@@ -3,15 +3,22 @@
 ## 1. Local start
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Default local URL:
 
 ```text
-http://localhost:3000
+http://localhost:3000/dashboard
 ```
+
+`/` redirects to `/dashboard`.
+
+Current Phase 1 behavior:
+
+- UI uses static mock data only.
+- Auth, database writes, and DeepSeek analyze are not wired yet.
 
 Verification commands:
 
@@ -111,4 +118,5 @@ Reserved for next phases:
 - UI shell and routes live in Next.js App Router.
 - Shadcn/ui is the only component primitive layer introduced in Phase 1.
 - Supabase is wired only up to client factory level in Phase 1.
+- Dashboard / Prompts / Skills / Settings currently read from static mock data.
 - DeepSeek and GitHub stay at documentation/env boundary until their phases arrive.

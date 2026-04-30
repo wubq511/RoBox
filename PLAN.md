@@ -3,6 +3,8 @@
 ## Key Changes / Phase Breakdown
 
 ### Phase 1：工程骨架与基础约束
+状态：已完成（2026-05-01）
+
 目标：把“方案仓库”变成“可开发项目”，先建立长期不返工的骨架。
 
 任务清单：
@@ -115,7 +117,7 @@
 - `UsageLog`
   - `action` 仅允许：`copy_raw`、`copy_final`
 - 服务端接口
-  - `POST /api/analyze`
+  - `POST /api/items/:id/analyze`
   - `POST /api/import/github`
   - `POST /api/items/:id/copy`
 - 前端页面

@@ -14,7 +14,7 @@ export const mockItems: LibraryItem[] = [
     isFavorite: true,
     isAnalyzed: true,
     usageCount: 17,
-    updatedAt: "今天 19:38",
+    updatedAt: "2026-05-01 19:38",
     variables: [
       {
         name: "paper",
@@ -43,7 +43,7 @@ export const mockItems: LibraryItem[] = [
     isFavorite: true,
     isAnalyzed: true,
     usageCount: 11,
-    updatedAt: "今天 18:56",
+    updatedAt: "2026-05-01 18:56",
     variables: [],
   },
   {
@@ -59,7 +59,7 @@ export const mockItems: LibraryItem[] = [
     isFavorite: false,
     isAnalyzed: true,
     usageCount: 8,
-    updatedAt: "昨天 23:12",
+    updatedAt: "2026-04-30 23:12",
     variables: [
       {
         name: "url",
@@ -82,7 +82,7 @@ export const mockItems: LibraryItem[] = [
     isFavorite: false,
     isAnalyzed: true,
     usageCount: 6,
-    updatedAt: "4月29日",
+    updatedAt: "2026-04-29",
     variables: [],
   },
   {
@@ -98,7 +98,7 @@ export const mockItems: LibraryItem[] = [
     isFavorite: true,
     isAnalyzed: false,
     usageCount: 3,
-    updatedAt: "4月28日",
+    updatedAt: "2026-04-28",
     variables: [],
   },
   {
@@ -114,7 +114,7 @@ export const mockItems: LibraryItem[] = [
     isFavorite: false,
     isAnalyzed: false,
     usageCount: 2,
-    updatedAt: "4月27日",
+    updatedAt: "2026-04-27",
     variables: [],
   },
 ];

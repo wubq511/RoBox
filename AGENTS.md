@@ -13,7 +13,9 @@
 
 ## 2. 参考文档/文档索引
 
+- 仓库说明 D:\RoBox\README.md
 - 本文件 `AGENTS.md`
+- 启动文档 D:\RoBox\docs\setup.md
 - 项目文档 D:\RoBox\RoBox 最终项目方案.md
 - 计划文档 D:\RoBox\PLAN.md
 - UI原型 D:\RoBox\RoBox_UI_Prototype   注意，该原型已经定稿了，请你不要进行调整，直接改为真实落地的UI
@@ -56,6 +58,8 @@
 - 文件名、目录名、变量名、数据库字段名统一用英文
 - 不创建含义模糊的目录或文件，例如 `misc`、`temp`、`backup`、`utils2`
 - 新增长期目录约定时，先写文档，再落代码
+- `docs/` 负责面向接手者的启动、接入、运维文档
+- `.worktrees/` 只用于隔离开发，不作为主交付目录或主文档来源
 
 ---
 
