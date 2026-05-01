@@ -1,5 +1,7 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { ListItemsFilters, ItemType } from "@/lib/schema/items";
 import type { StoredItem } from "@/server/db/types";
 
@@ -64,7 +67,12 @@ export function LibraryList({
               <CardDescription>{shellCopy.emptyDescription}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button render={<a href={createHref} />}>{shellCopy.createLabel}</Button>
+              <Link
+                href={createHref}
+                className={cn(buttonVariants({ variant: "default" }))}
+              >
+                {shellCopy.createLabel}
+              </Link>
             </CardContent>
           </Card>
         );
@@ -151,7 +159,12 @@ export function LibraryList({
                 {shellCopy.shellDescription}
               </CardDescription>
             </div>
-            <Button render={<a href={createHref} />}>{shellCopy.createLabel}</Button>
+            <Link
+              href={createHref}
+              className={cn(buttonVariants({ variant: "default" }))}
+            >
+              {shellCopy.createLabel}
+            </Link>
           </div>
         </CardHeader>
         <CardContent className="pt-5">

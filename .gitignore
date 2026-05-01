@@ -1,6 +1,8 @@
 .worktrees/
 vendor_imports/
 output/
+test-results/
+.playwright-cli/
 node_modules/
 .next/
 out/

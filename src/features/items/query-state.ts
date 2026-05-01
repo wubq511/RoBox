@@ -1,4 +1,9 @@
-import type { ItemType, ListItemsFilters } from "@/lib/schema/items";
+import {
+  itemCategorySchema,
+  itemSortSchema,
+  type ItemType,
+  type ListItemsFilters,
+} from "@/lib/schema/items";
 import { sanitizeListItemsInput } from "@/server/db/items";
 
 type SearchParamsInput =
@@ -20,6 +25,22 @@ function getSingleParam(
 function normalizeString(value: string | undefined) {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function normalizeCategory(
+  value: string | undefined,
+): ListItemsFilters["category"] {
+  const normalized = normalizeString(value);
+  const parsed = itemCategorySchema.safeParse(normalized);
+
+  return parsed.success ? parsed.data : undefined;
+}
+
+function normalizeSort(value: string | undefined): ListItemsFilters["sort"] {
+  const normalized = normalizeString(value);
+  const parsed = itemSortSchema.safeParse(normalized);
+
+  return parsed.success ? parsed.data : undefined;
 }
 
 function normalizeLimit(value: string | number | undefined) {
@@ -44,11 +65,11 @@ export function parseLibrarySearchParams(
   return sanitizeListItemsInput({
     type,
     search: normalizeString(getSingleParam(searchParams, "search")),
-    category: normalizeString(getSingleParam(searchParams, "category")),
+    category: normalizeCategory(getSingleParam(searchParams, "category")),
     tag: normalizeString(getSingleParam(searchParams, "tag")),
     isFavorite:
       getSingleParam(searchParams, "favorite") === "1" ? true : undefined,
-    sort: getSingleParam(searchParams, "sort"),
+    sort: normalizeSort(getSingleParam(searchParams, "sort")),
     limit: normalizeLimit(getSingleParam(searchParams, "limit")),
   });
 }
@@ -61,10 +82,10 @@ export function buildLibraryHref(
   const parsed = sanitizeListItemsInput({
     type,
     search: normalizeString(filters.search),
-    category: normalizeString(filters.category),
+    category: normalizeCategory(filters.category),
     tag: normalizeString(filters.tag),
     isFavorite: filters.isFavorite,
-    sort: filters.sort,
+    sort: normalizeSort(filters.sort),
     limit: normalizeLimit(filters.limit),
   });
   const searchParams = new URLSearchParams();

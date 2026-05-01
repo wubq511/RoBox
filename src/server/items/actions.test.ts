@@ -4,12 +4,12 @@ import {
   createPromptAction,
   createSkillAction,
   deleteItemAction,
-  initialItemFormState,
   recordCopyActionAction,
   toggleFavoriteAction,
   updatePromptAction,
   updateSkillAction,
 } from "./actions";
+import { initialItemFormState } from "./form-state";
 
 const redirectError = new Error("NEXT_REDIRECT");
 

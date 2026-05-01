@@ -50,7 +50,6 @@ function createItemRow(
   overrides: Partial<MockItemRow> & Pick<MockItemRow, "id">,
 ): MockItemRow {
   return {
-    id: overrides.id,
     user_id: "user-1",
     type: "prompt",
     title: "Item",
@@ -82,6 +81,7 @@ function createSupabaseMock({
   };
 
   function createBuilder(table: "items" | "usage_logs") {
+    type QueryRow = MockItemRow | MockUsageLogRow;
     const filters = {
       eq: [] as Array<{ column: string; value: unknown }>,
       contains: [] as Array<{ column: string; value: unknown }>,
@@ -93,13 +93,15 @@ function createSupabaseMock({
     };
 
     function applySelectedColumns(rows: Array<Record<string, unknown>>) {
-      if (filters.selectedColumns === "*") {
+      const columns = filters.selectedColumns;
+
+      if (columns === "*") {
         return rows;
       }
 
       return rows.map((row) =>
         Object.fromEntries(
-          filters.selectedColumns.map((column) => [column, row[column]]),
+          columns.map((column) => [column, row[column]]),
         ),
       );
     }
@@ -155,7 +157,7 @@ function createSupabaseMock({
     };
 
     function runQuery() {
-      let rows = table === "items" ? [...state.items] : [...state.usageLogs];
+      let rows: QueryRow[] = table === "items" ? [...state.items] : [...state.usageLogs];
 
       for (const filter of filters.eq) {
         rows = rows.filter((row) => row[filter.column as keyof typeof row] === filter.value);
@@ -179,10 +181,11 @@ function createSupabaseMock({
       }
 
       if (filters.action === "delete" && table === "items") {
-        const matchedIds = new Set(rows.map((row) => row.id));
+        const itemRows = rows as MockItemRow[];
+        const matchedIds = new Set(itemRows.map((row) => row.id));
         state.items = state.items.filter((row) => !matchedIds.has(row.id));
         return {
-          data: applySelectedColumns(rows),
+          data: applySelectedColumns(itemRows),
           error: null,
         };
       }
@@ -216,7 +219,7 @@ function createSupabaseMock({
       }
 
       return {
-        data: applySelectedColumns(rows),
+        data: applySelectedColumns(rows as Array<Record<string, unknown>>),
         error: null,
       };
     }
@@ -299,17 +302,14 @@ describe("item repository helpers", () => {
     expect(
       buildDashboardCounts([
         {
-          id: "prompt-1",
           type: "prompt",
           isAnalyzed: true,
         },
         {
-          id: "skill-1",
           type: "skill",
           isAnalyzed: false,
         },
         {
-          id: "prompt-2",
           type: "prompt",
           isAnalyzed: false,
         },

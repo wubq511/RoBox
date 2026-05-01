@@ -15,7 +15,7 @@ import type { PromptVariable } from "@/features/items/types";
 import {
   initialItemFormState,
   type ItemFormState,
-} from "@/server/items/actions";
+} from "@/server/items/form-state";
 
 type ItemFormAction = (
   state: ItemFormState | void,

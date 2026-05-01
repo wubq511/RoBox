@@ -13,17 +13,8 @@ import {
   updateItem,
 } from "@/server/db/items";
 
+import type { ItemFormState } from "./form-state";
 import { parseItemFormData } from "./forms";
-
-export type ItemFormState = {
-  status: "idle" | "error";
-  message: string;
-};
-
-export const initialItemFormState: ItemFormState = {
-  status: "idle",
-  message: "",
-};
 
 function getStringValue(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -94,7 +85,7 @@ function toErrorState(error: unknown): ItemFormState {
 }
 
 export async function createPromptAction(
-  _previousState: ItemFormState,
+  _previousState: ItemFormState | void,
   formData: FormData,
 ) {
   let createdItem;
@@ -113,7 +104,7 @@ export async function createPromptAction(
 }
 
 export async function createSkillAction(
-  _previousState: ItemFormState,
+  _previousState: ItemFormState | void,
   formData: FormData,
 ) {
   let createdItem;
@@ -132,7 +123,7 @@ export async function createSkillAction(
 
 export async function updatePromptAction(
   itemId: string,
-  _previousState: ItemFormState,
+  _previousState: ItemFormState | void,
   formData: FormData,
 ) {
   try {
@@ -161,7 +152,7 @@ export async function updatePromptAction(
 
 export async function updateSkillAction(
   itemId: string,
-  _previousState: ItemFormState,
+  _previousState: ItemFormState | void,
   formData: FormData,
 ) {
   try {
@@ -206,7 +197,7 @@ export async function toggleFavoriteAction(formData: FormData) {
 }
 
 export async function deleteItemAction(
-  _previousState: ItemFormState,
+  _previousState: ItemFormState | void,
   formData: FormData,
 ) {
   let itemId: string = "";

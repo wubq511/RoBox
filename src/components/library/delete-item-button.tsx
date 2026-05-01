@@ -6,9 +6,9 @@ import { Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   deleteItemAction,
-  initialItemFormState,
 } from "@/server/items/actions";
 import type { ItemType } from "@/lib/schema/items";
+import { initialItemFormState } from "@/server/items/form-state";
 
 type DeleteItemButtonProps = {
   itemId: string;

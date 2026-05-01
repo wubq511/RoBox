@@ -7,12 +7,6 @@ import {
   StarIcon,
 } from "lucide-react";
 
-import {
-  getFavoriteItems,
-  getPendingItems,
-  getRecentItems,
-  mockItems,
-} from "@/features/items/mock-data";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -24,6 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { DashboardSnapshot, StoredItem } from "@/server/db/types";
 
 const analyzeSteps = [
   "Save raw content first",
@@ -31,10 +26,16 @@ const analyzeSteps = [
   "Extract variables for prompts only",
 ];
 
-export function DashboardView() {
-  const pending = getPendingItems();
-  const favorites = getFavoriteItems(3);
-  const recent = getRecentItems(4);
+function getItemHref(item: Pick<StoredItem, "id" | "type">) {
+  return item.type === "prompt" ? `/prompts/${item.id}` : `/skills/${item.id}`;
+}
+
+export function DashboardView({
+  snapshot,
+}: Readonly<{
+  snapshot: DashboardSnapshot;
+}>) {
+  const { counts, favorites, pending, recent } = snapshot;
 
   return (
     <section className="mx-auto flex w-full max-w-[1160px] flex-col gap-6 px-4 py-6 lg:px-8 lg:py-8">
@@ -45,45 +46,37 @@ export function DashboardView() {
               variant="outline"
               className="w-fit rounded-full border-border/80 bg-background/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
             >
-              Save → Analyze → Search → Copy
+              Save → Search → Open → Copy
             </Badge>
             <div className="space-y-3">
               <CardTitle className="max-w-3xl text-3xl leading-tight font-semibold tracking-[-0.04em] lg:text-5xl">
                 Your private command shelf for prompts and skills.
               </CardTitle>
               <CardDescription className="max-w-2xl text-sm leading-6 text-muted-foreground lg:text-[15px]">
-                RoBox 把 Prompt 与 Skill 放进同一个工作台。左边收纳，中间筛选，右边直接看变量、整理状态和复制语义。
+                RoBox Phase 3 接入真实库数据。搜索入口在顶栏，下面聚合最近使用、收藏、待整理与数量统计。
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/prompts"
+                href="/prompts/new"
                 className={cn(buttonVariants({ variant: "default", size: "lg" }))}
               >
-                Browse prompts
+                New prompt
               </Link>
               <Link
-                href="/skills"
+                href="/skills/new"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
               >
-                Browse skills
+                New skill
               </Link>
             </div>
           </CardHeader>
 
           <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Total" value={mockItems.length} detail="Prompt + Skill" />
-            <MetricCard
-              label="Prompts"
-              value={mockItems.filter((item) => item.type === "prompt").length}
-              detail="可变量化模板"
-            />
-            <MetricCard
-              label="Skills"
-              value={mockItems.filter((item) => item.type === "skill").length}
-              detail="文档或 GitHub 链接"
-            />
-            <MetricCard label="Pending" value={pending.length} detail="待智能整理" />
+            <MetricCard label="Total" value={counts.total} detail="Prompt + Skill" />
+            <MetricCard label="Prompts" value={counts.prompts} detail="可变量化模板" />
+            <MetricCard label="Skills" value={counts.skills} detail="可复制 Skill 原文" />
+            <MetricCard label="Pending" value={counts.pending} detail="待智能整理" />
           </CardContent>
         </Card>
 
@@ -119,7 +112,7 @@ export function DashboardView() {
                 Next action
               </p>
               <p className="mt-2 text-sm leading-6 text-white/80">
-                先整理 {pending.length} 个未分析条目，但不覆盖用户原文。
+                先整理 {counts.pending} 个未分析条目，但不覆盖用户原文。
               </p>
             </div>
           </CardContent>
@@ -133,7 +126,7 @@ export function DashboardView() {
               <div>
                 <CardTitle>Recently copied</CardTitle>
                 <CardDescription>
-                  这里先用静态样例模拟最近使用权重，Phase 3 再接真实 usage logs。
+                  这里展示真实 `usage_logs` 计数驱动的最近使用条目。
                 </CardDescription>
               </div>
               <Link
@@ -148,7 +141,7 @@ export function DashboardView() {
             {recent.map((item) => (
               <Link
                 key={item.id}
-                href={item.type === "prompt" ? "/prompts" : "/skills"}
+                href={getItemHref(item)}
                 className="flex items-center gap-4 py-4 transition-colors hover:text-foreground"
               >
                 <Badge variant="outline" className="rounded-full px-2.5">
@@ -174,9 +167,10 @@ export function DashboardView() {
             icon={<StarIcon className="size-4" />}
             empty="暂无收藏内容"
             items={favorites.map((item) => ({
+              key: item.id,
               label: item.title,
               meta: item.category,
-              href: item.type === "prompt" ? "/prompts" : "/skills",
+              href: getItemHref(item),
               badge: item.type,
             }))}
           />
@@ -185,9 +179,10 @@ export function DashboardView() {
             icon={<CircleDashedIcon className="size-4" />}
             empty="当前没有待整理内容"
             items={pending.map((item) => ({
+              key: item.id,
               label: item.title,
               meta: item.category,
-              href: item.type === "prompt" ? "/prompts" : "/skills",
+              href: getItemHref(item),
               badge: item.type,
             }))}
           />
@@ -227,6 +222,7 @@ function MiniListCard({
   icon: React.ReactNode;
   empty: string;
   items: Array<{
+    key: string;
     label: string;
     meta: string;
     href: string;
@@ -251,7 +247,7 @@ function MiniListCard({
           </div>
         ) : (
           items.map((item, index) => (
-            <div key={item.label}>
+            <div key={item.key}>
               {index > 0 ? <Separator className="my-3" /> : null}
               <Link
                 href={item.href}

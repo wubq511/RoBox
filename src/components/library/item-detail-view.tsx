@@ -1,5 +1,7 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -7,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { ItemDetail } from "@/server/db/types";
 
 import { CopyRawButton } from "./copy-raw-button";
@@ -61,12 +64,18 @@ export function ItemDetailView({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="ghost" size="sm" render={<a href={normalizedReturnPath} />}>
+          <Link
+            href={normalizedReturnPath}
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+          >
             Back
-          </Button>
-          <Button variant="outline" size="sm" render={<a href={editPath} />}>
+          </Link>
+          <Link
+            href={editPath}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+          >
             Edit
-          </Button>
+          </Link>
           <DeleteItemButton itemId={item.id} type={item.type} />
         </div>
       </CardHeader>

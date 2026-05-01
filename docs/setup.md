@@ -19,7 +19,7 @@ Current Phase 2 behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
-- Library pages still render static mock data; the server repository is ready for Phase 3 page wiring.
+- Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 
 Verification commands:
 
@@ -123,12 +123,12 @@ Still waiting for later phases:
 
 - DeepSeek analyze routes and prompt variable extraction UI
 - GitHub import route and repository README fetch flow
-- Phase 3 page wiring from mock data to the new repository layer
 
 ## 6. Dependency boundaries
 
 - UI shell and routes live in Next.js App Router.
 - Shadcn/ui remains the only component primitive layer introduced so far.
 - Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
-- Dashboard / Prompts / Skills / Settings currently read from static mock data.
+- `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
+- Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - DeepSeek and GitHub stay at documentation/env boundary until their phases arrive.

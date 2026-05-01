@@ -2,14 +2,13 @@ import Link from "next/link";
 import {
   GitBranchIcon,
   LogOutIcon,
-  SearchIcon,
   SquarePenIcon,
 } from "lucide-react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { GlobalSearchForm } from "@/components/layout/global-search-form";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { signOutAction } from "@/server/auth/actions";
-import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -35,32 +34,25 @@ export function WorkspaceShell({
                 <div className="text-sm font-semibold">RoBox</div>
               </div>
 
-              <div className="relative ml-auto w-full max-w-xl lg:ml-0">
-                <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  aria-label="Search library"
-                  placeholder="Search titles, tags, or raw content"
-                  className="h-10 rounded-xl bg-muted/50 pl-10"
-                />
-              </div>
+              <GlobalSearchForm />
 
               <div className="hidden items-center gap-2 sm:flex">
                 <div className="max-w-[220px] truncate text-sm text-muted-foreground">
                   {userEmail}
                 </div>
                 <Link
-                  href="/prompts"
+                  href="/prompts/new"
                   className={cn(buttonVariants({ variant: "default", size: "lg" }))}
                 >
                   <SquarePenIcon className="size-4" />
-                  Quick add
+                  New prompt
                 </Link>
                 <Link
-                  href="/skills"
+                  href="/skills/new"
                   className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
                 >
                   <GitBranchIcon className="size-4" />
-                  GitHub import
+                  New skill
                 </Link>
                 <form action={signOutAction}>
                   <Button type="submit" variant="ghost" size="lg">
