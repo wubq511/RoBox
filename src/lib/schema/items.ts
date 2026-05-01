@@ -18,7 +18,7 @@ export const itemCategories = [...itemCategorySchema.options];
 export const copyActionSchema = z.enum(["copy_raw", "copy_final"]);
 export const copyActions = [...copyActionSchema.options];
 
-export const itemSortSchema = z.enum(["recent", "used"]);
+export const itemSortSchema = z.enum(["updated", "used"]);
 export const itemSorts = [...itemSortSchema.options];
 
 export const promptVariableSchema = z.object({
@@ -67,7 +67,7 @@ export const listItemsFiltersSchema = z.object({
   tag: z.string().trim().min(1).max(32).optional(),
   isFavorite: z.boolean().optional(),
   search: z.string().trim().max(120).optional(),
-  sort: itemSortSchema.default("recent"),
+  sort: itemSortSchema.default("updated"),
   limit: z.number().int().min(1).max(100).default(50),
 });
 

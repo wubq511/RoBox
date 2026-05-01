@@ -1,7 +1,6 @@
-import type { ListItemsFilters } from "@/lib/schema/items";
+import type { ItemType, ListItemsFilters } from "@/lib/schema/items";
 import { sanitizeListItemsInput } from "@/server/db/items";
 
-type LibraryPath = "/prompts" | "/skills";
 type SearchParamsInput =
   | URLSearchParams
   | Record<string, string | string[] | undefined>;
@@ -16,10 +15,6 @@ function getSingleParam(
 
   const value = searchParams[key];
   return Array.isArray(value) ? value[0] : value;
-}
-
-function getTypeFromPath(pathname: LibraryPath): ListItemsFilters["type"] {
-  return pathname === "/skills" ? "skill" : "prompt";
 }
 
 function normalizeString(value: string | undefined) {
@@ -38,42 +33,43 @@ function normalizeLimit(value: string | number | undefined) {
   return Math.min(Math.max(parsed, 1), 100);
 }
 
+function getLibraryPath(type: ItemType) {
+  return type === "skill" ? "/skills" : "/prompts";
+}
+
 export function parseLibrarySearchParams(
-  pathname: LibraryPath,
   searchParams: SearchParamsInput,
+  type: ItemType,
 ) {
   return sanitizeListItemsInput({
-    type: getTypeFromPath(pathname),
+    type,
+    search: normalizeString(getSingleParam(searchParams, "search")),
     category: normalizeString(getSingleParam(searchParams, "category")),
     tag: normalizeString(getSingleParam(searchParams, "tag")),
-    search: normalizeString(
-      getSingleParam(searchParams, "q") ??
-        getSingleParam(searchParams, "search"),
-    ),
-    sort: getSingleParam(searchParams, "sort"),
     isFavorite:
       getSingleParam(searchParams, "favorite") === "1" ? true : undefined,
+    sort: getSingleParam(searchParams, "sort"),
     limit: normalizeLimit(getSingleParam(searchParams, "limit")),
   });
 }
 
 export function buildLibraryHref(
-  pathname: LibraryPath,
+  type: ItemType,
   filters: Partial<ListItemsFilters>,
 ) {
   const parsed = sanitizeListItemsInput({
-    type: getTypeFromPath(pathname),
+    type,
+    search: normalizeString(filters.search),
     category: normalizeString(filters.category),
     tag: normalizeString(filters.tag),
-    search: normalizeString(filters.search),
-    sort: filters.sort,
     isFavorite: filters.isFavorite,
+    sort: filters.sort,
     limit: normalizeLimit(filters.limit),
   });
   const searchParams = new URLSearchParams();
 
   if (parsed.search) {
-    searchParams.set("q", parsed.search);
+    searchParams.set("search", parsed.search);
   }
 
   if (parsed.category) {
@@ -88,14 +84,13 @@ export function buildLibraryHref(
     searchParams.set("favorite", "1");
   }
 
-  if (parsed.sort !== "recent") {
-    searchParams.set("sort", parsed.sort);
-  }
+  searchParams.set("sort", parsed.sort);
 
   if (parsed.limit !== 50) {
     searchParams.set("limit", String(parsed.limit));
   }
 
   const query = searchParams.toString();
+  const pathname = getLibraryPath(type);
   return query ? `${pathname}?${query}` : pathname;
 }

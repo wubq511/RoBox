@@ -8,33 +8,45 @@ import {
 describe("library query state", () => {
   it("normalizes prompt list query params", () => {
     expect(
-      parseLibrarySearchParams("/prompts", {
-        search: "  prompt ideas  ",
-        category: "Writing",
-        tag: "  react  ",
-        sort: "used",
-        limit: "200",
-      }),
+      parseLibrarySearchParams(
+        {
+          search: "  refactor prompt  ",
+          category: "Coding",
+          tag: "ts",
+          favorite: "1",
+          sort: "used",
+        },
+        "prompt",
+      ),
     ).toEqual({
       type: "prompt",
-      search: "prompt ideas",
-      category: "Writing",
-      tag: "react",
+      search: "refactor prompt",
+      category: "Coding",
+      tag: "ts",
+      isFavorite: true,
       sort: "used",
-      limit: 100,
+      limit: 50,
     });
+  });
+
+  it("builds skill hrefs with search param and updated sort", () => {
+    expect(
+      buildLibraryHref("skill", {
+        search: "agent",
+        sort: "updated",
+      }),
+    ).toBe("/skills?search=agent&sort=updated");
   });
 
   it("builds stable list hrefs without empty params", () => {
     expect(
-      buildLibraryHref("/prompts", {
-        type: "prompt",
+      buildLibraryHref("prompt", {
         search: "  prompt ideas  ",
         category: undefined,
         tag: "",
-        sort: "recent",
+        sort: "used",
         limit: 50,
       }),
-    ).toBe("/prompts?q=prompt+ideas");
+    ).toBe("/prompts?search=prompt+ideas&sort=used");
   });
 });

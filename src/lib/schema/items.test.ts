@@ -40,6 +40,18 @@ describe("item schemas", () => {
     });
   });
 
+  it("defaults sort to updated", () => {
+    expect(
+      listItemsFiltersSchema.parse({
+        type: "skill",
+      }),
+    ).toEqual({
+      type: "skill",
+      sort: "updated",
+      limit: 50,
+    });
+  });
+
   it("allows prompt editor input with zero variables", () => {
     expect(
       itemEditorInputSchema.parse({
