@@ -1,22 +1,18 @@
 import { Input } from "@/components/ui/input";
-import { itemCategories, type ItemSort, type ItemType } from "@/lib/schema/items";
+import {
+  itemCategories,
+  type ListItemsFilters,
+  type ItemType,
+} from "@/lib/schema/items";
 
 type LibraryFiltersProps = {
   type: ItemType;
-  search?: string;
-  category?: string;
-  tag?: string;
-  isFavorite?: boolean;
-  sort?: ItemSort;
+  filters: ListItemsFilters;
 };
 
 export function LibraryFilters({
   type,
-  search = "",
-  category = "",
-  tag = "",
-  isFavorite = false,
-  sort = "updated",
+  filters,
 }: Readonly<LibraryFiltersProps>) {
   return (
     <form className="grid gap-3 rounded-[24px] border border-border/70 bg-background/90 p-4 md:grid-cols-2 xl:grid-cols-5">
@@ -24,7 +20,7 @@ export function LibraryFilters({
         <span className="text-xs font-medium text-muted-foreground">Search</span>
         <Input
           name="search"
-          defaultValue={search}
+          defaultValue={filters.search ?? ""}
           placeholder={`Search ${type === "prompt" ? "prompts" : "skills"}`}
         />
       </label>
@@ -33,7 +29,7 @@ export function LibraryFilters({
         <span className="text-xs font-medium text-muted-foreground">Category</span>
         <select
           name="category"
-          defaultValue={category}
+          defaultValue={filters.category ?? ""}
           className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
         >
           <option value="">All categories</option>
@@ -47,14 +43,14 @@ export function LibraryFilters({
 
       <label className="space-y-2">
         <span className="text-xs font-medium text-muted-foreground">Tag</span>
-        <Input name="tag" defaultValue={tag} placeholder="react" />
+        <Input name="tag" defaultValue={filters.tag ?? ""} placeholder="react" />
       </label>
 
       <label className="space-y-2">
         <span className="text-xs font-medium text-muted-foreground">Sort</span>
         <select
           name="sort"
-          defaultValue={sort}
+          defaultValue={filters.sort}
           className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
         >
           <option value="updated">Updated</option>
@@ -67,7 +63,7 @@ export function LibraryFilters({
           type="checkbox"
           name="favorite"
           value="1"
-          defaultChecked={isFavorite}
+          defaultChecked={filters.isFavorite ?? false}
         />
         Favorites only
       </label>

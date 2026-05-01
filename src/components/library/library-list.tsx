@@ -7,14 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { LibraryItem, ItemType } from "@/features/items/types";
+import type { ListItemsFilters, ItemType } from "@/lib/schema/items";
+import type { StoredItem } from "@/server/db/types";
 
 type LibraryListProps = {
   type: ItemType;
-  items: LibraryItem[];
-  selectedItemId?: string;
-  getItemHref?: (item: LibraryItem) => string;
-  createHref?: string;
+  items: StoredItem[];
+  filters: ListItemsFilters;
 };
 
 function getEmptyCopy(type: ItemType) {
@@ -31,15 +30,22 @@ function getEmptyCopy(type: ItemType) {
       };
 }
 
+function getCreateHref(type: ItemType) {
+  return type === "prompt" ? "/prompts/new" : "/skills/new";
+}
+
+function getDetailHref(type: ItemType, itemId: string) {
+  return type === "prompt" ? `/prompts/${itemId}` : `/skills/${itemId}`;
+}
+
 export function LibraryList({
   type,
   items,
-  selectedItemId,
-  getItemHref,
-  createHref,
+  filters,
 }: Readonly<LibraryListProps>) {
   if (items.length === 0) {
     const emptyCopy = getEmptyCopy(type);
+    const createHref = getCreateHref(type);
 
     return (
       <Card className="rounded-[28px] border-border/70">
@@ -47,25 +53,19 @@ export function LibraryList({
           <CardTitle>{emptyCopy.title}</CardTitle>
           <CardDescription>{emptyCopy.description}</CardDescription>
         </CardHeader>
-        {createHref ? (
-          <CardContent>
-            <Button render={<a href={createHref} />}>{emptyCopy.action}</Button>
-          </CardContent>
-        ) : null}
+        <CardContent>
+          <Button render={<a href={createHref} />}>{emptyCopy.action}</Button>
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-sort={filters.sort}>
       {items.map((item) => {
         const body = (
           <article
-            className={`rounded-[24px] border p-5 shadow-[0_10px_24px_-22px_rgba(17,17,17,0.35)] ${
-              selectedItemId === item.id
-                ? "border-foreground/20 bg-muted/30"
-                : "border-border/70 bg-background/90"
-            }`}
+            className="rounded-[24px] border border-border/70 bg-background/90 p-5 shadow-[0_10px_24px_-22px_rgba(17,17,17,0.35)]"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -106,12 +106,8 @@ export function LibraryList({
           </article>
         );
 
-        if (!getItemHref) {
-          return <div key={item.id}>{body}</div>;
-        }
-
         return (
-          <a key={item.id} href={getItemHref(item)} className="block">
+          <a key={item.id} href={getDetailHref(type, item.id)} className="block">
             {body}
           </a>
         );

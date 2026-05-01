@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,19 +7,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { LibraryItem } from "@/features/items/types";
+import type { ItemDetail } from "@/server/db/types";
 
 import { CopyRawButton } from "./copy-raw-button";
+import { DeleteItemButton } from "./delete-item-button";
 
 type ItemDetailViewProps = {
-  item: LibraryItem;
-  revalidatePaths: string[];
+  item: ItemDetail;
+  returnPath: string;
 };
 
 export function ItemDetailView({
   item,
-  revalidatePaths,
+  returnPath,
 }: Readonly<ItemDetailViewProps>) {
+  const normalizedReturnPath = returnPath.endsWith("/")
+    ? returnPath.slice(0, -1)
+    : returnPath;
+  const revalidatePaths = [
+    "/dashboard",
+    normalizedReturnPath,
+    `${normalizedReturnPath}/${item.id}`,
+  ];
+
   return (
     <Card className="rounded-[28px] border-border/70">
       <CardHeader className="gap-4 border-b border-border/70 pb-5">
@@ -47,6 +58,12 @@ export function ItemDetailView({
               {tag}
             </Badge>
           ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="ghost" size="sm" render={<a href={normalizedReturnPath} />}>
+            Back
+          </Button>
+          <DeleteItemButton itemId={item.id} type={item.type} />
         </div>
       </CardHeader>
 

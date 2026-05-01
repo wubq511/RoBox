@@ -20,32 +20,32 @@ type ItemFormAction = (
 type ItemFormProps = {
   action: ItemFormAction;
   submitLabel: string;
-  initialValue: ItemEditorInput;
+  initialValues: ItemEditorInput;
 };
 
 export function ItemForm({
   action,
   submitLabel,
-  initialValue,
+  initialValues,
 }: Readonly<ItemFormProps>) {
   const [state, formAction] = useActionState(action, initialItemFormState);
   const resolvedState = state ?? initialItemFormState;
 
   return (
     <form action={formAction} className="space-y-6">
-      <input type="hidden" name="type" value={initialValue.type} />
+      <input type="hidden" name="type" value={initialValues.type} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium">Title</span>
-          <Input name="title" defaultValue={initialValue.title} maxLength={120} />
+          <Input name="title" defaultValue={initialValues.title} maxLength={120} />
         </label>
 
         <label className="space-y-2">
           <span className="text-sm font-medium">Category</span>
           <select
             name="category"
-            defaultValue={initialValue.category}
+            defaultValue={initialValues.category}
             className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
           >
             {itemCategories.map((category) => (
@@ -61,7 +61,7 @@ export function ItemForm({
         <span className="text-sm font-medium">Summary</span>
         <Textarea
           name="summary"
-          defaultValue={initialValue.summary}
+          defaultValue={initialValues.summary}
           maxLength={240}
           rows={3}
         />
@@ -71,32 +71,32 @@ export function ItemForm({
         <span className="text-sm font-medium">Tags</span>
         <Input
           name="tags"
-          defaultValue={(initialValue.tags ?? []).join(", ")}
+          defaultValue={(initialValues.tags ?? []).join(", ")}
           placeholder="comma, separated, tags"
         />
       </label>
 
-      {initialValue.type === "skill" ? (
+      {initialValues.type === "skill" ? (
         <label className="space-y-2">
           <span className="text-sm font-medium">Source URL</span>
-          <Input name="sourceUrl" defaultValue={initialValue.sourceUrl} />
+          <Input name="sourceUrl" defaultValue={initialValues.sourceUrl} />
         </label>
       ) : (
-        <input type="hidden" name="sourceUrl" value={initialValue.sourceUrl} />
+        <input type="hidden" name="sourceUrl" value={initialValues.sourceUrl} />
       )}
 
       <label className="space-y-2">
         <span className="text-sm font-medium">Content</span>
         <Textarea
           name="content"
-          defaultValue={initialValue.content}
+          defaultValue={initialValues.content}
           rows={14}
           required
         />
       </label>
 
-      {initialValue.type === "prompt" ? (
-        <PromptVariablesEditor initialVariables={initialValue.variables} />
+      {initialValues.type === "prompt" ? (
+        <PromptVariablesEditor initialVariables={initialValues.variables} />
       ) : (
         <input type="hidden" name="variables" value="[]" />
       )}
