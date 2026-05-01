@@ -89,10 +89,33 @@ function createSupabaseMock({
       order: null as null | { column: string; ascending: boolean },
       limit: null as null | number,
       action: "select" as "select" | "delete",
+      selectedColumns: "*" as "*" | string[],
     };
 
+    function applySelectedColumns(rows: Array<Record<string, unknown>>) {
+      if (filters.selectedColumns === "*") {
+        return rows;
+      }
+
+      return rows.map((row) =>
+        Object.fromEntries(
+          filters.selectedColumns.map((column) => [column, row[column]]),
+        ),
+      );
+    }
+
     const builder = {
-      select() {
+      select(columns?: string) {
+        if (!columns || columns.trim() === "*") {
+          filters.selectedColumns = "*";
+          return builder;
+        }
+
+        filters.selectedColumns = columns
+          .split(",")
+          .map((column) => column.trim())
+          .filter(Boolean);
+
         return builder;
       },
       eq(column: string, value: unknown) {
@@ -159,7 +182,7 @@ function createSupabaseMock({
         const matchedIds = new Set(rows.map((row) => row.id));
         state.items = state.items.filter((row) => !matchedIds.has(row.id));
         return {
-          data: rows,
+          data: applySelectedColumns(rows),
           error: null,
         };
       }
@@ -193,7 +216,7 @@ function createSupabaseMock({
       }
 
       return {
-        data: rows,
+        data: applySelectedColumns(rows),
         error: null,
       };
     }

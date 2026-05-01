@@ -349,7 +349,7 @@ export async function deleteItem(itemId: string) {
     .delete()
     .eq("id", itemId)
     .eq("user_id", userId)
-    .select("id")
+    .select("*")
     .maybeSingle();
 
   if (error) {
