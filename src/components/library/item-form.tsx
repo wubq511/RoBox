@@ -6,7 +6,12 @@ import { PromptVariablesEditor } from "@/components/library/prompt-variables-edi
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { itemCategories, type ItemEditorInput } from "@/lib/schema/items";
+import {
+  itemCategories,
+  type ItemCategory,
+  type ItemType,
+} from "@/lib/schema/items";
+import type { PromptVariable } from "@/features/items/types";
 import {
   initialItemFormState,
   type ItemFormState,
@@ -18,12 +23,22 @@ type ItemFormAction = (
 ) => Promise<ItemFormState | void>;
 
 type ItemFormProps = {
+  type: ItemType;
   action: ItemFormAction;
   submitLabel: string;
-  initialValues: ItemEditorInput;
+  initialValues: {
+    title: string;
+    summary: string;
+    category: ItemCategory;
+    tags: string[];
+    content: string;
+    sourceUrl: string;
+    variables: PromptVariable[];
+  };
 };
 
 export function ItemForm({
+  type,
   action,
   submitLabel,
   initialValues,
@@ -33,7 +48,7 @@ export function ItemForm({
 
   return (
     <form action={formAction} className="space-y-6">
-      <input type="hidden" name="type" value={initialValues.type} />
+      <input type="hidden" name="type" value={type} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
@@ -76,7 +91,7 @@ export function ItemForm({
         />
       </label>
 
-      {initialValues.type === "skill" ? (
+      {type === "skill" ? (
         <label className="space-y-2">
           <span className="text-sm font-medium">Source URL</span>
           <Input name="sourceUrl" defaultValue={initialValues.sourceUrl} />
@@ -95,7 +110,7 @@ export function ItemForm({
         />
       </label>
 
-      {initialValues.type === "prompt" ? (
+      {type === "prompt" ? (
         <PromptVariablesEditor initialVariables={initialValues.variables} />
       ) : (
         <input type="hidden" name="variables" value="[]" />

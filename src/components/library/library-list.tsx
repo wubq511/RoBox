@@ -18,17 +18,24 @@ type LibraryListProps = {
   filters: ListItemsFilters;
 };
 
-function getEmptyCopy(type: ItemType) {
+function getShellCopy(type: ItemType) {
   return type === "prompt"
     ? {
-        title: "No prompts yet",
-        description: "Create your first Prompt to start saving and copying templates.",
-        action: "Create Prompt",
+        shellTitle: "Prompt library",
+        shellDescription: "Variables, raw copy, edit, and saved search.",
+        createLabel: "Create now",
+        emptyTitle: "No prompts yet",
+        emptyDescription:
+          "Change the keyword or filters, or create your first saved item.",
       }
     : {
-        title: "No skills yet",
-        description: "Create your first Skill to keep reusable instructions close at hand.",
-        action: "Create Skill",
+        shellTitle: "Skill library",
+        shellDescription:
+          "Save reusable SKILL.md files, linked sources, and copy-ready notes.",
+        createLabel: "Create now",
+        emptyTitle: "No skills yet",
+        emptyDescription:
+          "Change the keyword or filters, or create your first saved item.",
       };
 }
 
@@ -45,20 +52,19 @@ export function LibraryList({
   items,
   filters,
 }: Readonly<LibraryListProps>) {
+  const shellCopy = getShellCopy(type);
+  const createHref = getCreateHref(type);
   const content =
     items.length === 0 ? (
       (() => {
-        const emptyCopy = getEmptyCopy(type);
-        const createHref = getCreateHref(type);
-
         return (
           <Card className="rounded-[28px] border-border/70">
             <CardHeader>
-              <CardTitle>{emptyCopy.title}</CardTitle>
-              <CardDescription>{emptyCopy.description}</CardDescription>
+              <CardTitle>{shellCopy.emptyTitle}</CardTitle>
+              <CardDescription>{shellCopy.emptyDescription}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button render={<a href={createHref} />}>{emptyCopy.action}</Button>
+              <Button render={<a href={createHref} />}>{shellCopy.createLabel}</Button>
             </CardContent>
           </Card>
         );
@@ -75,6 +81,14 @@ export function LibraryList({
                   <Badge variant="outline" className="rounded-full px-2.5">
                     {item.type}
                   </Badge>
+                  <Badge variant="secondary" className="rounded-full px-2.5">
+                    {item.category}
+                  </Badge>
+                  {item.isFavorite ? (
+                    <Badge variant="outline" className="rounded-full px-2.5">
+                      Favorite
+                    </Badge>
+                  ) : null}
                   {!item.isAnalyzed ? (
                     <Badge
                       variant="outline"
@@ -84,9 +98,14 @@ export function LibraryList({
                     </Badge>
                   ) : null}
                 </div>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {item.updatedAt}
-                </span>
+                <div className="text-right">
+                  <div className="font-mono text-xs text-muted-foreground">
+                    {item.updatedAt}
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Copied {item.usageCount}
+                  </div>
+                </div>
               </div>
 
               <h2 className="mt-4 text-lg font-semibold tracking-[-0.02em]">
@@ -97,9 +116,6 @@ export function LibraryList({
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <Badge variant="secondary" className="rounded-full px-2.5">
-                  #{item.category}
-                </Badge>
                 {item.tags.slice(0, 3).map((tag) => (
                   <Badge
                     key={tag}
@@ -124,7 +140,24 @@ export function LibraryList({
 
   return (
     <section className="space-y-4">
-      <LibraryFilters type={type} filters={filters} />
+      <Card className="rounded-[28px] border-border/70">
+        <CardHeader className="gap-4 border-b border-border/70 pb-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <CardTitle className="text-3xl tracking-[-0.04em]">
+                {shellCopy.shellTitle}
+              </CardTitle>
+              <CardDescription className="mt-2 text-sm leading-6">
+                {shellCopy.shellDescription}
+              </CardDescription>
+            </div>
+            <Button render={<a href={createHref} />}>{shellCopy.createLabel}</Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-5">
+          <LibraryFilters type={type} filters={filters} />
+        </CardContent>
+      </Card>
       {content}
     </section>
   );

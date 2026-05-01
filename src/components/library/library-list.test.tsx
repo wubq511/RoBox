@@ -7,7 +7,7 @@ import type { StoredItem } from "@/server/db/types";
 import { LibraryList } from "./library-list";
 
 describe("LibraryList", () => {
-  it("renders inline prompt filters with an apply action and the empty-state CTA", () => {
+  it("renders the prompt library shell with header, create CTA, filters, and empty-state guidance", () => {
     const filters: ListItemsFilters = {
       type: "prompt",
       search: "draft",
@@ -19,15 +19,20 @@ describe("LibraryList", () => {
       <LibraryList type="prompt" items={[]} filters={filters} />,
     );
 
+    expect(html).toContain("Prompt library");
+    expect(html).toContain("Variables, raw copy, edit, and saved search.");
+    expect(html).toContain('href="/prompts/new"');
+    expect(html).toContain("Create now");
     expect(html).toContain('action="/prompts"');
     expect(html).toContain("Apply");
     expect(html).toContain('name="search"');
     expect(html).toContain("No prompts yet");
-    expect(html).toContain("Create Prompt");
-    expect(html).toContain('href="/prompts/new"');
+    expect(html).toContain(
+      "Change the keyword or filters, or create your first saved item.",
+    );
   });
 
-  it("renders inline skill filters with an apply action and the empty-state CTA", () => {
+  it("renders the skill library shell with header, create CTA, filters, and empty-state guidance", () => {
     const filters: ListItemsFilters = {
       type: "skill",
       isFavorite: true,
@@ -39,14 +44,19 @@ describe("LibraryList", () => {
       <LibraryList type="skill" items={[]} filters={filters} />,
     );
 
+    expect(html).toContain("Skill library");
+    expect(html).toContain("Save reusable SKILL.md files, linked sources, and copy-ready notes.");
+    expect(html).toContain('href="/skills/new"');
+    expect(html).toContain("Create now");
     expect(html).toContain('action="/skills"');
     expect(html).toContain("Apply");
     expect(html).toContain("No skills yet");
-    expect(html).toContain("Create Skill");
-    expect(html).toContain('href="/skills/new"');
+    expect(html).toContain(
+      "Change the keyword or filters, or create your first saved item.",
+    );
   });
 
-  it("renders filters above non-empty items without requiring route pages to compose them", () => {
+  it("renders filters above non-empty items and shows the planned card metadata", () => {
     const filters: ListItemsFilters = {
       type: "prompt",
       sort: "used",
@@ -63,8 +73,8 @@ describe("LibraryList", () => {
         category: "Writing",
         tags: ["draft"],
         sourceUrl: "",
-        isFavorite: false,
-        isAnalyzed: true,
+        isFavorite: true,
+        isAnalyzed: false,
         usageCount: 2,
         createdAt: "2026-05-01T12:00:00.000Z",
         updatedAt: "2026-05-01 20:00",
@@ -79,5 +89,9 @@ describe("LibraryList", () => {
     expect(html).toContain("Apply");
     expect(html).toContain('href="/prompts/prompt-1"');
     expect(html).toContain("Prompt title");
+    expect(html).toContain("Favorite");
+    expect(html).toContain("Need analyze");
+    expect(html).toContain("Writing");
+    expect(html).toContain("Copied 2");
   });
 });
