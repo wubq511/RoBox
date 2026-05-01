@@ -1,0 +1,1 @@
+-- Phase 2 does not seed demo content. Keep this file to satisfy local CLI defaults.

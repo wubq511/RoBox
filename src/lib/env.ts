@@ -8,6 +8,10 @@ function readRequiredEnv(name: string) {
   return value;
 }
 
+function readOptionalEnv(name: string) {
+  return process.env[name]?.trim();
+}
+
 export function getSupabasePublicEnv() {
   return {
     url: readRequiredEnv("NEXT_PUBLIC_SUPABASE_URL"),
@@ -20,4 +24,8 @@ export function hasSupabasePublicEnv() {
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   );
+}
+
+export function getAppOrigin() {
+  return readOptionalEnv("NEXT_PUBLIC_APP_ORIGIN") ?? "http://localhost:3000";
 }

@@ -1,23 +1,15 @@
-export const itemCategories = [
-  "Writing",
-  "Coding",
-  "Research",
-  "Design",
-  "Study",
-  "Agent",
-  "Content",
-  "Other",
-] as const;
+import {
+  itemCategories,
+  type CopyAction,
+  type ItemCategory,
+  type ItemType,
+  type PromptVariableInput,
+} from "@/lib/schema/items";
 
-export type ItemCategory = (typeof itemCategories)[number];
-export type ItemType = "prompt" | "skill";
+export { itemCategories };
+export type { CopyAction, ItemCategory, ItemType };
 
-export interface PromptVariable {
-  name: string;
-  description: string;
-  defaultValue: string;
-  required: boolean;
-}
+export type PromptVariable = Omit<PromptVariableInput, "sortOrder">;
 
 export interface LibraryItem {
   id: string;

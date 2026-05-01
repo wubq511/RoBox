@@ -1,21 +1,29 @@
 import Link from "next/link";
-import { GitBranchIcon, SearchIcon, SquarePenIcon } from "lucide-react";
+import {
+  GitBranchIcon,
+  LogOutIcon,
+  SearchIcon,
+  SquarePenIcon,
+} from "lucide-react";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { signOutAction } from "@/server/auth/actions";
 import { Input } from "@/components/ui/input";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function WorkspaceShell({
   children,
+  userEmail,
 }: Readonly<{
   children: React.ReactNode;
+  userEmail: string;
 }>) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="flex min-h-screen">
-        <AppSidebar />
+        <AppSidebar userEmail={userEmail} />
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-border/70 bg-background/80 backdrop-blur">
@@ -37,6 +45,9 @@ export function WorkspaceShell({
               </div>
 
               <div className="hidden items-center gap-2 sm:flex">
+                <div className="max-w-[220px] truncate text-sm text-muted-foreground">
+                  {userEmail}
+                </div>
                 <Link
                   href="/prompts"
                   className={cn(buttonVariants({ variant: "default", size: "lg" }))}
@@ -51,6 +62,12 @@ export function WorkspaceShell({
                   <GitBranchIcon className="size-4" />
                   GitHub import
                 </Link>
+                <form action={signOutAction}>
+                  <Button type="submit" variant="ghost" size="lg">
+                    <LogOutIcon className="size-4" />
+                    Sign out
+                  </Button>
+                </form>
               </div>
             </div>
             <MobileNav />

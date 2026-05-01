@@ -10,7 +10,7 @@ function isActive(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AppSidebar() {
+export function AppSidebar({ userEmail }: Readonly<{ userEmail: string }>) {
   const pathname = usePathname();
 
   return (
@@ -65,11 +65,13 @@ export function AppSidebar() {
 
         <div className="rounded-2xl border border-border/80 bg-background/90 p-4">
           <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Phase 1
+            Phase 2
           </h2>
           <p className="mt-2 text-sm text-foreground">
-            Supabase Auth + allowlist email will arrive in Phase 2. This stage
-            only settles the project shell.
+            Auth、allowlist 和数据库底座已接入，库体验和真实 CRUD 在下一阶段接上。
+          </p>
+          <p className="mt-3 border-t border-border/70 pt-3 text-xs text-muted-foreground">
+            Signed in as {userEmail}
           </p>
         </div>
       </div>
