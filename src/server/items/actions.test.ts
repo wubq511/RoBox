@@ -65,6 +65,13 @@ describe("item server actions", () => {
     });
   });
 
+  it("exposes the planned initial form state shape", () => {
+    expect(initialItemFormState).toEqual({
+      status: "idle",
+      message: "",
+    });
+  });
+
   it("creates a prompt and replaces prompt variables before redirecting", async () => {
     createItemMock.mockResolvedValue({
       id: "prompt-1",
@@ -148,7 +155,7 @@ describe("item server actions", () => {
     expect(redirectMock).toHaveBeenCalledWith("/skills/skill-1");
   });
 
-  it("updates a prompt and rewrites prompt variables", async () => {
+  it("updates a prompt via bound item id and rewrites prompt variables", async () => {
     updateItemMock.mockResolvedValue({
       id: "prompt-1",
       type: "prompt",
@@ -156,13 +163,12 @@ describe("item server actions", () => {
     replacePromptVariablesMock.mockResolvedValue([]);
 
     const formData = new FormData();
-    formData.set("itemId", "prompt-1");
     formData.set("title", "Updated prompt");
     formData.set("content", "Updated content");
     formData.set("variables", JSON.stringify([{ name: "project" }]));
 
     await expect(
-      updatePromptAction(initialItemFormState, formData),
+      updatePromptAction("prompt-1", initialItemFormState, formData),
     ).rejects.toThrow(redirectError);
 
     expect(updateItemMock).toHaveBeenCalledWith("prompt-1", {
@@ -186,20 +192,19 @@ describe("item server actions", () => {
     expect(redirectMock).toHaveBeenCalledWith("/prompts/prompt-1");
   });
 
-  it("updates a skill without touching variables", async () => {
+  it("updates a skill via bound item id without touching variables", async () => {
     updateItemMock.mockResolvedValue({
       id: "skill-1",
       type: "skill",
     });
 
     const formData = new FormData();
-    formData.set("itemId", "skill-1");
     formData.set("title", "Updated skill");
     formData.set("content", "Updated content");
     formData.set("variables", JSON.stringify([{ name: "ignored" }]));
 
     await expect(
-      updateSkillAction(initialItemFormState, formData),
+      updateSkillAction("skill-1", initialItemFormState, formData),
     ).rejects.toThrow(redirectError);
 
     expect(updateItemMock).toHaveBeenCalledWith("skill-1", {
@@ -225,12 +230,13 @@ describe("item server actions", () => {
     await expect(
       createPromptAction(initialItemFormState, formData),
     ).resolves.toEqual({
-      error: "db down",
+      status: "error",
+      message: "db down",
     });
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("toggles favorite, revalidates paths, and redirects to the provided path", async () => {
+  it("toggles favorite, revalidates paths, and does not redirect", async () => {
     toggleFavoriteMock.mockResolvedValue({
       id: "prompt-1",
       type: "prompt",
@@ -241,15 +247,13 @@ describe("item server actions", () => {
     formData.set("type", "prompt");
     formData.set("redirectTo", "/prompts/prompt-1");
 
-    await expect(
-      toggleFavoriteAction(initialItemFormState, formData),
-    ).rejects.toThrow(redirectError);
+    await expect(toggleFavoriteAction(formData)).resolves.toBeUndefined();
 
     expect(toggleFavoriteMock).toHaveBeenCalledWith("prompt-1");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts/prompt-1");
-    expect(redirectMock).toHaveBeenCalledWith("/prompts/prompt-1");
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it("deletes an item, revalidates, and redirects to the list page", async () => {
@@ -273,38 +277,38 @@ describe("item server actions", () => {
     expect(redirectMock).toHaveBeenCalledWith("/skills");
   });
 
-  it("records raw copy usage and rejects unsupported phase 3 copy actions", async () => {
+  it("records raw copy usage from a plain input object and does not redirect", async () => {
     recordCopyActionMock.mockResolvedValue({
       id: "prompt-1",
       type: "prompt",
     });
 
-    const copyFormData = new FormData();
-    copyFormData.set("itemId", "prompt-1");
-    copyFormData.set("type", "prompt");
-    copyFormData.set("action", "copy_raw");
-    copyFormData.set("redirectTo", "/prompts/prompt-1");
-
     await expect(
-      recordCopyActionAction(initialItemFormState, copyFormData),
-    ).rejects.toThrow(redirectError);
+      recordCopyActionAction({
+        itemId: "prompt-1",
+        action: "copy_raw",
+        revalidatePaths: ["/dashboard", "/prompts", "/prompts/prompt-1"],
+      }),
+    ).resolves.toBeUndefined();
 
     expect(recordCopyActionMock).toHaveBeenCalledWith("prompt-1", "copy_raw");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts/prompt-1");
-    expect(redirectMock).toHaveBeenCalledWith("/prompts/prompt-1");
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
 
-    const invalidFormData = new FormData();
-    invalidFormData.set("itemId", "prompt-1");
-    invalidFormData.set("type", "prompt");
-    invalidFormData.set("action", "copy_final");
-
+  it("rejects unsupported phase 3 copy actions with the planned state shape", async () => {
     await expect(
-      recordCopyActionAction(initialItemFormState, invalidFormData),
+      recordCopyActionAction({
+        itemId: "prompt-1",
+        action: "copy_final" as "copy_raw",
+        revalidatePaths: ["/prompts/prompt-1"],
+      }),
     ).resolves.toEqual({
-      error: "Phase 3 only supports copy_raw.",
+      status: "error",
+      message: "Phase 3 only supports copy_raw.",
     });
-    expect(recordCopyActionMock).toHaveBeenCalledTimes(1);
+    expect(recordCopyActionMock).not.toHaveBeenCalled();
   });
 });

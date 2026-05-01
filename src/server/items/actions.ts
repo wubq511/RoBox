@@ -16,11 +16,13 @@ import {
 import { parseItemFormData } from "./forms";
 
 export type ItemFormState = {
-  error: string | null;
+  status: "idle" | "error";
+  message: string;
 };
 
 export const initialItemFormState: ItemFormState = {
-  error: null,
+  status: "idle",
+  message: "",
 };
 
 function getStringValue(formData: FormData, key: string) {
@@ -69,16 +71,6 @@ function getPathsForType(type: ItemType, itemId: string) {
   };
 }
 
-function getRedirectTarget(formData: FormData, fallbackPath: string) {
-  const redirectTo = getStringValue(formData, "redirectTo").trim();
-
-  if (redirectTo.startsWith("/")) {
-    return redirectTo;
-  }
-
-  return fallbackPath;
-}
-
 function revalidateItemPaths(type: ItemType, itemId: string) {
   const { collectionPath, detailPath } = getPathsForType(type, itemId);
 
@@ -90,12 +82,14 @@ function revalidateItemPaths(type: ItemType, itemId: string) {
 function toErrorState(error: unknown): ItemFormState {
   if (error instanceof Error) {
     return {
-      error: error.message,
+      status: "error",
+      message: error.message,
     };
   }
 
   return {
-    error: "Unknown error.",
+    status: "error",
+    message: "Unknown error.",
   };
 }
 
@@ -137,13 +131,11 @@ export async function createSkillAction(
 }
 
 export async function updatePromptAction(
+  itemId: string,
   _previousState: ItemFormState,
   formData: FormData,
 ) {
-  let itemId: string;
-
   try {
-    itemId = getItemId(formData);
     const { baseInput, variables } = toMutationInput(formData, "prompt");
     const updatedItem = await updateItem(itemId, {
       title: baseInput.title,
@@ -168,13 +160,11 @@ export async function updatePromptAction(
 }
 
 export async function updateSkillAction(
+  itemId: string,
   _previousState: ItemFormState,
   formData: FormData,
 ) {
-  let itemId: string;
-
   try {
-    itemId = getItemId(formData);
     const { baseInput } = toMutationInput(formData, "skill");
     const updatedItem = await updateItem(itemId, {
       title: baseInput.title,
@@ -196,10 +186,7 @@ export async function updateSkillAction(
   redirect(`/skills/${itemId}`);
 }
 
-export async function toggleFavoriteAction(
-  _previousState: ItemFormState,
-  formData: FormData,
-) {
+export async function toggleFavoriteAction(formData: FormData) {
   let itemId: string = "";
   let type: ItemType = "prompt";
 
@@ -216,7 +203,6 @@ export async function toggleFavoriteAction(
   }
 
   revalidateItemPaths(type, itemId);
-  redirect(getRedirectTarget(formData, getPathsForType(type, itemId).detailPath));
 }
 
 export async function deleteItemAction(
@@ -243,24 +229,21 @@ export async function deleteItemAction(
   redirect(collectionPath);
 }
 
+type RecordCopyActionInput = {
+  itemId: string;
+  action: "copy_raw";
+  revalidatePaths: string[];
+};
+
 export async function recordCopyActionAction(
-  _previousState: ItemFormState,
-  formData: FormData,
+  input: RecordCopyActionInput,
 ) {
-  let itemId: string = "";
-  let type: ItemType = "prompt";
-
   try {
-    itemId = getItemId(formData);
-    type = getItemType(formData);
-
-    const action = getStringValue(formData, "action");
-
-    if (action !== "copy_raw") {
+    if (input.action !== "copy_raw") {
       throw new Error("Phase 3 only supports copy_raw.");
     }
 
-    const item = await recordCopyAction(itemId, action);
+    const item = await recordCopyAction(input.itemId, input.action);
 
     if (!item) {
       throw new Error("Item not found.");
@@ -269,6 +252,7 @@ export async function recordCopyActionAction(
     return toErrorState(error);
   }
 
-  revalidateItemPaths(type, itemId);
-  redirect(getRedirectTarget(formData, getPathsForType(type, itemId).detailPath));
+  for (const path of input.revalidatePaths) {
+    revalidatePath(path);
+  }
 }
