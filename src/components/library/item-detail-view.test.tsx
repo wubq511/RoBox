@@ -56,5 +56,35 @@ describe("ItemDetailView", () => {
     expect(html).toContain("Copy raw");
     expect(html).toContain("Delete");
     expect(html).toContain('href="/prompts"');
+    expect(html).toContain('href="/prompts/prompt-1/edit"');
+  });
+
+  it("renders skill source as metadata but keeps raw content bound to item.content", () => {
+    const item: ItemDetail = {
+      id: "skill-1",
+      userId: "user-1",
+      type: "skill",
+      title: "Skill title",
+      summary: "Skill summary",
+      content: "SKILL.md raw body",
+      category: "Agent",
+      tags: ["agent"],
+      sourceUrl: "https://github.com/example/repo",
+      isFavorite: false,
+      isAnalyzed: true,
+      usageCount: 3,
+      createdAt: "2026-05-01T12:00:00.000Z",
+      updatedAt: "2026-05-01 20:00",
+      variables: [],
+    };
+
+    const html = renderToStaticMarkup(
+      <ItemDetailView item={item} returnPath="/skills" />,
+    );
+
+    expect(html).toContain("Source");
+    expect(html).toContain("https://github.com/example/repo");
+    expect(html).toContain("SKILL.md raw body");
+    expect(html).toContain('href="/skills/skill-1/edit"');
   });
 });

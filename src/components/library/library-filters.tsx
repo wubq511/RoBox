@@ -1,4 +1,5 @@
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   itemCategories,
   type ListItemsFilters,
@@ -14,8 +15,13 @@ export function LibraryFilters({
   type,
   filters,
 }: Readonly<LibraryFiltersProps>) {
+  const action = type === "prompt" ? "/prompts" : "/skills";
+
   return (
-    <form className="grid gap-3 rounded-[24px] border border-border/70 bg-background/90 p-4 md:grid-cols-2 xl:grid-cols-5">
+    <form
+      action={action}
+      className="grid gap-3 rounded-[24px] border border-border/70 bg-background/90 p-4 md:grid-cols-2 xl:grid-cols-5"
+    >
       <label className="space-y-2 xl:col-span-2">
         <span className="text-xs font-medium text-muted-foreground">Search</span>
         <Input
@@ -67,6 +73,12 @@ export function LibraryFilters({
         />
         Favorites only
       </label>
+
+      <div className="xl:col-span-5">
+        <Button type="submit" size="sm">
+          Apply
+        </Button>
+      </div>
     </form>
   );
 }

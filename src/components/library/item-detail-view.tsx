@@ -24,6 +24,7 @@ export function ItemDetailView({
   const normalizedReturnPath = returnPath.endsWith("/")
     ? returnPath.slice(0, -1)
     : returnPath;
+  const editPath = `${normalizedReturnPath}/${item.id}/edit`;
   const revalidatePaths = [
     "/dashboard",
     normalizedReturnPath,
@@ -62,6 +63,9 @@ export function ItemDetailView({
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="ghost" size="sm" render={<a href={normalizedReturnPath} />}>
             Back
+          </Button>
+          <Button variant="outline" size="sm" render={<a href={editPath} />}>
+            Edit
           </Button>
           <DeleteItemButton itemId={item.id} type={item.type} />
         </div>
@@ -132,12 +136,12 @@ export function ItemDetailView({
             </h3>
             <CopyRawButton
               itemId={item.id}
-              content={item.sourceUrl || item.content}
+              content={item.content}
               revalidatePaths={revalidatePaths}
             />
           </div>
           <pre className="overflow-x-auto rounded-[22px] border border-border/70 bg-muted/30 p-4 font-mono text-xs leading-6 whitespace-pre-wrap text-muted-foreground">
-            {item.sourceUrl || item.content}
+            {item.content}
           </pre>
         </section>
       </CardContent>
