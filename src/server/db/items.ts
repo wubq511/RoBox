@@ -17,11 +17,14 @@ import { requireAppUser } from "@/server/auth/session";
 
 import { mapItemRow, mapPromptVariableRow } from "./mappers";
 import type {
+  DashboardCounts,
+  DashboardSnapshot,
   ItemDetail,
   ItemRow,
   PromptVariableRow,
   StoredItem,
   StoredPromptVariable,
+  UsageLogRow,
 } from "./types";
 
 type ItemInsertPayload = {
@@ -48,6 +51,10 @@ type ItemUpdatePayload = Partial<{
 
 function sanitizeSearchValue(value: string) {
   return value.replaceAll(",", " ").replaceAll("*", " ").trim();
+}
+
+function compareIsoDatesDesc(left: string, right: string) {
+  return right.localeCompare(left);
 }
 
 async function getDatabaseContext(nextPath = "/dashboard") {
@@ -123,7 +130,61 @@ export function sanitizeListItemsInput(input: Partial<ListItemsFilters> = {}) {
   return listItemsFiltersSchema.parse({
     ...input,
     search: input.search?.trim() || undefined,
+    tag: input.tag?.trim() || undefined,
   });
+}
+
+export function sortItemsByRecentUsage<T extends Pick<StoredItem, "id" | "updatedAt">>(
+  items: T[],
+  copiedAtByItemId: Record<string, string>,
+) {
+  return [...items].sort((left, right) => {
+    const leftTimestamp = copiedAtByItemId[left.id] ?? left.updatedAt;
+    const rightTimestamp = copiedAtByItemId[right.id] ?? right.updatedAt;
+
+    return compareIsoDatesDesc(leftTimestamp, rightTimestamp);
+  });
+}
+
+export function buildDashboardCounts(
+  items: Array<Pick<StoredItem, "type" | "isAnalyzed">>,
+): DashboardCounts {
+  return {
+    total: items.length,
+    prompts: items.filter((item) => item.type === "prompt").length,
+    skills: items.filter((item) => item.type === "skill").length,
+    pending: items.filter((item) => !item.isAnalyzed).length,
+  };
+}
+
+async function selectLatestCopiedAtByItemId(
+  supabase: SupabaseClient,
+  itemIds: string[],
+) {
+  if (itemIds.length === 0) {
+    return {} satisfies Record<string, string>;
+  }
+
+  const { data, error } = await supabase
+    .from("usage_logs")
+    .select("item_id, created_at")
+    .in("item_id", itemIds);
+
+  if (error) {
+    throw error;
+  }
+
+  return ((data ?? []) as Pick<UsageLogRow, "item_id" | "created_at">[]).reduce<
+    Record<string, string>
+  >((accumulator, row) => {
+    const currentValue = accumulator[row.item_id];
+
+    if (!currentValue || row.created_at > currentValue) {
+      accumulator[row.item_id] = row.created_at;
+    }
+
+    return accumulator;
+  }, {});
 }
 
 async function selectPromptVariables(
@@ -149,12 +210,7 @@ export async function listItems(filters: Partial<ListItemsFilters> = {}) {
     parsed.type === "skill" ? "/skills" : "/dashboard",
   );
 
-  let query = supabase
-    .from("items")
-    .select("*")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false })
-    .limit(parsed.limit);
+  let query = supabase.from("items").select("*").eq("user_id", userId);
 
   if (parsed.type) {
     query = query.eq("type", parsed.type);
@@ -168,6 +224,10 @@ export async function listItems(filters: Partial<ListItemsFilters> = {}) {
     query = query.eq("is_favorite", parsed.isFavorite);
   }
 
+  if (parsed.tag) {
+    query = query.contains("tags", [parsed.tag]);
+  }
+
   if (parsed.search) {
     const search = sanitizeSearchValue(parsed.search);
 
@@ -178,13 +238,28 @@ export async function listItems(filters: Partial<ListItemsFilters> = {}) {
     }
   }
 
+  if (parsed.sort === "updated") {
+    query = query.order("updated_at", { ascending: false }).limit(parsed.limit);
+  }
+
   const { data, error } = await query;
 
   if (error) {
     throw error;
   }
 
-  return ((data ?? []) as ItemRow[]).map(mapItemRow);
+  const items = ((data ?? []) as ItemRow[]).map(mapItemRow);
+
+  if (parsed.sort === "updated") {
+    return items;
+  }
+
+  const copiedAtByItemId = await selectLatestCopiedAtByItemId(
+    supabase,
+    items.map((item) => item.id),
+  );
+
+  return sortItemsByRecentUsage(items, copiedAtByItemId).slice(0, parsed.limit);
 }
 
 export async function getItemById(itemId: string): Promise<StoredItem | null> {
@@ -261,6 +336,23 @@ export async function updateItem(itemId: string, input: UpdateItemInput) {
   }
 
   return data ? mapItemRow(data as ItemRow) : null;
+}
+
+export async function deleteItem(itemId: string) {
+  const { supabase, userId } = await getDatabaseContext();
+  const { data, error } = await supabase
+    .from("items")
+    .delete()
+    .eq("id", itemId)
+    .eq("user_id", userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return Boolean(data);
 }
 
 export async function replacePromptVariables(
@@ -362,4 +454,30 @@ export async function recordCopyAction(itemId: string, action: CopyAction) {
   }
 
   return data ? mapItemRow(data as ItemRow) : null;
+}
+
+export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
+  const { supabase, userId } = await getDatabaseContext();
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const items = ((data ?? []) as ItemRow[]).map(mapItemRow);
+  const copiedAtByItemId = await selectLatestCopiedAtByItemId(
+    supabase,
+    items.map((item) => item.id),
+  );
+
+  return {
+    counts: buildDashboardCounts(items),
+    favorites: items.filter((item) => item.isFavorite).slice(0, 3),
+    pending: items.filter((item) => !item.isAnalyzed),
+    recent: sortItemsByRecentUsage(items, copiedAtByItemId).slice(0, 4),
+  };
 }

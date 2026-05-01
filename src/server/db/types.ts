@@ -65,3 +65,17 @@ export interface StoredItem {
 export interface ItemDetail extends StoredItem {
   variables: StoredPromptVariable[];
 }
+
+export interface DashboardCounts {
+  total: number;
+  prompts: number;
+  skills: number;
+  pending: number;
+}
+
+export interface DashboardSnapshot {
+  counts: DashboardCounts;
+  favorites: StoredItem[];
+  pending: StoredItem[];
+  recent: StoredItem[];
+}
