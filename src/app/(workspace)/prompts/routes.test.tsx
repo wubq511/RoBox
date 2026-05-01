@@ -91,8 +91,10 @@ describe("prompt routes", () => {
     const markup = renderToStaticMarkup(await NewPromptPage());
 
     expect(markup).toContain('name="type" value="prompt"');
-    expect(markup).toContain("Save prompt");
+    expect(markup).toContain("New Prompt");
+    expect(markup).toContain("Save Prompt");
     expect(markup).toContain("Variables");
+    expect(markup).toContain('<option value="Other" selected="">Other</option>');
   });
 
   it("renders the prompt detail route for prompt items", async () => {
@@ -156,7 +158,8 @@ describe("prompt routes", () => {
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("prompt-1");
     expect(markup).toContain('name="type" value="prompt"');
-    expect(markup).toContain("Save changes");
+    expect(markup).toContain("Edit Prompt");
+    expect(markup).toContain("Update Prompt");
     expect(markup).toContain('name="title" value="Prompt title"');
   });
 

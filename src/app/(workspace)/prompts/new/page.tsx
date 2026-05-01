@@ -6,38 +6,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  createPromptAction,
-  initialItemFormState,
-  type ItemFormState,
-} from "@/server/items/actions";
-
-async function submitNewPrompt(
-  state: ItemFormState | void,
-  formData: FormData,
-) {
-  return createPromptAction(state ?? initialItemFormState, formData);
-}
+import { createPromptAction } from "@/server/items/actions";
 
 export default async function NewPromptPage() {
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 lg:px-8 lg:py-8">
       <Card className="rounded-[28px] border-border/70">
         <CardHeader className="gap-3 border-b border-border/70 pb-5">
-          <CardTitle className="text-3xl tracking-[-0.04em]">New prompt</CardTitle>
+          <CardTitle className="text-3xl tracking-[-0.04em]">New Prompt</CardTitle>
           <CardDescription className="text-sm leading-6">
-            Save the raw prompt first. Variables can stay empty and be refined later.
+            Paste the raw prompt, save it first, then refine variables and structure later.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <ItemForm
             type="prompt"
-            action={submitNewPrompt}
-            submitLabel="Save prompt"
+            action={createPromptAction}
+            submitLabel="Save Prompt"
             initialValues={{
               title: "",
               summary: "",
-              category: "Writing",
+              category: "Other",
               tags: [],
               content: "",
               sourceUrl: "",
