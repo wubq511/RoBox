@@ -15,7 +15,7 @@ http://localhost:3000/login
 
 `/` redirects to `/dashboard`, and unauthenticated workspace requests redirect to `/login`.
 
-Current Phase 2 behavior:
+Current Phase 3 behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
@@ -103,7 +103,7 @@ Current code placement:
 - `src/components/settings`
   Settings page UI
 - `src/features/items`
-  Prompt / Skill types and mock data
+  Prompt / Skill types and query-state helpers
 - `src/lib`
   Generic helpers, navigation, env readers, shared validation schemas
 - `src/lib/supabase`
@@ -112,6 +112,8 @@ Current code placement:
   Allowlist helpers, session guards, magic link actions
 - `src/server/db`
   Supabase-backed repository for `items`, `prompt_variables`, and `usage_logs`
+- `src/server/items`
+  Prompt / Skill form parsing and mutation Server Actions
 - `supabase`
   Local config, migration SQL, and seed placeholder
 - `supabase/templates`
@@ -132,3 +134,26 @@ Still waiting for later phases:
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - DeepSeek and GitHub stay at documentation/env boundary until their phases arrive.
+
+## 7. Phase 3 route map
+
+Implemented workspace routes:
+
+- `/dashboard`
+  Real dashboard snapshot with counts, recent copies, favorites, pending analyze items, and quick-create links.
+- `/prompts`
+  Prompt list with keyword search, category, tag, favorite filter, and updated/used sorting.
+- `/prompts/new`
+  Prompt create form. Title and summary can stay blank; raw content is required.
+- `/prompts/[id]`
+  Prompt detail with metadata, optional variable definitions, raw content, copy feedback, edit, and delete.
+- `/prompts/[id]/edit`
+  Prompt edit form with variable-definition editing.
+- `/skills`
+  Skill list with the same search/filter/sort contract as prompts.
+- `/skills/new`
+  Manual Skill create form. GitHub import remains Phase 5.
+- `/skills/[id]`
+  Skill detail with source URL metadata when present, raw content, copy feedback, edit, and delete.
+- `/skills/[id]/edit`
+  Manual Skill edit form.

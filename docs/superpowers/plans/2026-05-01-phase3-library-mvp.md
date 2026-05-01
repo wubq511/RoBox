@@ -1,5 +1,8 @@
 # Phase 3 Library MVP Implementation Plan
 
+> Status: Archived on `2026-05-02`. Phase 3 shipped, merged into `main`, and passed full verification on the merged branch.
+> This file is kept as a historical worker plan only. Use `D:\RoBox\PLAN.md`, `D:\RoBox\README.md`, and `D:\RoBox\docs\setup.md` for current project state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the mock-driven workspace library with a real Supabase-backed Prompt / Skill MVP that completes the Phase 3 loop: save, search, open, edit, favorite, delete, and copy raw content.

@@ -1,5 +1,7 @@
 # Phase 3 Library MVP Design
 
+> Status: Implemented on `2026-05-02`. This document is retained as the Phase 3 scope/design record; current operating instructions live in `D:\RoBox\README.md` and `D:\RoBox\docs\setup.md`.
+
 ## 1. Context
 
 This document defines the Phase 3 implementation scope for RoBox.
