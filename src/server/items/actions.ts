@@ -1,0 +1,274 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { type ItemType } from "@/lib/schema/items";
+import {
+  createItem,
+  deleteItem,
+  recordCopyAction,
+  replacePromptVariables,
+  toggleFavorite,
+  updateItem,
+} from "@/server/db/items";
+
+import { parseItemFormData } from "./forms";
+
+export type ItemFormState = {
+  error: string | null;
+};
+
+export const initialItemFormState: ItemFormState = {
+  error: null,
+};
+
+function getStringValue(formData: FormData, key: string) {
+  const value = formData.get(key);
+
+  return typeof value === "string" ? value : "";
+}
+
+function getItemId(formData: FormData) {
+  const itemId = getStringValue(formData, "itemId").trim();
+
+  if (!itemId) {
+    throw new Error("Item id is required.");
+  }
+
+  return itemId;
+}
+
+function getItemType(formData: FormData): ItemType {
+  return getStringValue(formData, "type") === "skill" ? "skill" : "prompt";
+}
+
+function toMutationInput(formData: FormData, type: ItemType) {
+  const parsed = parseItemFormData(formData, type);
+
+  return {
+    baseInput: {
+      type: parsed.type,
+      title: parsed.title,
+      summary: parsed.summary,
+      content: parsed.content,
+      category: parsed.category,
+      tags: parsed.tags,
+      sourceUrl: parsed.sourceUrl,
+    },
+    variables: parsed.variables,
+  };
+}
+
+function getPathsForType(type: ItemType, itemId: string) {
+  const collectionPath = type === "prompt" ? "/prompts" : "/skills";
+
+  return {
+    collectionPath,
+    detailPath: `${collectionPath}/${itemId}`,
+  };
+}
+
+function getRedirectTarget(formData: FormData, fallbackPath: string) {
+  const redirectTo = getStringValue(formData, "redirectTo").trim();
+
+  if (redirectTo.startsWith("/")) {
+    return redirectTo;
+  }
+
+  return fallbackPath;
+}
+
+function revalidateItemPaths(type: ItemType, itemId: string) {
+  const { collectionPath, detailPath } = getPathsForType(type, itemId);
+
+  revalidatePath("/dashboard");
+  revalidatePath(collectionPath);
+  revalidatePath(detailPath);
+}
+
+function toErrorState(error: unknown): ItemFormState {
+  if (error instanceof Error) {
+    return {
+      error: error.message,
+    };
+  }
+
+  return {
+    error: "Unknown error.",
+  };
+}
+
+export async function createPromptAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let createdItem;
+
+  try {
+    const { baseInput, variables } = toMutationInput(formData, "prompt");
+
+    createdItem = await createItem(baseInput);
+    await replacePromptVariables(createdItem.id, variables);
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths("prompt", createdItem.id);
+  redirect(`/prompts/${createdItem.id}`);
+}
+
+export async function createSkillAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let createdItem;
+
+  try {
+    const { baseInput } = toMutationInput(formData, "skill");
+
+    createdItem = await createItem(baseInput);
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths("skill", createdItem.id);
+  redirect(`/skills/${createdItem.id}`);
+}
+
+export async function updatePromptAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let itemId: string;
+
+  try {
+    itemId = getItemId(formData);
+    const { baseInput, variables } = toMutationInput(formData, "prompt");
+    const updatedItem = await updateItem(itemId, {
+      title: baseInput.title,
+      summary: baseInput.summary,
+      content: baseInput.content,
+      category: baseInput.category,
+      tags: baseInput.tags,
+      sourceUrl: baseInput.sourceUrl,
+    });
+
+    if (!updatedItem) {
+      throw new Error("Item not found.");
+    }
+
+    await replacePromptVariables(itemId, variables);
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths("prompt", itemId);
+  redirect(`/prompts/${itemId}`);
+}
+
+export async function updateSkillAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let itemId: string;
+
+  try {
+    itemId = getItemId(formData);
+    const { baseInput } = toMutationInput(formData, "skill");
+    const updatedItem = await updateItem(itemId, {
+      title: baseInput.title,
+      summary: baseInput.summary,
+      content: baseInput.content,
+      category: baseInput.category,
+      tags: baseInput.tags,
+      sourceUrl: baseInput.sourceUrl,
+    });
+
+    if (!updatedItem) {
+      throw new Error("Item not found.");
+    }
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths("skill", itemId);
+  redirect(`/skills/${itemId}`);
+}
+
+export async function toggleFavoriteAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let itemId: string = "";
+  let type: ItemType = "prompt";
+
+  try {
+    itemId = getItemId(formData);
+    type = getItemType(formData);
+    const item = await toggleFavorite(itemId);
+
+    if (!item) {
+      throw new Error("Item not found.");
+    }
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths(type, itemId);
+  redirect(getRedirectTarget(formData, getPathsForType(type, itemId).detailPath));
+}
+
+export async function deleteItemAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let itemId: string = "";
+  let type: ItemType = "prompt";
+
+  try {
+    itemId = getItemId(formData);
+    type = getItemType(formData);
+    const item = await deleteItem(itemId);
+
+    if (!item) {
+      throw new Error("Item not found.");
+    }
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  const { collectionPath } = getPathsForType(type, itemId);
+  revalidateItemPaths(type, itemId);
+  redirect(collectionPath);
+}
+
+export async function recordCopyActionAction(
+  _previousState: ItemFormState,
+  formData: FormData,
+) {
+  let itemId: string = "";
+  let type: ItemType = "prompt";
+
+  try {
+    itemId = getItemId(formData);
+    type = getItemType(formData);
+
+    const action = getStringValue(formData, "action");
+
+    if (action !== "copy_raw") {
+      throw new Error("Phase 3 only supports copy_raw.");
+    }
+
+    const item = await recordCopyAction(itemId, action);
+
+    if (!item) {
+      throw new Error("Item not found.");
+    }
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths(type, itemId);
+  redirect(getRedirectTarget(formData, getPathsForType(type, itemId).detailPath));
+}
