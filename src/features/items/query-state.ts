@@ -57,6 +57,7 @@ export function buildLibraryHref(
   type: ItemType,
   filters: Partial<ListItemsFilters>,
 ) {
+  const hasExplicitSort = filters.sort !== undefined;
   const parsed = sanitizeListItemsInput({
     type,
     search: normalizeString(filters.search),
@@ -84,7 +85,9 @@ export function buildLibraryHref(
     searchParams.set("favorite", "1");
   }
 
-  searchParams.set("sort", parsed.sort);
+  if (hasExplicitSort) {
+    searchParams.set("sort", parsed.sort);
+  }
 
   if (parsed.limit !== 50) {
     searchParams.set("limit", String(parsed.limit));

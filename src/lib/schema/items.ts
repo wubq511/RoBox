@@ -52,13 +52,13 @@ export const updateItemInputSchema = z.object({
 
 export const itemEditorInputSchema = z.object({
   type: itemTypeSchema,
-  title: z.string().trim().max(120).optional(),
-  summary: z.string().trim().max(240).optional(),
+  title: z.string().trim().max(120).default(""),
+  summary: z.string().trim().max(240).default(""),
   content: z.string().trim().min(1),
   category: itemCategorySchema.default("Other"),
   tags: z.array(z.string().trim().min(1).max(32)).max(12).default([]),
   sourceUrl: z.url().optional().or(z.literal("")),
-  variables: z.array(promptVariableSchema).default([]),
+  variables: z.array(promptVariableSchema).max(20).default([]),
 });
 
 export const listItemsFiltersSchema = z.object({

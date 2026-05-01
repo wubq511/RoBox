@@ -49,4 +49,12 @@ describe("library query state", () => {
       }),
     ).toBe("/prompts?search=prompt+ideas&sort=used");
   });
+
+  it("does not add implicit updated sort when omitted", () => {
+    expect(
+      buildLibraryHref("prompt", {
+        search: "abc",
+      }),
+    ).toBe("/prompts?search=abc");
+  });
 });

@@ -65,4 +65,18 @@ describe("item schemas", () => {
       variables: [],
     });
   });
+
+  it("defaults editor title summary and variables", () => {
+    expect(
+      itemEditorInputSchema.parse({
+        type: "prompt",
+        content: "Draft prompt",
+      }),
+    ).toMatchObject({
+      type: "prompt",
+      title: "",
+      summary: "",
+      variables: [],
+    });
+  });
 });
