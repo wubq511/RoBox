@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   copyActionSchema,
   createItemInputSchema,
+  itemEditorInputSchema,
   itemCategorySchema,
+  listItemsFiltersSchema,
 } from "./items";
 
 describe("item schemas", () => {
@@ -21,5 +23,34 @@ describe("item schemas", () => {
   it("accepts only supported copy actions", () => {
     expect(copyActionSchema.parse("copy_raw")).toBe("copy_raw");
     expect(() => copyActionSchema.parse("copy_preview")).toThrow();
+  });
+
+  it("supports tag filters and used sort with default limit", () => {
+    expect(
+      listItemsFiltersSchema.parse({
+        type: "prompt",
+        tag: "react",
+        sort: "used",
+      }),
+    ).toEqual({
+      type: "prompt",
+      tag: "react",
+      sort: "used",
+      limit: 50,
+    });
+  });
+
+  it("allows prompt editor input with zero variables", () => {
+    expect(
+      itemEditorInputSchema.parse({
+        type: "prompt",
+        content: "Draft prompt",
+        variables: [],
+      }),
+    ).toMatchObject({
+      type: "prompt",
+      content: "Draft prompt",
+      variables: [],
+    });
   });
 });
