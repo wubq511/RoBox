@@ -344,13 +344,23 @@ describe("item repository helpers", () => {
   it("deletes a single item for the current user", async () => {
     const supabase = createSupabaseMock({
       items: [
-        createItemRow({ id: "item-1" }),
+        createItemRow({
+          id: "item-1",
+          type: "skill",
+          title: "Delete me",
+          tags: ["cleanup"],
+        }),
         createItemRow({ id: "item-2", user_id: "user-2" }),
       ],
     });
     getServerSupabaseClientMock.mockResolvedValue(supabase.client);
 
-    await expect(deleteItem("item-1")).resolves.toBe(true);
+    await expect(deleteItem("item-1")).resolves.toMatchObject({
+      id: "item-1",
+      type: "skill",
+      title: "Delete me",
+      tags: ["cleanup"],
+    });
     expect(supabase.state.items.map((item) => item.id)).toEqual(["item-2"]);
   });
 
@@ -376,6 +386,24 @@ describe("item repository helpers", () => {
           is_analyzed: false,
           updated_at: "2026-05-01T09:00:00.000Z",
         }),
+        createItemRow({
+          id: "pending-3",
+          type: "skill",
+          is_analyzed: false,
+          updated_at: "2026-05-01T08:30:00.000Z",
+        }),
+        createItemRow({
+          id: "pending-4",
+          type: "prompt",
+          is_analyzed: false,
+          updated_at: "2026-05-01T08:15:00.000Z",
+        }),
+        createItemRow({
+          id: "pending-5",
+          type: "skill",
+          is_analyzed: false,
+          updated_at: "2026-05-01T08:05:00.000Z",
+        }),
       ],
       usageLogs: [
         {
@@ -393,10 +421,10 @@ describe("item repository helpers", () => {
     const snapshot = await getDashboardSnapshot();
 
     expect(snapshot.counts).toEqual({
-      total: 3,
-      prompts: 2,
-      skills: 1,
-      pending: 2,
+      total: 6,
+      prompts: 3,
+      skills: 3,
+      pending: 5,
     });
     expect(snapshot.favorites.map((item) => item.id)).toEqual([
       "skill-1",
@@ -405,11 +433,14 @@ describe("item repository helpers", () => {
     expect(snapshot.pending.map((item) => item.id)).toEqual([
       "skill-1",
       "prompt-2",
+      "pending-3",
+      "pending-4",
     ]);
     expect(snapshot.recent.map((item) => item.id)).toEqual([
       "prompt-1",
       "skill-1",
       "prompt-2",
+      "pending-3",
     ]);
   });
 });

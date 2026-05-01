@@ -206,9 +206,13 @@ async function selectPromptVariables(
 
 export async function listItems(filters: Partial<ListItemsFilters> = {}) {
   const parsed = sanitizeListItemsInput(filters);
-  const { supabase, userId } = await getDatabaseContext(
-    parsed.type === "skill" ? "/skills" : "/dashboard",
-  );
+  const nextPath =
+    parsed.type === "skill"
+      ? "/skills"
+      : parsed.type === "prompt"
+        ? "/prompts"
+        : "/dashboard";
+  const { supabase, userId } = await getDatabaseContext(nextPath);
 
   let query = supabase.from("items").select("*").eq("user_id", userId);
 
@@ -352,7 +356,7 @@ export async function deleteItem(itemId: string) {
     throw error;
   }
 
-  return Boolean(data);
+  return data ? mapItemRow(data as ItemRow) : null;
 }
 
 export async function replacePromptVariables(
@@ -477,7 +481,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   return {
     counts: buildDashboardCounts(items),
     favorites: items.filter((item) => item.isFavorite).slice(0, 3),
-    pending: items.filter((item) => !item.isAnalyzed),
+    pending: items.filter((item) => !item.isAnalyzed).slice(0, 4),
     recent: sortItemsByRecentUsage(items, copiedAtByItemId).slice(0, 4),
   };
 }
