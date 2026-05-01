@@ -5,7 +5,7 @@ import { configDefaults, defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    exclude: [...configDefaults.exclude, ".next/**"],
+    exclude: [...configDefaults.exclude, ".next/**", ".worktrees/**"],
   },
   resolve: {
     alias: {
