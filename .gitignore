@@ -1,5 +1,5 @@
 .worktrees/
-.tools/
+vendor_imports/
 output/
 node_modules/
 .next/

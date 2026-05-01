@@ -58,6 +58,8 @@
 - 文件名、目录名、变量名、数据库字段名统一用英文
 - 不创建含义模糊的目录或文件，例如 `misc`、`temp`、`backup`、`utils2`
 - 新增长期目录约定时，先写文档，再落代码
+- 第三方 CLI 二进制统一放在 `vendor_imports/tools/<tool>/<version>/`
+- 第三方 CLI 的稳定入口统一放在 `scripts/<tool>.ps1` 或 `scripts/<tool>.cmd`，代码和文档都不要直接依赖版本化二进制路径
 - `docs/` 负责面向接手者的启动、接入、运维文档
 - `.worktrees/` 只用于隔离开发，不作为主交付目录或主文档来源
 

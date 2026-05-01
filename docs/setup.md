@@ -78,9 +78,11 @@ npm run supabase:stop
 
 Notes:
 
-- RoBox pins a repository-local Supabase CLI version and installs it into `.tools/supabase/<version>/supabase.exe`.
+- RoBox pins a repository-local Supabase CLI version and installs it into `vendor_imports/tools/supabase/<version>/supabase.exe`.
+- Use the stable entrypoints in `scripts/setup-supabase-cli.ps1` and `scripts/run-supabase.ps1` through the npm scripts above instead of calling the versioned binary path directly.
 - Run `npm run supabase:install` before the first local Supabase command or after changing `package.json > config.supabaseCliVersion`.
 - `supabase start` needs Docker and will download images on first run.
+- The local stack intentionally uses `5542x` ports: API `55421`, Studio `55423`, Mailpit `55424`, Postgres `55432`.
 - Local auth callback settings already live in `supabase/config.toml`, including `/auth/confirm`.
 - Local magic-link emails use `supabase/templates/magic_link.html` so the link lands on `/auth/confirm?token_hash=...` and works with the SSR callback route.
 - This phase does not modify CI/CD or production project settings, and it avoids global CLI installation.
@@ -114,7 +116,7 @@ Current code placement:
   Local config, migration SQL, and seed placeholder
 - `supabase/templates`
   Local auth email templates used by the Supabase runtime
-- `.tools/supabase`
+- `vendor_imports/tools/supabase`
   Repository-local Supabase CLI binaries, ignored from git
 
 Still waiting for later phases:
@@ -126,7 +128,7 @@ Still waiting for later phases:
 ## 6. Dependency boundaries
 
 - UI shell and routes live in Next.js App Router.
-- Shadcn/ui is the only component primitive layer introduced in Phase 1.
-- Supabase is wired only up to client factory level in Phase 1.
+- Shadcn/ui remains the only component primitive layer introduced so far.
+- Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
 - Dashboard / Prompts / Skills / Settings currently read from static mock data.
 - DeepSeek and GitHub stay at documentation/env boundary until their phases arrive.

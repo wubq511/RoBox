@@ -25,6 +25,15 @@ http://localhost:3000/login
 
 根路由 `/` 会自动跳转到 `/dashboard`；未登录时工作台路由会再跳转到 `/login`。
 
+如果你要跑本地 Supabase runtime，当前约定端口是：
+
+```text
+API     http://127.0.0.1:55421
+Studio  http://127.0.0.1:55423
+Mailpit http://127.0.0.1:55424
+DB      postgresql://postgres:postgres@127.0.0.1:55432/postgres
+```
+
 ## 常用命令
 
 ```bash
@@ -58,4 +67,4 @@ npm run supabase:stop
 - `supabase`：本地 Supabase 配置、migration、seed
 - `supabase/templates`：本地 Supabase auth 邮件模板
 - `scripts`：本地 Supabase CLI 安装与调用脚本
-- `.tools/supabase`：仓库内 Supabase CLI 二进制，已加入 git ignore
+- `vendor_imports/tools/supabase`：仓库内 Supabase CLI 二进制，按版本隔离，已加入 git ignore

@@ -11,6 +11,15 @@ function Get-RepoRoot {
   return Split-Path -Parent $PSScriptRoot
 }
 
+function Get-SupabaseCliPath {
+  param(
+    [string] $RepoRoot,
+    [string] $Version
+  )
+
+  return (Join-Path $RepoRoot "vendor_imports/tools/supabase/$Version/supabase.exe")
+}
+
 $repoRoot = Get-RepoRoot
 $packageJson = Get-Content -Raw (Join-Path $repoRoot "package.json") | ConvertFrom-Json
 $version = $env:SUPABASE_CLI_VERSION
@@ -23,7 +32,7 @@ if (-not $version) {
   throw "Missing package.json config.supabaseCliVersion"
 }
 
-$cliPath = Join-Path $repoRoot ".tools/supabase/$version/supabase.exe"
+$cliPath = Get-SupabaseCliPath -RepoRoot $repoRoot -Version $version
 
 if (-not (Test-Path $cliPath)) {
   throw "Local Supabase CLI is not installed. Run 'npm run supabase:install' first."

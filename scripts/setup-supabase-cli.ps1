@@ -11,6 +11,15 @@ function Get-RepoRoot {
   return Split-Path -Parent $PSScriptRoot
 }
 
+function Get-VendorToolDir {
+  param(
+    [string] $RepoRoot,
+    [string] $ToolName
+  )
+
+  return Join-Path $RepoRoot "vendor_imports/tools/$ToolName"
+}
+
 function Get-PackageJson {
   param(
     [string] $RepoRoot
@@ -124,7 +133,8 @@ $archiveName = "supabase_${platform}_${arch}.tar.gz"
 $checksumName = "supabase_${Version}_checksums.txt"
 $releaseBaseUrl = "https://github.com/supabase/cli/releases/download/v$Version"
 
-$targetDir = Join-Path $repoRoot ".tools/supabase/$Version"
+$toolRoot = Get-VendorToolDir -RepoRoot $repoRoot -ToolName "supabase"
+$targetDir = Join-Path $toolRoot $Version
 $targetExe = Join-Path $targetDir "supabase.exe"
 
 if ((Test-Path $targetExe) -and (-not $Force)) {

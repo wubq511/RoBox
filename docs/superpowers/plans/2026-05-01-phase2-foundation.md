@@ -1,5 +1,8 @@
 # RoBox Phase 2 Foundation Implementation Plan
 
+> Status: Archived on `2026-05-01`. Phase 2 shipped, merged into `main`, and passed local Supabase runtime verification.
+> This file is kept as a historical worker plan only. The checklist below is not the live source of truth; use `D:\RoBox\PLAN.md`, `D:\RoBox\README.md`, and `D:\RoBox\docs\setup.md` for current project state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add authenticated single-user access, the Phase 2 Supabase schema, and reusable server-side auth/data boundaries without prematurely wiring the full Phase 3 library UX.
