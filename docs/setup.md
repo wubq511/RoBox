@@ -15,11 +15,14 @@ http://localhost:3000/login
 
 `/` redirects to `/dashboard`, and unauthenticated workspace requests redirect to `/login`.
 
-Current Phase 3 behavior:
+Current Phase 4 behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
+- Prompt / Skill detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
+- Prompt analyze writes `items` metadata and `prompt_variables`; Skill analyze updates metadata only.
+- Prompt detail pages support variable filling, final prompt preview, `copy_final`, and unchanged `copy_raw`.
 
 Verification commands:
 
@@ -56,7 +59,11 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 ### DeepSeek
 
 - `DEEPSEEK_API_KEY`
-  Reserved for the analyze route in Phase 4. Server only.
+  Required for the analyze route in Phase 4. Server only.
+- `DEEPSEEK_MODEL`
+  Optional. Defaults to `deepseek-v4-flash`.
+- `DEEPSEEK_API_BASE_URL`
+  Optional. Defaults to `https://api.deepseek.com`.
 
 ### GitHub
 
@@ -123,7 +130,6 @@ Current code placement:
 
 Still waiting for later phases:
 
-- DeepSeek analyze routes and prompt variable extraction UI
 - GitHub import route and repository README fetch flow
 
 ## 6. Dependency boundaries
@@ -133,7 +139,8 @@ Still waiting for later phases:
 - Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
-- DeepSeek and GitHub stay at documentation/env boundary until their phases arrive.
+- DeepSeek is wired through a server-only route and still needs a valid `DEEPSEEK_API_KEY` for live model calls.
+- GitHub stays at documentation/env boundary until Phase 5.
 
 ## 7. Phase 3 route map
 
@@ -146,7 +153,7 @@ Implemented workspace routes:
 - `/prompts/new`
   Prompt create form. Title and summary can stay blank; raw content is required.
 - `/prompts/[id]`
-  Prompt detail with metadata, optional variable definitions, raw content, copy feedback, edit, and delete.
+  Prompt detail with metadata, variable filling, final prompt preview, raw/final copy feedback, smart analyze, edit, and delete.
 - `/prompts/[id]/edit`
   Prompt edit form with variable-definition editing.
 - `/skills`
@@ -154,6 +161,6 @@ Implemented workspace routes:
 - `/skills/new`
   Manual Skill create form. GitHub import remains Phase 5.
 - `/skills/[id]`
-  Skill detail with source URL metadata when present, raw content, copy feedback, edit, and delete.
+  Skill detail with source URL metadata when present, raw content, copy feedback, smart analyze, edit, and delete.
 - `/skills/[id]/edit`
   Manual Skill edit form.

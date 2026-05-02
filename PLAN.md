@@ -69,6 +69,8 @@
 - `usage_logs` 和 `usage_count` 行为一致。
 
 ### Phase 4：DeepSeek 智能整理
+状态：实现完成（2026-05-02），已通过本地 `test/typecheck/lint/build`；真实 DeepSeek API 联调需要配置 `DEEPSEEK_API_KEY`
+
 目标：把普通收藏库升级成“可结构化整理”的工具。
 
 任务清单：

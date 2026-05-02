@@ -298,17 +298,21 @@ describe("item server actions", () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("rejects unsupported phase 3 copy actions with the planned state shape", async () => {
+  it("records final prompt copy usage from a plain input object", async () => {
+    recordCopyActionMock.mockResolvedValue({
+      id: "prompt-1",
+      type: "prompt",
+    });
+
     await expect(
       recordCopyActionAction({
         itemId: "prompt-1",
-        action: "copy_final" as "copy_raw",
+        action: "copy_final",
         revalidatePaths: ["/prompts/prompt-1"],
       }),
-    ).resolves.toEqual({
-      status: "error",
-      message: "Phase 3 only supports copy_raw.",
-    });
-    expect(recordCopyActionMock).not.toHaveBeenCalled();
+    ).resolves.toBeUndefined();
+
+    expect(recordCopyActionMock).toHaveBeenCalledWith("prompt-1", "copy_final");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/prompts/prompt-1");
   });
 });

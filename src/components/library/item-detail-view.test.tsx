@@ -18,7 +18,7 @@ describe("ItemDetailView", () => {
       tags: ["drafting", "prompt"],
       sourceUrl: "",
       isFavorite: false,
-      isAnalyzed: true,
+      isAnalyzed: false,
       usageCount: 3,
       createdAt: "2026-05-01T12:00:00.000Z",
       updatedAt: "2026-05-01 20:00",
@@ -51,9 +51,12 @@ describe("ItemDetailView", () => {
     );
 
     expect(html).toContain("Variables");
+    expect(html).toContain("Final prompt preview");
     expect(html).toContain("topic");
     expect(html).toContain("format");
     expect(html).toContain("Copy raw");
+    expect(html).toContain("Copy final");
+    expect(html).toContain("Smart analyze");
     expect(html).toContain("Delete");
     expect(html).toContain('href="/prompts"');
     expect(html).toContain('href="/prompts/prompt-1/edit"');

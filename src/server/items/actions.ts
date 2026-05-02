@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { type ItemType } from "@/lib/schema/items";
+import { type CopyAction, type ItemType } from "@/lib/schema/items";
 import {
   createItem,
   deleteItem,
@@ -222,7 +222,7 @@ export async function deleteItemAction(
 
 type RecordCopyActionInput = {
   itemId: string;
-  action: "copy_raw";
+  action: CopyAction;
   revalidatePaths: string[];
 };
 
@@ -230,10 +230,6 @@ export async function recordCopyActionAction(
   input: RecordCopyActionInput,
 ) {
   try {
-    if (input.action !== "copy_raw") {
-      throw new Error("Phase 3 only supports copy_raw.");
-    }
-
     const item = await recordCopyAction(input.itemId, input.action);
 
     if (!item) {
