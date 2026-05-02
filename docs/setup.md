@@ -15,7 +15,7 @@ http://localhost:3000/login
 
 `/` redirects to `/dashboard`, and unauthenticated workspace requests redirect to `/login`.
 
-Current Phase 4 behavior:
+Current Phase 5 behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
@@ -23,7 +23,11 @@ Current Phase 4 behavior:
 - Prompt / Skill detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
 - Prompt analyze writes `items` metadata and `prompt_variables`; Skill analyze updates metadata only.
 - Prompt detail pages support variable filling, final prompt preview, `copy_final`, and unchanged `copy_raw`.
+- `/skills/new` supports GitHub Skill import through `POST /api/import/github`.
+- GitHub imports only allow `github.com` and `raw.githubusercontent.com`, fetch README/SKILL.md for analysis context, save the submitted URL in `content`, and save the canonical repository link in `source_url`.
+- Imported GitHub Skills copy `source_url`; manual Skills continue to copy raw content.
 - Phase 4 was verified on `2026-05-02` with local Supabase and real DeepSeek `deepseek-v4-flash` analyze.
+- Phase 5 was verified on `2026-05-02` with local `test/typecheck/lint/build`, live README fetch for `https://github.com/tw93/Waza`, and a browser smoke test against local Supabase + DeepSeek: login by magic link, import Waza, view analyzed Skill detail, copy source URL, search it, reject an invalid GitHub URL, then manually save and copy a Skill.
 
 Verification commands:
 
@@ -69,7 +73,7 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 ### GitHub
 
 - `GITHUB_TOKEN`
-  Optional for Phase 5 GitHub import and rate-limit relief. Server only.
+  Optional for GitHub import rate-limit relief. Server only.
 
 ## 4. Supabase local development convention
 
@@ -122,6 +126,8 @@ Current code placement:
   Allowlist helpers, session guards, magic link actions
 - `src/server/analyze`
   DeepSeek prompt construction, model call, JSON repair/parsing, and analyze persistence
+- `src/server/import`
+  GitHub Skill URL validation, README/SKILL.md fetch, Skill creation, and README-based analyze orchestration
 - `src/server/db`
   Supabase-backed repository for `items`, `prompt_variables`, and `usage_logs`
 - `src/server/items`
@@ -133,10 +139,6 @@ Current code placement:
 - `vendor_imports/tools/supabase`
   Repository-local Supabase CLI binaries, ignored from git
 
-Still waiting for later phases:
-
-- GitHub import route and repository README fetch flow
-
 ## 6. Dependency boundaries
 
 - UI shell and routes live in Next.js App Router.
@@ -145,11 +147,11 @@ Still waiting for later phases:
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - DeepSeek is wired through a server-only route. Live model calls need a valid `DEEPSEEK_API_KEY`; the default model is `deepseek-v4-flash`.
-- GitHub stays at documentation/env boundary until Phase 5.
+- GitHub import is wired through a server-only route. It does not fetch arbitrary URLs and uses `GITHUB_TOKEN` only when provided.
 
 For architecture and smoke-test details, see `docs/architecture.md` and `docs/integration-guide.md`.
 
-## 7. Phase 4 route map
+## 7. MVP route map
 
 Implemented workspace routes:
 
@@ -166,7 +168,7 @@ Implemented workspace routes:
 - `/skills`
   Skill list with the same search/filter/sort contract as prompts.
 - `/skills/new`
-  Manual Skill create form. GitHub import remains Phase 5.
+  Manual Skill create form plus GitHub import form for repository, README, or raw README/SKILL.md links.
 - `/skills/[id]`
   Skill detail with source URL metadata when present, raw content, copy feedback, smart analyze, edit, and delete.
 - `/skills/[id]/edit`

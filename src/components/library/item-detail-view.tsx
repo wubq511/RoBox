@@ -35,6 +35,20 @@ export function ItemDetailView({
     normalizedReturnPath,
     `${normalizedReturnPath}/${item.id}`,
   ];
+  const isImportedSkill = item.type === "skill" && Boolean(item.sourceUrl);
+  const copyContent = isImportedSkill ? item.sourceUrl : item.content;
+  const copyLabel =
+    item.type === "prompt"
+      ? "Copy raw"
+      : isImportedSkill
+        ? "Copy source URL"
+        : "Copy raw skill";
+  const rawContentLabel =
+    item.type === "prompt"
+      ? "Raw prompt"
+      : isImportedSkill
+        ? "Saved link"
+        : "Raw skill";
 
   return (
     <Card className="rounded-[28px] border-border/70">
@@ -114,12 +128,11 @@ export function ItemDetailView({
 
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold">
-              {item.type === "prompt" ? "Raw prompt" : "Raw skill"}
-            </h3>
+            <h3 className="text-sm font-semibold">{rawContentLabel}</h3>
             <CopyRawButton
               itemId={item.id}
-              content={item.content}
+              content={copyContent}
+              label={copyLabel}
               revalidatePaths={revalidatePaths}
             />
           </div>

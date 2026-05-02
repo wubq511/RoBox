@@ -17,25 +17,33 @@ const settingsCards = [
   {
     title: "DeepSeek API",
     description:
-      "保存时不调用模型；只有点击智能整理时才请求 DeepSeek。API Key 只放服务端环境变量。",
+      "保存时不调用模型；手动智能整理和 GitHub 导入整理才请求 DeepSeek。",
+    detail:
+      "Server env: DEEPSEEK_API_KEY. Optional: DEEPSEEK_MODEL defaults to deepseek-v4-flash, DEEPSEEK_API_BASE_URL defaults to https://api.deepseek.com.",
     icon: SparklesIcon,
   },
   {
     title: "Categories",
     description:
-      "固定 Writing、Coding、Research、Design、Study、Agent、Content、Other 八类。标签由模型生成，用户可手改。",
+      "固定分类，不开放动态分类配置，避免第一版变成通用知识库。",
+    detail:
+      "Allowed: Writing, Coding, Research, Design, Study, Agent, Content, Other. Tags remain editable per item.",
     icon: DatabaseIcon,
   },
   {
     title: "GitHub import",
     description:
-      "只允许 github.com 和 raw.githubusercontent.com，第一版不抓任意 URL。",
+      "只允许 GitHub 仓库、README 链接和 raw README/SKILL.md 链接。",
+    detail:
+      "Allowed hosts: github.com and raw.githubusercontent.com. Optional GITHUB_TOKEN can be set server-side for rate-limit relief.",
     icon: GitBranchIcon,
   },
   {
     title: "Data export",
     description:
-      "导出 JSON / Markdown 作为后续优化项，当前先保留入口和说明，不做完整备份系统。",
+      "导出 JSON / Markdown 是后续优化项，本阶段只保留清晰占位。",
+    detail:
+      "Placeholder only: JSON / Markdown export is not implemented in the MVP closeout.",
     icon: FolderDownIcon,
   },
 ];
@@ -46,7 +54,7 @@ export function SettingsView() {
       <div className="space-y-3">
         <h1 className="text-3xl font-semibold tracking-[-0.04em]">Settings</h1>
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          MVP 只保留必要设置入口，不在第一阶段引入多余复杂度。真正的外部服务接入从 Phase 2 和 Phase 4 开始。
+          MVP 保留外部服务、固定分类和导出占位说明；当前不引入多用户配置面板。
         </p>
       </div>
 
@@ -72,7 +80,7 @@ export function SettingsView() {
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-                  Phase 1 先把入口放稳，具体功能在后续阶段接真实数据和服务端逻辑。
+                  {card.detail}
                 </div>
               </CardContent>
             </Card>

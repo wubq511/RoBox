@@ -11,12 +11,14 @@ import { copyText } from "./clipboard";
 type CopyRawButtonProps = {
   itemId: string;
   content: string;
+  label?: string;
   revalidatePaths: string[];
 };
 
 export function CopyRawButton({
   itemId,
   content,
+  label = "Copy raw",
   revalidatePaths,
 }: Readonly<CopyRawButtonProps>) {
   const [feedback, setFeedback] = useState("");
@@ -54,7 +56,7 @@ export function CopyRawButton({
         }}
       >
         <CopyIcon className="size-4" />
-        Copy raw
+        {label}
       </Button>
       {feedback ? (
         <span className="text-xs text-muted-foreground" role="status">

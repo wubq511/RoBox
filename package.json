@@ -5,6 +5,11 @@
   "config": {
     "supabaseCliVersion": "2.96.0"
   },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.13"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

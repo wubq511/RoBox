@@ -90,6 +90,8 @@ describe("skill routes", () => {
   it("renders the new skill route with a hidden skill type field and source URL input", async () => {
     const markup = renderToStaticMarkup(await NewSkillPage());
 
+    expect(markup).toContain("Import from GitHub");
+    expect(markup).toContain('name="githubUrl"');
     expect(markup).toContain('name="type" value="skill"');
     expect(markup).toContain("New Skill");
     expect(markup).toContain("Save Skill");

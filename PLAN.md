@@ -92,6 +92,8 @@
 - Prompt 支持复制原始版和变量填充后的最终版。
 
 ### Phase 5：GitHub Skill 导入与上线前收口
+状态：已完成（2026-05-02），已在 `codex/phase-5-github-import` 落地并通过本地 `test/typecheck/lint/build` 与本地 Supabase + DeepSeek + GitHub 真实浏览器验收
+
 目标：补齐 Skill 的核心差异化入口，并把 MVP 收到可长期使用。
 
 任务清单：
@@ -124,7 +126,7 @@
   - `action` 仅允许：`copy_raw`、`copy_final`
 - 服务端接口
   - 已实现：`POST /api/items/:id/analyze`
-  - Phase 5 计划：`POST /api/import/github`
+  - 已实现：`POST /api/import/github`
   - 当前复制日志通过 Server Actions 写入；`POST /api/items/:id/copy` 仅作为后续外部 API 需求的预留名称
 - 前端页面
   - Dashboard
