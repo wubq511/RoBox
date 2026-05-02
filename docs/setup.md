@@ -15,7 +15,7 @@ http://localhost:3000/login
 
 `/` redirects to `/dashboard`, and unauthenticated workspace requests redirect to `/login`.
 
-Current Phase 5 behavior:
+Current MVP behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
@@ -64,7 +64,7 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 ### DeepSeek
 
 - `DEEPSEEK_API_KEY`
-  Required for the analyze route in Phase 4. Server only.
+  Required for live smart analyze and GitHub import analysis. Server only.
 - `DEEPSEEK_MODEL`
   Optional. Defaults to `deepseek-v4-flash`.
 - `DEEPSEEK_API_BASE_URL`
@@ -77,7 +77,7 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 
 ## 4. Supabase local development convention
 
-Phase 2 now includes the in-repo `supabase/` project and the first migration.
+The repository includes the in-repo `supabase/` project and the first migration.
 
 Recommended commands:
 
@@ -97,7 +97,7 @@ Notes:
 - The local stack intentionally uses `5542x` ports: API `55421`, Studio `55423`, Mailpit `55424`, Postgres `55432`.
 - Local auth callback settings already live in `supabase/config.toml`, including `/auth/confirm`.
 - Local magic-link emails use `supabase/templates/magic_link.html` so the link lands on `/auth/confirm?token_hash=...` and works with the SSR callback route.
-- This phase does not modify CI/CD or production project settings, and it avoids global CLI installation.
+- This local setup does not modify CI/CD or production project settings, and it avoids global CLI installation.
 - If you use hosted Supabase instead of the local stack, add `http://localhost:3000/auth/confirm` to the project's redirect URLs and keep the email template on `{{ .ConfirmationURL }}` for magic links.
 
 ## 5. Directory map
@@ -107,7 +107,7 @@ Current code placement:
 - `src/app`
   App Router routes and shared route layouts
 - `src/app/api`
-  Route Handlers, including `POST /api/items/:id/analyze`
+  Route Handlers, including `POST /api/items/:id/analyze` and `POST /api/import/github`
 - `src/components/layout`
   App shell, sidebar, mobile nav
 - `src/components/dashboard`

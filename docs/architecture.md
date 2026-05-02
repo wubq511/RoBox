@@ -91,7 +91,7 @@ Optional server-only environment variable:
 - GitHub-imported Skill copy
   The detail page still logs `copy_raw`, but copies `items.source_url` so linked Skills behave as source links instead of fake README bodies.
 
-Copy logging is implemented through Server Actions in Phase 4. There is no `POST /api/items/:id/copy` Route Handler yet; that route name is reserved only if an external API surface is needed later.
+Copy logging is implemented through Server Actions. There is no `POST /api/items/:id/copy` Route Handler yet; that route name is reserved only if an external API surface is needed later.
 
 ## Verification Baseline
 
