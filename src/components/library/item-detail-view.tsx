@@ -12,8 +12,10 @@ import {
 import { cn } from "@/lib/utils";
 import type { ItemDetail } from "@/server/db/types";
 
+import { AnalyzeButton } from "./analyze-button";
 import { CopyRawButton } from "./copy-raw-button";
 import { DeleteItemButton } from "./delete-item-button";
+import { PromptFinalPanel } from "./prompt-final-panel";
 
 type ItemDetailViewProps = {
   item: ItemDetail;
@@ -41,6 +43,14 @@ export function ItemDetailView({
           <Badge variant="outline" className="rounded-full px-2.5">
             {item.type}
           </Badge>
+          {!item.isAnalyzed ? (
+            <Badge
+              variant="outline"
+              className="rounded-full border-amber-300 bg-amber-50 px-2.5 text-amber-700"
+            >
+              Need analyze
+            </Badge>
+          ) : null}
           <span className="font-mono text-xs text-muted-foreground">
             {item.updatedAt}
           </span>
@@ -76,55 +86,19 @@ export function ItemDetailView({
           >
             Edit
           </Link>
+          <AnalyzeButton itemId={item.id} isAnalyzed={item.isAnalyzed} />
           <DeleteItemButton itemId={item.id} type={item.type} />
         </div>
       </CardHeader>
 
       <CardContent className="space-y-6 pt-5">
         {item.type === "prompt" ? (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold">Variables</h3>
-              <span className="font-mono text-xs text-muted-foreground">
-                {item.variables.length}
-              </span>
-            </div>
-            {item.variables.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-                No variables yet. You can still copy the raw prompt.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {item.variables.map((variable) => (
-                  <div
-                    key={variable.name}
-                    className="rounded-2xl border border-border/70 bg-muted/30 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="font-mono text-sm font-medium">
-                        {variable.name}
-                      </div>
-                      {variable.required ? (
-                        <Badge variant="outline" className="rounded-full px-2.5">
-                          Required
-                        </Badge>
-                      ) : null}
-                    </div>
-                    {variable.description ? (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {variable.description}
-                      </p>
-                    ) : null}
-                    {variable.defaultValue ? (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        Default: {variable.defaultValue}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <PromptFinalPanel
+            itemId={item.id}
+            content={item.content}
+            variables={item.variables}
+            revalidatePaths={revalidatePaths}
+          />
         ) : null}
 
         {item.type === "skill" && item.sourceUrl ? (
