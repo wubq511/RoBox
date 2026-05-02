@@ -69,7 +69,7 @@
 - `usage_logs` 和 `usage_count` 行为一致。
 
 ### Phase 4：DeepSeek 智能整理
-状态：实现完成（2026-05-02），已通过本地 `test/typecheck/lint/build`；真实 DeepSeek API 联调需要配置 `DEEPSEEK_API_KEY`
+状态：已完成（2026-05-02），已合并并推送到 `main`；已通过本地 `test/typecheck/lint/build` 与本地 Supabase + DeepSeek `deepseek-v4-flash` 真实联调
 
 目标：把普通收藏库升级成“可结构化整理”的工具。
 
@@ -114,7 +114,7 @@
 
 ## Important APIs / Interfaces / Types
 
-需要在实现中固定的核心接口如下：
+当前已经固定或预留的核心接口如下：
 
 - `Item`
   - 统一实体，字段至少包含：`id`、`user_id`、`type`、`title`、`summary`、`content`、`category`、`tags`、`source_url`、`is_favorite`、`is_analyzed`、`usage_count`、`created_at`、`updated_at`
@@ -123,9 +123,9 @@
 - `UsageLog`
   - `action` 仅允许：`copy_raw`、`copy_final`
 - 服务端接口
-  - `POST /api/items/:id/analyze`
-  - `POST /api/import/github`
-  - `POST /api/items/:id/copy`
+  - 已实现：`POST /api/items/:id/analyze`
+  - Phase 5 计划：`POST /api/import/github`
+  - 当前复制日志通过 Server Actions 写入；`POST /api/items/:id/copy` 仅作为后续外部 API 需求的预留名称
 - 前端页面
   - Dashboard
   - Prompts：列表 / 新建 / 详情 / 编辑

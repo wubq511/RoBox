@@ -23,6 +23,7 @@ Current Phase 4 behavior:
 - Prompt / Skill detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
 - Prompt analyze writes `items` metadata and `prompt_variables`; Skill analyze updates metadata only.
 - Prompt detail pages support variable filling, final prompt preview, `copy_final`, and unchanged `copy_raw`.
+- Phase 4 was verified on `2026-05-02` with local Supabase and real DeepSeek `deepseek-v4-flash` analyze.
 
 Verification commands:
 
@@ -101,6 +102,8 @@ Current code placement:
 
 - `src/app`
   App Router routes and shared route layouts
+- `src/app/api`
+  Route Handlers, including `POST /api/items/:id/analyze`
 - `src/components/layout`
   App shell, sidebar, mobile nav
 - `src/components/dashboard`
@@ -117,6 +120,8 @@ Current code placement:
   Browser/server/proxy Supabase client factories
 - `src/server/auth`
   Allowlist helpers, session guards, magic link actions
+- `src/server/analyze`
+  DeepSeek prompt construction, model call, JSON repair/parsing, and analyze persistence
 - `src/server/db`
   Supabase-backed repository for `items`, `prompt_variables`, and `usage_logs`
 - `src/server/items`
@@ -139,10 +144,12 @@ Still waiting for later phases:
 - Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
-- DeepSeek is wired through a server-only route and still needs a valid `DEEPSEEK_API_KEY` for live model calls.
+- DeepSeek is wired through a server-only route. Live model calls need a valid `DEEPSEEK_API_KEY`; the default model is `deepseek-v4-flash`.
 - GitHub stays at documentation/env boundary until Phase 5.
 
-## 7. Phase 3 route map
+For architecture and smoke-test details, see `docs/architecture.md` and `docs/integration-guide.md`.
+
+## 7. Phase 4 route map
 
 Implemented workspace routes:
 

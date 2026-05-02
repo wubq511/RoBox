@@ -16,6 +16,8 @@
 - 仓库说明 D:\RoBox\README.md
 - 本文件 `AGENTS.md`
 - 启动文档 D:\RoBox\docs\setup.md
+- 架构文档 D:\RoBox\docs\architecture.md
+- 接入文档 D:\RoBox\docs\integration-guide.md
 - 项目文档 D:\RoBox\RoBox 最终项目方案.md
 - 计划文档 D:\RoBox\PLAN.md
 - UI原型 D:\RoBox\RoBox_UI_Prototype   注意，该原型已经定稿了，请你不要进行调整，直接改为真实落地的UI
