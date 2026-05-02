@@ -21,9 +21,9 @@ import { cn } from "@/lib/utils";
 import type { DashboardSnapshot, StoredItem } from "@/server/db/types";
 
 const analyzeSteps = [
-  "Save raw content first",
-  "Generate title, summary, and tags",
-  "Extract variables for prompts only",
+  "先保存原始内容",
+  "生成标题、摘要和标签",
+  "仅为 Prompt 提取变量",
 ];
 
 function getItemHref(item: Pick<StoredItem, "id" | "type">) {
@@ -46,14 +46,14 @@ export function DashboardView({
               variant="outline"
               className="w-fit rounded-full border-border/80 bg-background/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
             >
-              Save → Search → Open → Copy
+              保存 -&gt; 搜索 -&gt; 打开 -&gt; 复制
             </Badge>
             <div className="space-y-3">
               <CardTitle className="max-w-3xl text-3xl leading-tight font-semibold tracking-[-0.04em] lg:text-5xl">
-                Your private command shelf for prompts and skills.
+                你的个人 Prompt 与 Skill 工作台。
               </CardTitle>
               <CardDescription className="max-w-2xl text-sm leading-6 text-muted-foreground lg:text-[15px]">
-                RoBox Phase 3 接入真实库数据。搜索入口在顶栏，下面聚合最近使用、收藏、待整理与数量统计。
+                搜索入口在顶栏，下面聚合最近使用、收藏、待整理与数量统计。
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -61,22 +61,22 @@ export function DashboardView({
                 href="/prompts/new"
                 className={cn(buttonVariants({ variant: "default", size: "lg" }))}
               >
-                New prompt
+                新建 Prompt
               </Link>
               <Link
                 href="/skills/new"
                 className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
               >
-                New skill
+                新建 Skill
               </Link>
             </div>
           </CardHeader>
 
           <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Total" value={counts.total} detail="Prompt + Skill" />
-            <MetricCard label="Prompts" value={counts.prompts} detail="可变量化模板" />
-            <MetricCard label="Skills" value={counts.skills} detail="可复制 Skill 原文" />
-            <MetricCard label="Pending" value={counts.pending} detail="待智能整理" />
+            <MetricCard label="总数" value={counts.total} detail="Prompt + Skill" />
+            <MetricCard label="Prompt" value={counts.prompts} detail="可变量化模板" />
+            <MetricCard label="Skill" value={counts.skills} detail="可复制 Skill 原文" />
+            <MetricCard label="待整理" value={counts.pending} detail="待智能整理" />
           </CardContent>
         </Card>
 
@@ -85,10 +85,10 @@ export function DashboardView({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-white/55">
-                  DeepSeek analyze
+                  DeepSeek 整理
                 </p>
                 <CardTitle className="mt-2 text-2xl text-white">
-                  Manual trigger only
+                  仅手动触发
                 </CardTitle>
               </div>
               <SparklesIcon className="size-5 text-amber-300" />
@@ -109,7 +109,7 @@ export function DashboardView({
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.16em] text-white/45">
-                Next action
+                下一步
               </p>
               <p className="mt-2 text-sm leading-6 text-white/80">
                 先整理 {counts.pending} 个未分析条目，但不覆盖用户原文。
@@ -124,7 +124,7 @@ export function DashboardView({
           <CardHeader className="border-b border-border/70 pb-4">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <CardTitle>Recently copied</CardTitle>
+                <CardTitle>最近复制</CardTitle>
                 <CardDescription>
                   这里展示真实 `usage_logs` 计数驱动的最近使用条目。
                 </CardDescription>
@@ -133,7 +133,7 @@ export function DashboardView({
                 href="/prompts"
                 className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
               >
-                View all
+                查看全部
               </Link>
             </div>
           </CardHeader>
@@ -163,7 +163,7 @@ export function DashboardView({
 
         <div className="grid gap-6">
           <MiniListCard
-            title="Favorites"
+            title="收藏"
             icon={<StarIcon className="size-4" />}
             empty="暂无收藏内容"
             items={favorites.map((item) => ({
@@ -175,7 +175,7 @@ export function DashboardView({
             }))}
           />
           <MiniListCard
-            title="Need analyze"
+            title="待整理"
             icon={<CircleDashedIcon className="size-4" />}
             empty="当前没有待整理内容"
             items={pending.map((item) => ({

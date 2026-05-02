@@ -28,10 +28,10 @@ export function GlobalSearchForm() {
       <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         key={`${actionPath}:${query}`}
-        aria-label="Search library"
+        aria-label="搜索库内容"
         name="search"
         defaultValue={query}
-        placeholder="Search titles, tags, or raw content"
+        placeholder="搜索标题、标签或原文"
         className="h-10 rounded-xl bg-muted/50 pl-10"
       />
     </form>

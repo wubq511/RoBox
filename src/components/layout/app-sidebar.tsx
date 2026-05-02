@@ -22,7 +22,7 @@ export function AppSidebar({ userEmail }: Readonly<{ userEmail: string }>) {
         <div className="space-y-0.5">
           <div className="text-sm font-semibold">RoBox</div>
           <p className="text-xs text-muted-foreground">
-            Prompt / Skill library
+            Prompt / Skill 库
           </p>
         </div>
       </div>
@@ -49,29 +49,15 @@ export function AppSidebar({ userEmail }: Readonly<{ userEmail: string }>) {
       </nav>
 
       <div className="mt-auto space-y-5 px-5 pb-5">
-        <div className="space-y-3 border-t border-border/70 pt-5">
-          <div className="flex items-center justify-between text-xs font-medium">
-            <span>Library health</span>
-            <span className="text-emerald-600">OK</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-border">
-            <div className="h-full w-[72%] rounded-full bg-primary" />
-          </div>
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Coverage</span>
-            <span>72%</span>
-          </div>
-        </div>
-
         <div className="rounded-2xl border border-border/80 bg-background/90 p-4">
           <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Phase 2
+            当前账号
           </h2>
           <p className="mt-2 text-sm text-foreground">
-            Auth、allowlist 和数据库底座已接入，库体验和真实 CRUD 在下一阶段接上。
+            RoBox 通过 Supabase Auth 和邮箱白名单保护工作台。
           </p>
           <p className="mt-3 border-t border-border/70 pt-3 text-xs text-muted-foreground">
-            Signed in as {userEmail}
+            {userEmail}
           </p>
         </div>
       </div>

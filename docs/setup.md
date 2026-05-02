@@ -55,7 +55,7 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
   Public key used by `@supabase/ssr`.
 - `NEXT_PUBLIC_APP_ORIGIN`
-  Optional override for login callback origin building. Defaults to `http://localhost:3000`.
+  Required in production. Local development may omit it and fall back to `http://localhost:3000`; production must set the real app origin, for example the Vercel URL.
 - `SUPABASE_SERVICE_ROLE_KEY`
   Reserved for server-only admin operations. Do not expose it to the browser.
 - `ALLOWED_EMAILS`

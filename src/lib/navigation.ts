@@ -8,7 +8,7 @@ import {
 export const navigationItems = [
   {
     href: "/dashboard",
-    label: "Dashboard",
+    label: "总览",
     icon: LayoutDashboardIcon,
   },
   {
@@ -23,7 +23,7 @@ export const navigationItems = [
   },
   {
     href: "/settings",
-    label: "Settings",
+    label: "设置",
     icon: SettingsIcon,
   },
 ] as const;

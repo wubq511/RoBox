@@ -27,5 +27,15 @@ export function hasSupabasePublicEnv() {
 }
 
 export function getAppOrigin() {
-  return readOptionalEnv("NEXT_PUBLIC_APP_ORIGIN") ?? "http://localhost:3000";
+  const configuredOrigin = readOptionalEnv("NEXT_PUBLIC_APP_ORIGIN");
+
+  if (configuredOrigin) {
+    return configuredOrigin;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:3000";
+  }
+
+  throw new Error("Missing required environment variable: NEXT_PUBLIC_APP_ORIGIN");
 }

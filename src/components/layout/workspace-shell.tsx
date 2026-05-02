@@ -45,19 +45,19 @@ export function WorkspaceShell({
                   className={cn(buttonVariants({ variant: "default", size: "lg" }))}
                 >
                   <SquarePenIcon className="size-4" />
-                  New prompt
+                  新建 Prompt
                 </Link>
                 <Link
                   href="/skills/new"
                   className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
                 >
                   <GitBranchIcon className="size-4" />
-                  New skill
+                  新建 Skill
                 </Link>
                 <form action={signOutAction}>
                   <Button type="submit" variant="ghost" size="lg">
                     <LogOutIcon className="size-4" />
-                    Sign out
+                    退出
                   </Button>
                 </form>
               </div>

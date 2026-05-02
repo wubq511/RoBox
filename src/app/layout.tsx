@@ -7,7 +7,13 @@ export const metadata: Metadata = {
     default: "RoBox",
     template: "%s | RoBox",
   },
-  description: "Manage your prompts and skills.",
+  description: "管理你的 Prompt 与 Skill。",
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({

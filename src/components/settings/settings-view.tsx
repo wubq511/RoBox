@@ -19,31 +19,30 @@ const settingsCards = [
     description:
       "保存时不调用模型；手动智能整理和 GitHub 导入整理才请求 DeepSeek。",
     detail:
-      "Server env: DEEPSEEK_API_KEY. Optional: DEEPSEEK_MODEL defaults to deepseek-v4-flash, DEEPSEEK_API_BASE_URL defaults to https://api.deepseek.com.",
+      "服务端环境变量：DEEPSEEK_API_KEY。可选：DEEPSEEK_MODEL 默认 deepseek-v4-flash，DEEPSEEK_API_BASE_URL 默认 https://api.deepseek.com。",
     icon: SparklesIcon,
   },
   {
-    title: "Categories",
+    title: "固定分类",
     description:
       "固定分类，不开放动态分类配置，避免第一版变成通用知识库。",
     detail:
-      "Allowed: Writing, Coding, Research, Design, Study, Agent, Content, Other. Tags remain editable per item.",
+      "允许分类：Writing, Coding, Research, Design, Study, Agent, Content, Other。标签仍然可以按条目手动编辑。",
     icon: DatabaseIcon,
   },
   {
-    title: "GitHub import",
+    title: "GitHub 导入",
     description:
       "只允许 GitHub 仓库、README 链接和 raw README/SKILL.md 链接。",
     detail:
-      "Allowed hosts: github.com and raw.githubusercontent.com. Optional GITHUB_TOKEN can be set server-side for rate-limit relief.",
+      "允许域名：github.com 和 raw.githubusercontent.com。可选 GITHUB_TOKEN 只放服务端，用于降低 API 限流影响。",
     icon: GitBranchIcon,
   },
   {
-    title: "Data export",
+    title: "数据导出",
     description:
       "导出 JSON / Markdown 是后续优化项，本阶段只保留清晰占位。",
-    detail:
-      "Placeholder only: JSON / Markdown export is not implemented in the MVP closeout.",
+    detail: "仅占位：MVP 收口阶段还没有实现 JSON / Markdown 导出。",
     icon: FolderDownIcon,
   },
 ];
@@ -52,7 +51,7 @@ export function SettingsView() {
   return (
     <section className="mx-auto flex w-full max-w-[960px] flex-col gap-6 px-4 py-6 lg:px-8 lg:py-8">
       <div className="space-y-3">
-        <h1 className="text-3xl font-semibold tracking-[-0.04em]">Settings</h1>
+        <h1 className="text-3xl font-semibold tracking-[-0.04em]">设置</h1>
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
           MVP 保留外部服务、固定分类和导出占位说明；当前不引入多用户配置面板。
         </p>

@@ -40,14 +40,14 @@ function getStatusCopy(params: SearchParams) {
       case "email_not_allowed":
         return "这个邮箱不在允许名单内。";
       case "auth_request_failed":
-        return "Magic link 发送失败，请检查 Supabase Auth 配置。";
+        return "登录链接发送失败，请检查 Supabase Auth 配置。";
       default:
-        return "登录状态无效，请重新请求一次 magic link。";
+        return "登录状态无效，请重新请求一次登录链接。";
     }
   }
 
   if (readSearchParam(params, "sent") === "1") {
-    return `Magic link 已发送到 ${readSearchParam(params, "email") ?? "你的邮箱"}。`;
+    return `登录链接已发送到 ${readSearchParam(params, "email") ?? "你的邮箱"}。`;
   }
 
   if (readSearchParam(params, "signed_out") === "1") {
@@ -83,14 +83,14 @@ export default async function LoginPage({
               variant="outline"
               className="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]"
             >
-              Phase 2 foundation
+              单用户登录
             </Badge>
             <div className="space-y-3">
               <CardTitle className="max-w-2xl text-4xl leading-tight tracking-[-0.05em]">
-                Sign in to your private prompt and skill shelf.
+                登录 RoBox，进入你的 Prompt 与 Skill 库。
               </CardTitle>
               <CardDescription className="max-w-xl text-sm leading-6">
-                RoBox 现在开始用 Supabase Auth 保护工作台，只允许白名单邮箱进入。通过邮箱 magic link 登录，不引入多余账号系统。
+                RoBox 使用 Supabase Auth 保护工作台，只允许白名单邮箱进入。通过邮箱登录链接验证，不引入多余账号系统。
               </CardDescription>
             </div>
           </CardHeader>
@@ -102,9 +102,9 @@ export default async function LoginPage({
                   <MailIcon className="size-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">Passwordless login</div>
+                  <div className="text-sm font-semibold">邮件链接登录</div>
                   <p className="text-sm text-muted-foreground">
-                    只发一封 magic link，不存本地密码。
+                    只发一封登录链接，不存本地密码。
                   </p>
                 </div>
               </div>
@@ -116,7 +116,7 @@ export default async function LoginPage({
                   <ShieldCheckIcon className="size-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold">Allowlist only</div>
+                  <div className="text-sm font-semibold">仅限白名单</div>
                   <p className="text-sm text-muted-foreground">
                     非白名单邮箱即使拿到链接，也不会进入主应用。
                   </p>
@@ -128,7 +128,7 @@ export default async function LoginPage({
 
         <Card className="rounded-[32px] border-border/80">
           <CardHeader className="gap-3 border-b border-border/70 pb-6">
-            <CardTitle className="text-2xl tracking-[-0.04em]">Login</CardTitle>
+            <CardTitle className="text-2xl tracking-[-0.04em]">登录</CardTitle>
             <CardDescription className="text-sm leading-6">
               输入允许邮箱，RoBox 会把你带回 {nextPath}。
             </CardDescription>
@@ -151,7 +151,7 @@ export default async function LoginPage({
               <input type="hidden" name="next" value={nextPath} />
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-medium">
-                  Allowed email
+                  允许登录的邮箱
                 </label>
                 <Input
                   id="email"
@@ -165,7 +165,7 @@ export default async function LoginPage({
               </div>
 
               <Button type="submit" size="lg" className="w-full">
-                Send magic link
+                发送登录链接
               </Button>
             </form>
           </CardContent>
