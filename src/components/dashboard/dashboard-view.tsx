@@ -5,6 +5,8 @@ import {
   CopyIcon,
   SparklesIcon,
   StarIcon,
+  GitBranchIcon,
+  SquarePenIcon,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -38,152 +40,163 @@ export function DashboardView({
   const { counts, favorites, pending, recent } = snapshot;
 
   return (
-    <section className="mx-auto flex w-full max-w-[1160px] flex-col gap-6 px-4 py-6 lg:px-8 lg:py-8">
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="surface-noise rounded-[28px] border border-border/70 shadow-[0_20px_60px_-36px_rgba(17,17,17,0.32)]">
-          <CardHeader className="gap-4 border-b border-border/60 pb-6">
+    <section className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-8 lg:px-8 lg:py-10">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <Card className="surface-noise overflow-hidden rounded-[28px] border border-border/60 shadow-[0_20px_60px_-36px_rgba(0,0,0,0.08)] transition-all">
+          <CardHeader className="gap-5 border-b border-border/40 pb-8">
             <Badge
-              variant="outline"
-              className="w-fit rounded-full border-border/80 bg-background/70 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+              variant="secondary"
+              className="w-fit rounded-full bg-primary/5 text-primary border-primary/20 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.2em]"
             >
-              保存 -&gt; 搜索 -&gt; 打开 -&gt; 复制
+              工作流: 保存 → 搜索 → 复制
             </Badge>
-            <div className="space-y-3">
-              <CardTitle className="max-w-3xl text-3xl leading-tight font-semibold tracking-[-0.04em] lg:text-5xl">
-                你的个人 Prompt 与 Skill 工作台。
+            <div className="space-y-4">
+              <CardTitle className="max-w-3xl text-[2rem] leading-[1.15] font-semibold tracking-[-0.04em] lg:text-[2.75rem]">
+                RoBox 个人工作台
               </CardTitle>
-              <CardDescription className="max-w-2xl text-sm leading-6 text-muted-foreground lg:text-[15px]">
-                搜索入口在顶栏，下面聚合最近使用、收藏、待整理与数量统计。
+              <CardDescription className="max-w-2xl text-[15px] leading-relaxed text-muted-foreground/80">
+                你的专属 Prompt 与 Skill 知识库。聚合最近使用、收藏标记与待智能整理内容。
               </CardDescription>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4 pt-2">
               <Link
                 href="/prompts/new"
-                className={cn(buttonVariants({ variant: "default", size: "lg" }))}
+                className={cn(buttonVariants({ variant: "default", size: "lg" }), "h-12 rounded-[14px] px-6 text-[15px] font-medium shadow-sm")}
               >
                 新建 Prompt
               </Link>
               <Link
                 href="/skills/new"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+                className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 rounded-[14px] px-6 text-[15px] font-medium shadow-sm bg-background/50 hover:bg-background")}
               >
                 新建 Skill
               </Link>
             </div>
           </CardHeader>
 
-          <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="总数" value={counts.total} detail="Prompt + Skill" />
-            <MetricCard label="Prompt" value={counts.prompts} detail="可变量化模板" />
-            <MetricCard label="Skill" value={counts.skills} detail="可复制 Skill 原文" />
-            <MetricCard label="待整理" value={counts.pending} detail="待智能整理" />
+          <CardContent className="grid gap-4 bg-muted/20 pt-8 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="总计资源" value={counts.total} detail="Prompt & Skill" />
+            <MetricCard label="Prompts" value={counts.prompts} detail="包含变量配置" />
+            <MetricCard label="Skills" value={counts.skills} detail="Cursor/Claude 规则" />
+            <MetricCard label="待整理" value={counts.pending} detail="需要 AI 归档" />
           </CardContent>
         </Card>
 
-        <Card className="rounded-[28px] border-0 bg-[#111111] text-white shadow-[0_18px_64px_-36px_rgba(0,0,0,0.72)]">
-          <CardHeader className="border-b border-white/10 pb-6">
+        <Card className="relative overflow-hidden rounded-[28px] border-0 bg-slate-950 text-white shadow-xl">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-purple-500/20 to-transparent mix-blend-overlay"></div>
+          <CardHeader className="relative border-b border-white/10 pb-6 z-10">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.18em] text-white/55">
-                  DeepSeek 整理
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-300">
+                  AI 智能整理
                 </p>
-                <CardTitle className="mt-2 text-2xl text-white">
-                  仅手动触发
+                <CardTitle className="mt-2 text-2xl font-semibold tracking-tight text-white">
+                  结构化归档
                 </CardTitle>
               </div>
-              <SparklesIcon className="size-5 text-amber-300" />
+              <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md">
+                <SparklesIcon className="size-5 text-indigo-300" />
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="relative space-y-4 pt-6 z-10">
             {analyzeSteps.map((step, index) => (
               <div
                 key={step}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
+                className="flex items-center gap-4 rounded-xl border border-white/5 bg-white/5 px-4 py-3.5 text-[14px] font-medium backdrop-blur-sm"
               >
-                <span className="flex size-7 items-center justify-center rounded-full bg-white text-xs font-semibold text-black">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-indigo-500/30 text-[13px] font-bold text-indigo-200">
                   {index + 1}
                 </span>
-                <span>{step}</span>
+                <span className="text-white/90">{step}</span>
               </div>
             ))}
 
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-white/45">
-                下一步
-              </p>
-              <p className="mt-2 text-sm leading-6 text-white/80">
-                先整理 {counts.pending} 个未分析条目，但不覆盖用户原文。
+            <div className="mt-6 rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-5 backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <div className="size-2 rounded-full bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)] animate-pulse"></div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-300">
+                  系统状态
+                </p>
+              </div>
+              <p className="mt-3 text-[14px] leading-relaxed text-indigo-100/80">
+                有 {counts.pending} 个草稿等待分析。原文本安全隔离，不会被覆写。
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <Card className="rounded-[28px] border-border/70">
-          <CardHeader className="border-b border-border/70 pb-4">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <Card className="rounded-[28px] border-border/60 shadow-sm">
+          <CardHeader className="border-b border-border/40 pb-5">
             <div className="flex items-end justify-between gap-4">
-              <div>
-                <CardTitle>最近复制</CardTitle>
-                <CardDescription>
-                  这里展示真实 `usage_logs` 计数驱动的最近使用条目。
+              <div className="space-y-1.5">
+                <CardTitle className="text-xl">最近使用</CardTitle>
+                <CardDescription className="text-[14px]">
+                  根据使用频次自动排行的资源。
                 </CardDescription>
               </div>
               <Link
                 href="/prompts"
-                className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+                className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "h-9 rounded-xl font-medium")}
               >
-                查看全部
+                浏览全部
               </Link>
             </div>
           </CardHeader>
-          <CardContent className="divide-y divide-border/70 pt-2">
-            {recent.map((item) => (
-              <Link
-                key={item.id}
-                href={getItemHref(item)}
-                className="flex items-center gap-4 py-4 transition-colors hover:text-foreground"
-              >
-                <Badge variant="outline" className="rounded-full px-2.5">
-                  {item.type}
-                </Badge>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{item.title}</div>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {item.summary}
-                  </p>
-                </div>
-                <div className="font-mono text-xs text-muted-foreground">
-                  {item.usageCount}
-                </div>
-              </Link>
-            ))}
+          <CardContent className="pt-2 px-6 pb-6">
+            <div className="divide-y divide-border/40">
+              {recent.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted-foreground">暂无使用记录</div>
+              ) : recent.map((item) => (
+                <Link
+                  key={item.id}
+                  href={getItemHref(item)}
+                  className="group flex items-center gap-5 py-4 transition-all hover:bg-muted/30 -mx-4 px-4 rounded-2xl"
+                >
+                  <div className="flex size-[42px] shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background shadow-sm group-hover:border-primary/20 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+                    {item.type === "prompt" ? <SquarePenIcon className="size-5" /> : <GitBranchIcon className="size-5" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[15px] font-semibold text-foreground/90 group-hover:text-foreground">{item.title}</div>
+                    <p className="truncate text-[14px] text-muted-foreground mt-0.5">
+                      {item.summary || "无摘要"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-muted/50 px-3 py-1 text-[13px] font-medium text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                    <CopyIcon className="size-3.5" />
+                    <span>{item.usageCount}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
         <div className="grid gap-6">
           <MiniListCard
-            title="收藏"
-            icon={<StarIcon className="size-4" />}
-            empty="暂无收藏内容"
+            title="收藏内容"
+            icon={<StarIcon className="size-[18px] text-amber-500" />}
+            empty="暂无加星收藏的条目"
             items={favorites.map((item) => ({
               key: item.id,
               label: item.title,
               meta: item.category,
               href: getItemHref(item),
-              badge: item.type,
+              type: item.type,
             }))}
           />
           <MiniListCard
-            title="待整理"
-            icon={<CircleDashedIcon className="size-4" />}
-            empty="当前没有待整理内容"
+            title="未整理草稿"
+            icon={<CircleDashedIcon className="size-[18px] text-blue-500" />}
+            empty="目前没有需要分析的草稿"
             items={pending.map((item) => ({
               key: item.id,
               label: item.title,
               meta: item.category,
               href: getItemHref(item),
-              badge: item.type,
+              type: item.type,
             }))}
           />
         </div>
@@ -202,12 +215,12 @@ function MetricCard({
   detail: string;
 }>) {
   return (
-    <div className="rounded-[22px] border border-border/70 bg-background/90 p-5 shadow-[0_12px_32px_-28px_rgba(17,17,17,0.35)]">
-      <div className="text-xs font-medium text-muted-foreground">{label}</div>
-      <div className="mt-2 font-mono text-3xl font-semibold tracking-[-0.04em]">
+    <div className="rounded-[20px] border border-border/50 bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-border/80">
+      <div className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-3 font-mono text-4xl font-bold tracking-tight text-foreground">
         {value}
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
+      <p className="mt-2 text-[13px] font-medium text-muted-foreground/80">{detail}</p>
     </div>
   );
 }
@@ -226,44 +239,43 @@ function MiniListCard({
     label: string;
     meta: string;
     href: string;
-    badge: string;
+    type: string;
   }>;
 }>) {
   return (
-    <Card className="rounded-[28px] border-border/70">
-      <CardHeader className="border-b border-border/70 pb-4">
+    <Card className="rounded-[24px] border-border/60 shadow-sm overflow-hidden">
+      <CardHeader className="border-b border-border/40 pb-4 px-5">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            {icon}
+          <CardTitle className="flex items-center gap-2.5 text-[16px] font-semibold">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-muted/50">
+              {icon}
+            </div>
             <span>{title}</span>
           </CardTitle>
-          <CopyIcon className="size-4 text-muted-foreground" />
         </div>
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-2 px-5 pb-5 bg-muted/10">
         {items.length === 0 ? (
-          <div className="rounded-2xl bg-muted/60 px-4 py-6 text-sm text-muted-foreground">
-            {empty}
+          <div className="mt-3 flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border/60 bg-background/50 py-8 text-center">
+            <div className="text-[14px] font-medium text-muted-foreground">{empty}</div>
           </div>
         ) : (
-          items.map((item, index) => (
-            <div key={item.key}>
-              {index > 0 ? <Separator className="my-3" /> : null}
-              <Link
-                href={item.href}
-                className="flex items-center gap-3 py-1.5 transition-colors hover:text-foreground"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{item.label}</div>
-                  <div className="text-sm text-muted-foreground">{item.meta}</div>
-                </div>
-                <Badge variant="outline" className="rounded-full px-2.5">
-                  {item.badge}
-                </Badge>
-                <ArrowRightIcon className="size-4 text-muted-foreground" />
-              </Link>
-            </div>
-          ))
+          <div className="divide-y divide-border/40 mt-1">
+            {items.map((item) => (
+              <div key={item.key} className="py-1">
+                <Link
+                  href={item.href}
+                  className="group flex items-center gap-4 rounded-xl py-3 px-3 transition-colors hover:bg-background shadow-sm border border-transparent hover:border-border/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[14px] font-semibold text-foreground/90 group-hover:text-foreground">{item.label}</div>
+                    <div className="text-[12px] text-muted-foreground mt-0.5">{item.meta || "未分类"}</div>
+                  </div>
+                  <ArrowRightIcon className="size-4 shrink-0 text-muted-foreground/40 group-hover:text-foreground/80 transition-colors" />
+                </Link>
+              </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

@@ -36,28 +36,28 @@ export function WorkspaceShell({
 
               <GlobalSearchForm />
 
-              <div className="hidden items-center gap-2 sm:flex">
-                <div className="max-w-[220px] truncate text-sm text-muted-foreground">
+              <div className="hidden items-center gap-3 sm:flex">
+                <div className="mr-2 max-w-[200px] truncate text-[13px] font-medium text-muted-foreground/80">
                   {userEmail}
                 </div>
                 <Link
                   href="/prompts/new"
-                  className={cn(buttonVariants({ variant: "default", size: "lg" }))}
+                  className={cn(buttonVariants({ variant: "default", size: "sm" }), "h-9 rounded-xl px-4 font-medium shadow-sm")}
                 >
-                  <SquarePenIcon className="size-4" />
+                  <SquarePenIcon className="mr-2 size-4" />
                   新建 Prompt
                 </Link>
                 <Link
                   href="/skills/new"
-                  className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "h-9 rounded-xl px-4 font-medium shadow-sm")}
                 >
-                  <GitBranchIcon className="size-4" />
+                  <GitBranchIcon className="mr-2 size-4" />
                   新建 Skill
                 </Link>
                 <form action={signOutAction}>
-                  <Button type="submit" variant="ghost" size="lg">
+                  <Button type="submit" variant="ghost" size="sm" className="h-9 w-9 rounded-xl px-0 text-muted-foreground hover:text-foreground">
                     <LogOutIcon className="size-4" />
-                    退出
+                    <span className="sr-only">退出</span>
                   </Button>
                 </form>
               </div>

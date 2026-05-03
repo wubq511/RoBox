@@ -1,0 +1,25 @@
+
+> robox@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.30.227.68:3000
+- Environments: .env.local
+✓ Ready in 383ms
+
+ GET /dashboard 200 in 2.2s (next.js: 1523ms, proxy.ts: 276ms, application-code: 450ms)
+ GET /login?next=%2Fdashboard 200 in 357ms (next.js: 122ms, proxy.ts: 26ms, application-code: 209ms)
+[TypeError: fetch failed] {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:55421
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:55421) {
+    errno: -4078,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 55421
+  }
+}
+ GET /login?next=%2Fdashboard&email=robert%40example.com&error=auth_request_failed 200 in 84ms (next.js: 7ms, proxy.ts: 12ms, application-code: 65ms)
+ POST /login?next=%2Fdashboard 303 in 181ms (next.js: 9ms, proxy.ts: 13ms, application-code: 158ms)
+  └─ ƒ requestMagicLinkAction({}) in 38ms src/server/auth/actions.ts

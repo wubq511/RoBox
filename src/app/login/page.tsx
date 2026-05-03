@@ -75,83 +75,81 @@ export default async function LoginPage({
   const allowlistConfigured = hasAllowedEmails();
 
   return (
-    <main className="min-h-screen bg-background px-4 py-10 text-foreground lg:px-8">
-      <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <Card className="rounded-[32px] border-border/80 shadow-[0_20px_60px_-42px_rgba(17,17,17,0.35)]">
-          <CardHeader className="gap-5 border-b border-border/70 pb-8">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10 text-foreground sm:px-8">
+      <div className="mx-auto flex w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-border/80 bg-card shadow-[0_20px_60px_-42px_rgba(0,0,0,0.15)] lg:flex-row">
+        {/* Left Side: Branding & Info */}
+        <div className="flex flex-col justify-between bg-muted/30 p-8 lg:w-1/2 lg:p-14 lg:border-r lg:border-border/60">
+          <div className="space-y-8">
             <Badge
-              variant="outline"
-              className="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]"
+              variant="secondary"
+              className="w-fit rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-foreground/80 shadow-none border-transparent"
             >
-              单用户登录
+              单用户工作台
             </Badge>
-            <div className="space-y-3">
-              <CardTitle className="max-w-2xl text-4xl leading-tight tracking-[-0.05em]">
-                登录 RoBox，进入你的 Prompt 与 Skill 库。
-              </CardTitle>
-              <CardDescription className="max-w-xl text-sm leading-6">
-                RoBox 使用 Supabase Auth 保护工作台，只允许白名单邮箱进入。通过邮箱登录链接验证，不引入多余账号系统。
-              </CardDescription>
+            <div className="space-y-4">
+              <h1 className="text-3xl font-semibold leading-tight tracking-tight lg:text-[2.5rem]">
+                进入专属的 <br />Prompt & Skill 库
+              </h1>
+              <p className="text-[15px] text-muted-foreground leading-relaxed max-w-[90%]">
+                基于 Supabase Auth 的白名单保护机制。只需受信任邮箱，一键获取 Magic Link，告别繁琐密码。
+              </p>
             </div>
-          </CardHeader>
+          </div>
 
-          <CardContent className="grid gap-5 pt-8 md:grid-cols-2">
-            <div className="rounded-[24px] border border-border/70 bg-muted/30 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <MailIcon className="size-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">邮件链接登录</div>
-                  <p className="text-sm text-muted-foreground">
-                    只发一封登录链接，不存本地密码。
-                  </p>
-                </div>
+          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="flex items-start gap-4">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background border shadow-sm text-foreground">
+                <MailIcon className="size-[1.125rem]" />
+              </div>
+              <div className="space-y-1.5 pt-0.5">
+                <div className="text-sm font-semibold">Magic Link 登录</div>
+                <p className="text-[13px] text-muted-foreground">
+                  安全无密码认证，一次点击直接进入。
+                </p>
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-border/70 bg-muted/30 p-5">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <ShieldCheckIcon className="size-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold">仅限白名单</div>
-                  <p className="text-sm text-muted-foreground">
-                    非白名单邮箱即使拿到链接，也不会进入主应用。
-                  </p>
-                </div>
+            <div className="flex items-start gap-4">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-[14px] bg-background border shadow-sm text-foreground">
+                <ShieldCheckIcon className="size-[1.125rem]" />
+              </div>
+              <div className="space-y-1.5 pt-0.5">
+                <div className="text-sm font-semibold">白名单强校验</div>
+                <p className="text-[13px] text-muted-foreground">
+                  硬编码级别访问控制，彻底杜绝外人入侵。
+                </p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="rounded-[32px] border-border/80">
-          <CardHeader className="gap-3 border-b border-border/70 pb-6">
-            <CardTitle className="text-2xl tracking-[-0.04em]">登录</CardTitle>
-            <CardDescription className="text-sm leading-6">
-              输入允许邮箱，RoBox 会把你带回 {nextPath}。
-            </CardDescription>
-          </CardHeader>
+        {/* Right Side: Login Form */}
+        <div className="flex flex-col justify-center bg-card p-8 lg:w-1/2 lg:p-14">
+          <div className="mx-auto w-full max-w-[360px] space-y-8">
+            <div className="space-y-2 text-center lg:text-left">
+              <h2 className="text-2xl font-semibold tracking-tight">登录账号</h2>
+              <p className="text-[15px] text-muted-foreground">
+                输入您的白名单邮箱以获取登录链接
+              </p>
+            </div>
 
-          <CardContent className="space-y-5 pt-6">
             {statusCopy ? (
-              <div className="rounded-2xl border border-border/70 bg-muted/40 px-4 py-3 text-sm leading-6">
+              <div className="rounded-[14px] border border-border/70 bg-muted/40 px-4 py-3.5 text-sm leading-6">
                 {statusCopy}
               </div>
             ) : null}
 
             {!allowlistConfigured ? (
-              <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-                `ALLOWED_EMAILS` 为空。当前只允许先完成配置，再继续登录。
+              <div className="rounded-[14px] border border-amber-300 bg-amber-50 px-4 py-3.5 text-sm leading-6 text-amber-800 dark:bg-amber-950/30 dark:border-amber-900 dark:text-amber-200">
+                `ALLOWED_EMAILS` 尚未配置，系统已执行 fail-closed 拦截。
               </div>
             ) : null}
 
-            <form action={requestMagicLinkAction} className="space-y-4">
+            <form action={requestMagicLinkAction} className="space-y-5">
               <input type="hidden" name="next" value={nextPath} />
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  允许登录的邮箱
+              <div className="space-y-2.5">
+                <label htmlFor="email" className="text-sm font-medium text-foreground/90">
+                  邮箱地址
                 </label>
                 <Input
                   id="email"
@@ -160,16 +158,16 @@ export default async function LoginPage({
                   defaultValue={initialEmail}
                   placeholder="robert@example.com"
                   required
-                  className="h-11 rounded-xl"
+                  className="h-12 rounded-[14px] px-4 shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-primary/20"
                 />
               </div>
 
-              <Button type="submit" size="lg" className="w-full">
-                发送登录链接
+              <Button type="submit" size="lg" className="h-12 w-full rounded-[14px] font-medium text-[15px] shadow-sm">
+                发送验证邮件
               </Button>
             </form>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </main>
   );
