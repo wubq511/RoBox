@@ -19,17 +19,15 @@ describe("LibraryList", () => {
       <LibraryList type="prompt" items={[]} filters={filters} />,
     );
 
-    expect(html).toContain("Prompt library");
-    expect(html).toContain("Variables, raw copy, edit, and saved search.");
+    expect(html).toContain("Prompt 库");
+    expect(html).toContain("变量模板、原始复制、编辑与搜索。");
     expect(html).toContain('href="/prompts/new"');
-    expect(html).toContain("Create now");
+    expect(html).toContain("新建 Prompt");
     expect(html).toContain('action="/prompts"');
     expect(html).toContain("Apply");
     expect(html).toContain('name="search"');
-    expect(html).toContain("No prompts yet");
-    expect(html).toContain(
-      "Change the keyword or filters, or create your first saved item.",
-    );
+    expect(html).toContain("还没有 Prompt");
+    expect(html).toContain("换个关键词或筛选条件，或创建第一个 Prompt。");
   });
 
   it("renders the skill library shell with header, create CTA, filters, and empty-state guidance", () => {
@@ -44,16 +42,14 @@ describe("LibraryList", () => {
       <LibraryList type="skill" items={[]} filters={filters} />,
     );
 
-    expect(html).toContain("Skill library");
-    expect(html).toContain("Save reusable SKILL.md files, linked sources, and copy-ready notes.");
+    expect(html).toContain("Skill 库");
+    expect(html).toContain("保存可复用的 Skill 文件、来源链接和复制笔记。");
     expect(html).toContain('href="/skills/new"');
-    expect(html).toContain("Create now");
+    expect(html).toContain("新建 Skill");
     expect(html).toContain('action="/skills"');
     expect(html).toContain("Apply");
-    expect(html).toContain("No skills yet");
-    expect(html).toContain(
-      "Change the keyword or filters, or create your first saved item.",
-    );
+    expect(html).toContain("还没有 Skill");
+    expect(html).toContain("换个关键词或筛选条件，或创建第一个 Skill。");
   });
 
   it("renders filters above non-empty items and shows the planned card metadata", () => {
@@ -89,9 +85,8 @@ describe("LibraryList", () => {
     expect(html).toContain("Apply");
     expect(html).toContain('href="/prompts/prompt-1"');
     expect(html).toContain("Prompt title");
-    expect(html).toContain("Favorite");
-    expect(html).toContain("Need analyze");
+    expect(html).toContain("待整理");
     expect(html).toContain("Writing");
-    expect(html).toContain("Copied 2");
+    expect(html).toContain("复制 2 次");
   });
 });

@@ -50,14 +50,14 @@ describe("ItemDetailView", () => {
       <ItemDetailView item={item} returnPath="/prompts" />,
     );
 
-    expect(html).toContain("Variables");
-    expect(html).toContain("Final prompt preview");
+    expect(html).toContain("变量");
+    expect(html).toContain("最终 Prompt 预览");
     expect(html).toContain("topic");
     expect(html).toContain("format");
-    expect(html).toContain("Copy raw");
-    expect(html).toContain("Copy final");
-    expect(html).toContain("Smart analyze");
-    expect(html).toContain("Delete");
+    expect(html).toContain("复制原始内容");
+    expect(html).toContain("复制最终内容");
+    expect(html).toContain("智能分析");
+    expect(html).toContain("删除");
     expect(html).toContain('href="/prompts"');
     expect(html).toContain('href="/prompts/prompt-1/edit"');
   });
@@ -85,10 +85,10 @@ describe("ItemDetailView", () => {
       <ItemDetailView item={item} returnPath="/skills" />,
     );
 
-    expect(html).toContain("Source");
+    expect(html).toContain("来源");
     expect(html).toContain("https://github.com/example/repo");
     expect(html).toContain("https://github.com/example/repo/blob/main/README.md");
-    expect(html).toContain("Copy source URL");
+    expect(html).toContain("复制来源链接");
     expect(html).toContain('href="/skills/skill-1/edit"');
   });
 
@@ -115,8 +115,8 @@ describe("ItemDetailView", () => {
       <ItemDetailView item={item} returnPath="/skills" />,
     );
 
-    expect(html).toContain("Raw skill");
+    expect(html).toContain("原始 Skill");
     expect(html).toContain("SKILL.md raw body");
-    expect(html).toContain("Copy raw skill");
+    expect(html).toContain("复制原始 Skill");
   });
 });

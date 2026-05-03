@@ -20,7 +20,7 @@ type ImportResponse = {
 };
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "GitHub import failed.";
+  return error instanceof Error ? error.message : "GitHub 导入失败";
 }
 
 export function GithubImportForm() {
@@ -51,7 +51,7 @@ export function GithubImportForm() {
             if (!response.ok) {
               setFeedback({
                 type: "error",
-                message: payload.error ?? "GitHub import failed.",
+                message: payload.error ?? "GitHub 导入失败",
               });
               return;
             }
@@ -61,14 +61,14 @@ export function GithubImportForm() {
             if (!itemId) {
               setFeedback({
                 type: "error",
-                message: "GitHub import did not return a Skill id.",
+                message: "GitHub 导入未返回 Skill ID",
               });
               return;
             }
 
             setFeedback({
               type: "success",
-              message: payload.warning ?? "Imported. Opening Skill.",
+              message: payload.warning ?? "导入成功，正在打开 Skill",
             });
             window.location.assign(`/skills/${itemId}`);
           } catch (error) {
@@ -82,7 +82,7 @@ export function GithubImportForm() {
     >
       <div className="flex items-center gap-2">
         <GitBranchIcon className="size-4 text-muted-foreground" />
-        <h2 className="text-sm font-semibold">Import from GitHub</h2>
+        <h2 className="text-sm font-semibold">从 GitHub 导入</h2>
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <Input
@@ -93,11 +93,11 @@ export function GithubImportForm() {
         />
         <Button type="submit" disabled={isPending}>
           <ImportIcon className="size-4" />
-          {isPending ? "Importing" : "Import Skill"}
+          {isPending ? "导入中" : "导入 Skill"}
         </Button>
       </div>
       <p className="text-xs leading-5 text-muted-foreground">
-        Allowed sources: github.com and raw.githubusercontent.com.
+        支持的来源：github.com 和 raw.githubusercontent.com。
       </p>
       {feedback ? (
         <p

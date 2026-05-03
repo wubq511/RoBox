@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { getServerSupabaseClient } from "@/lib/supabase/server-client";
@@ -23,7 +24,7 @@ function buildLoginRedirect(nextPath?: string, reason?: string) {
   return `/login?${searchParams.toString()}`;
 }
 
-async function readSessionEmail() {
+const readSessionEmail = cache(async function readSessionEmail() {
   const supabase = await getServerSupabaseClient();
   const { data, error } = await supabase.auth.getClaims();
 
@@ -52,7 +53,7 @@ async function readSessionEmail() {
     id: userData.user.id,
     email: userData.user.email.toLowerCase(),
   };
-}
+});
 
 export async function getOptionalAppUser(): Promise<AppUser | null> {
   const user = await readSessionEmail();

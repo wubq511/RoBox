@@ -30,6 +30,8 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
   DeepSeek prompt construction, model call, JSON repair/parsing, and persistence orchestration.
 - `src/server/import`
   GitHub URL validation, raw README/SKILL.md fetch, Skill creation, and README-based analysis orchestration.
+- `src/proxy`
+  Next.js middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on every matched request.
 
 ## Data Model
 
@@ -111,4 +113,12 @@ Phase 5 was verified on `2026-05-02` with:
 - `npm run build`
 - live README fetch check for `https://github.com/tw93/Waza`
 - local Supabase + DeepSeek browser smoke: magic-link login, Waza GitHub import, analyzed Skill detail, source URL copy, Skills search, invalid GitHub URL rejection, manual Skill save/copy fallback
+
+Production deployment verified on `2026-05-03` with:
+
+- Supabase cloud project `robox` in `ap-northeast-1` with migration applied
+- Vercel deployment at `robox.vercel.app`
+- All 94 tests passing, typecheck/lint/build clean
+- Full Chinese UI localization across all components
+- Performance: `React.cache()` on `getServerSupabaseClient()` and `readSessionEmail()` to deduplicate Supabase calls per request
 

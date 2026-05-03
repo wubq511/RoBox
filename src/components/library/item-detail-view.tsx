@@ -12,9 +12,12 @@ import {
 import { cn } from "@/lib/utils";
 import type { ItemDetail } from "@/server/db/types";
 
+import { toggleFavoriteAction } from "@/server/items/actions";
+
 import { AnalyzeButton } from "./analyze-button";
 import { CopyRawButton } from "./copy-raw-button";
 import { DeleteItemButton } from "./delete-item-button";
+import { FavoriteToggleButton } from "./favorite-toggle-button";
 import { PromptFinalPanel } from "./prompt-final-panel";
 
 type ItemDetailViewProps = {
@@ -39,16 +42,16 @@ export function ItemDetailView({
   const copyContent = isImportedSkill ? item.sourceUrl : item.content;
   const copyLabel =
     item.type === "prompt"
-      ? "Copy raw"
+      ? "复制原始内容"
       : isImportedSkill
-        ? "Copy source URL"
-        : "Copy raw skill";
+        ? "复制来源链接"
+        : "复制原始 Skill";
   const rawContentLabel =
     item.type === "prompt"
-      ? "Raw prompt"
+      ? "原始 Prompt"
       : isImportedSkill
-        ? "Saved link"
-        : "Raw skill";
+        ? "保存的链接"
+        : "原始 Skill";
 
   return (
     <Card className="rounded-[28px] border-border/70">
@@ -62,7 +65,7 @@ export function ItemDetailView({
               variant="outline"
               className="rounded-full border-amber-300 bg-amber-50 px-2.5 text-amber-700"
             >
-              Need analyze
+              待整理
             </Badge>
           ) : null}
           <span className="font-mono text-xs text-muted-foreground">
@@ -92,14 +95,21 @@ export function ItemDetailView({
             href={normalizedReturnPath}
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
           >
-            Back
+            返回
           </Link>
           <Link
             href={editPath}
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
-            Edit
+            编辑
           </Link>
+          <FavoriteToggleButton
+            itemId={item.id}
+            type={item.type}
+            isFavorite={item.isFavorite}
+            toggleAction={toggleFavoriteAction}
+            variant="button"
+          />
           <AnalyzeButton itemId={item.id} isAnalyzed={item.isAnalyzed} />
           <DeleteItemButton itemId={item.id} type={item.type} />
         </div>
@@ -118,7 +128,7 @@ export function ItemDetailView({
         {item.type === "skill" && item.sourceUrl ? (
           <section className="rounded-2xl border border-border/70 bg-muted/30 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              Source
+              来源
             </p>
             <p className="mt-2 break-all font-mono text-xs leading-6 text-muted-foreground">
               {item.sourceUrl}

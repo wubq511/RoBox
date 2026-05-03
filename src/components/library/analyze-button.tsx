@@ -40,11 +40,11 @@ export function AnalyzeButton({
               };
 
               if (!response.ok) {
-                setFeedback(payload.error ?? "Analyze failed. Retry is safe.");
+                setFeedback(payload.error ?? "分析失败，可安全重试");
                 return;
               }
 
-              setFeedback("Analyzed.");
+              setFeedback("分析完成");
 
               if (typeof window !== "undefined") {
                 window.location.reload();
@@ -53,7 +53,7 @@ export function AnalyzeButton({
               setFeedback(
                 error instanceof Error
                   ? error.message
-                  : "Analyze failed. Retry is safe.",
+                  : "分析失败，可安全重试",
               );
             }
           });
@@ -61,10 +61,10 @@ export function AnalyzeButton({
       >
         <SparklesIcon className="size-4" />
         {isPending
-          ? "Analyzing"
+          ? "分析中"
           : isAnalyzed
-            ? "Analyze again"
-            : "Smart analyze"}
+            ? "重新分析"
+            : "智能分析"}
       </Button>
       {feedback ? (
         <span className="text-xs text-muted-foreground" role="status">

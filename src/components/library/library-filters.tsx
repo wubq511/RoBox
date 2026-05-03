@@ -23,22 +23,22 @@ export function LibraryFilters({
       className="grid gap-3 rounded-[24px] border border-border/70 bg-background/90 p-4 md:grid-cols-2 xl:grid-cols-5"
     >
       <label className="space-y-2 xl:col-span-2">
-        <span className="text-xs font-medium text-muted-foreground">Search</span>
+        <span className="text-xs font-medium text-muted-foreground">搜索</span>
         <Input
           name="search"
           defaultValue={filters.search ?? ""}
-          placeholder={`Search ${type === "prompt" ? "prompts" : "skills"}`}
+          placeholder={`搜索 ${type === "prompt" ? "Prompt" : "Skill"}`}
         />
       </label>
 
       <label className="space-y-2">
-        <span className="text-xs font-medium text-muted-foreground">Category</span>
+        <span className="text-xs font-medium text-muted-foreground">分类</span>
         <select
           name="category"
           defaultValue={filters.category ?? ""}
           className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
         >
-          <option value="">All categories</option>
+          <option value="">全部分类</option>
           {itemCategories.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -48,19 +48,19 @@ export function LibraryFilters({
       </label>
 
       <label className="space-y-2">
-        <span className="text-xs font-medium text-muted-foreground">Tag</span>
+        <span className="text-xs font-medium text-muted-foreground">标签</span>
         <Input name="tag" defaultValue={filters.tag ?? ""} placeholder="react" />
       </label>
 
       <label className="space-y-2">
-        <span className="text-xs font-medium text-muted-foreground">Sort</span>
+        <span className="text-xs font-medium text-muted-foreground">排序</span>
         <select
           name="sort"
           defaultValue={filters.sort}
           className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
         >
-          <option value="updated">Updated</option>
-          <option value="used">Recently used</option>
+          <option value="updated">最近更新</option>
+          <option value="used">最近使用</option>
         </select>
       </label>
 
@@ -71,7 +71,7 @@ export function LibraryFilters({
           value="1"
           defaultChecked={filters.isFavorite ?? false}
         />
-        Favorites only
+        仅收藏
       </label>
 
       <div className="xl:col-span-5">

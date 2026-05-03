@@ -83,19 +83,19 @@ describe("skill routes", () => {
       "skill",
     );
     expect(mocks.listItems).toHaveBeenCalledWith(filters);
-    expect(markup).toContain("Skill library");
+    expect(markup).toContain("Skill 库");
     expect(markup).toContain('href="/skills/skill-1"');
   });
 
   it("renders the new skill route with a hidden skill type field and source URL input", async () => {
     const markup = renderToStaticMarkup(await NewSkillPage());
 
-    expect(markup).toContain("Import from GitHub");
+    expect(markup).toContain("从 GitHub 导入");
     expect(markup).toContain('name="githubUrl"');
     expect(markup).toContain('name="type" value="skill"');
-    expect(markup).toContain("New Skill");
-    expect(markup).toContain("Save Skill");
-    expect(markup).toContain("Source URL");
+    expect(markup).toContain("新建 Skill");
+    expect(markup).toContain("保存 Skill");
+    expect(markup).toContain("来源链接");
     expect(markup).not.toContain("Variables");
   });
 
@@ -128,7 +128,7 @@ describe("skill routes", () => {
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("skill-1");
     expect(markup).toContain("Skill title");
-    expect(markup).toContain("Source");
+    expect(markup).toContain("来源");
     expect(markup).toContain('href="/skills/skill-1/edit"');
   });
 
@@ -161,8 +161,8 @@ describe("skill routes", () => {
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("skill-1");
     expect(markup).toContain('name="type" value="skill"');
-    expect(markup).toContain("Edit Skill");
-    expect(markup).toContain("Update Skill");
+    expect(markup).toContain("编辑 Skill");
+    expect(markup).toContain("更新 Skill");
     expect(markup).toContain('name="sourceUrl" value="https://github.com/example/repo"');
   });
 

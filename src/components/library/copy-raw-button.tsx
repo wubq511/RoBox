@@ -18,7 +18,7 @@ type CopyRawButtonProps = {
 export function CopyRawButton({
   itemId,
   content,
-  label = "Copy raw",
+  label = "复制原始内容",
   revalidatePaths,
 }: Readonly<CopyRawButtonProps>) {
   const [feedback, setFeedback] = useState("");
@@ -46,10 +46,10 @@ export function CopyRawButton({
                 return;
               }
 
-              setFeedback("Copied.");
+              setFeedback("已复制");
             } catch (error) {
               setFeedback(
-                error instanceof Error ? error.message : "Copy failed.",
+                error instanceof Error ? error.message : "复制失败",
               );
             }
           });

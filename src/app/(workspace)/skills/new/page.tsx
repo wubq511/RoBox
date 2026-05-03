@@ -20,16 +20,16 @@ export default async function NewSkillPage() {
 
       <Card className="rounded-[28px] border-border/70">
         <CardHeader className="gap-3 border-b border-border/70 pb-5">
-          <CardTitle className="text-3xl tracking-[-0.04em]">New Skill</CardTitle>
+          <CardTitle className="text-3xl tracking-[-0.04em]">新建 Skill</CardTitle>
           <CardDescription className="text-sm leading-6">
-            Paste the SKILL.md body, save it first, then refine summary and tags later.
+            粘贴 SKILL.md 内容，先保存，之后再完善摘要和标签。
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
           <ItemForm
             type="skill"
             action={createSkillAction}
-            submitLabel="Save Skill"
+            submitLabel="保存 Skill"
             initialValues={{
               title: "",
               summary: "",

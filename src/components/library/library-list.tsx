@@ -12,7 +12,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { ListItemsFilters, ItemType } from "@/lib/schema/items";
 import type { StoredItem } from "@/server/db/types";
+import { toggleFavoriteAction } from "@/server/items/actions";
 
+import { FavoriteToggleButton } from "./favorite-toggle-button";
 import { LibraryFilters } from "./library-filters";
 
 type LibraryListProps = {
@@ -24,21 +26,18 @@ type LibraryListProps = {
 function getShellCopy(type: ItemType) {
   return type === "prompt"
     ? {
-        shellTitle: "Prompt library",
-        shellDescription: "Variables, raw copy, edit, and saved search.",
-        createLabel: "Create now",
-        emptyTitle: "No prompts yet",
-        emptyDescription:
-          "Change the keyword or filters, or create your first saved item.",
+        shellTitle: "Prompt 库",
+        shellDescription: "变量模板、原始复制、编辑与搜索。",
+        createLabel: "新建 Prompt",
+        emptyTitle: "还没有 Prompt",
+        emptyDescription: "换个关键词或筛选条件，或创建第一个 Prompt。",
       }
     : {
-        shellTitle: "Skill library",
-        shellDescription:
-          "Save reusable SKILL.md files, linked sources, and copy-ready notes.",
-        createLabel: "Create now",
-        emptyTitle: "No skills yet",
-        emptyDescription:
-          "Change the keyword or filters, or create your first saved item.",
+        shellTitle: "Skill 库",
+        shellDescription: "保存可复用的 Skill 文件、来源链接和复制笔记。",
+        createLabel: "新建 Skill",
+        emptyTitle: "还没有 Skill",
+        emptyDescription: "换个关键词或筛选条件，或创建第一个 Skill。",
       };
 }
 
@@ -92,17 +91,18 @@ export function LibraryList({
                   <Badge variant="secondary" className="rounded-full px-2.5">
                     {item.category}
                   </Badge>
-                  {item.isFavorite ? (
-                    <Badge variant="outline" className="rounded-full px-2.5">
-                      Favorite
-                    </Badge>
-                  ) : null}
+                  <FavoriteToggleButton
+                    itemId={item.id}
+                    type={item.type}
+                    isFavorite={item.isFavorite}
+                    toggleAction={toggleFavoriteAction}
+                  />
                   {!item.isAnalyzed ? (
                     <Badge
                       variant="outline"
                       className="rounded-full border-amber-300 bg-amber-50 px-2.5 text-amber-700"
                     >
-                      Need analyze
+                      待整理
                     </Badge>
                   ) : null}
                 </div>
@@ -111,7 +111,7 @@ export function LibraryList({
                     {item.updatedAt}
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
-                    Copied {item.usageCount}
+                    复制 {item.usageCount} 次
                   </div>
                 </div>
               </div>

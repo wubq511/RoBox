@@ -25,7 +25,7 @@ describe("ItemForm", () => {
     );
 
     expect(html).toContain('name="type" value="prompt"');
-    expect(html).toContain("Variables");
+    expect(html).toContain("变量");
     expect(html).toContain('name="variables"');
   });
 
@@ -48,7 +48,7 @@ describe("ItemForm", () => {
     );
 
     expect(html).toContain('name="type" value="skill"');
-    expect(html).toContain("Source URL");
-    expect(html).not.toContain("Add variable");
+    expect(html).toContain("来源链接");
+    expect(html).not.toContain("添加变量");
   });
 });

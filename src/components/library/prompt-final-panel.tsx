@@ -41,9 +41,9 @@ export function PromptFinalPanel({
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold">Variables</h3>
+          <h3 className="text-sm font-semibold">变量</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Fill values here to generate a copy-ready prompt.
+            填写变量值以生成可直接复制的 Prompt。
           </p>
         </div>
         <span className="font-mono text-xs text-muted-foreground">
@@ -53,8 +53,7 @@ export function PromptFinalPanel({
 
       {variables.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-          No variables yet. Smart analyze can extract variables, and raw copy still
-          works.
+          暂无变量。智能分析可自动提取变量，原始复制仍然可用。
         </div>
       ) : (
         <div className="space-y-3">
@@ -69,7 +68,7 @@ export function PromptFinalPanel({
                 </span>
                 {variable.required ? (
                   <Badge variant="outline" className="rounded-full px-2.5">
-                    Required
+                    必填
                   </Badge>
                 ) : null}
               </div>
@@ -91,7 +90,7 @@ export function PromptFinalPanel({
               ) : null}
               {variable.defaultValue ? (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Default: {variable.defaultValue}
+                  默认值: {variable.defaultValue}
                 </p>
               ) : null}
             </label>
@@ -101,7 +100,7 @@ export function PromptFinalPanel({
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold">Final prompt preview</h3>
+          <h3 className="text-sm font-semibold">最终 Prompt 预览</h3>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -123,17 +122,17 @@ export function PromptFinalPanel({
                       return;
                     }
 
-                    setFeedback("Copied final prompt.");
+                    setFeedback("已复制最终 Prompt");
                   } catch (error) {
                     setFeedback(
-                      error instanceof Error ? error.message : "Copy failed.",
+                      error instanceof Error ? error.message : "复制失败",
                     );
                   }
                 });
               }}
             >
               <CopyIcon className="size-4" />
-              Copy final
+              复制最终内容
             </Button>
             {feedback ? (
               <span className="text-xs text-muted-foreground" role="status">

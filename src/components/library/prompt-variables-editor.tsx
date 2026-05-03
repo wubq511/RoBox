@@ -39,9 +39,9 @@ export function PromptVariablesEditor({
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold">Variables</h3>
+          <h3 className="text-sm font-semibold">变量</h3>
           <p className="text-xs text-muted-foreground">
-            Prompt can be saved without any variables.
+            Prompt 可以不包含变量直接保存。
           </p>
         </div>
         <Button
@@ -53,7 +53,7 @@ export function PromptVariablesEditor({
           }}
         >
           <PlusIcon className="size-4" />
-          Add variable
+          添加变量
         </Button>
       </div>
 
@@ -67,7 +67,7 @@ export function PromptVariablesEditor({
 
       {variables.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border px-4 py-5 text-sm text-muted-foreground">
-          No variables yet. Plain prompts can still be saved and copied.
+          暂无变量。普通 Prompt 仍可保存和复制。
         </div>
       ) : (
         <div className="space-y-3">
@@ -78,7 +78,7 @@ export function PromptVariablesEditor({
             >
               <div className="flex items-center justify-between gap-3">
                 <Badge variant="outline" className="rounded-full px-2.5">
-                  Variable {index + 1}
+                  变量 {index + 1}
                 </Badge>
                 <Button
                   type="button"
@@ -96,7 +96,7 @@ export function PromptVariablesEditor({
 
               <div className="grid gap-3 md:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="text-xs font-medium text-foreground">Name</span>
+                  <span className="text-xs font-medium text-foreground">名称</span>
                   <Input
                     value={variable.name}
                     onChange={(event) => {
@@ -117,7 +117,7 @@ export function PromptVariablesEditor({
 
                 <label className="space-y-2">
                   <span className="text-xs font-medium text-foreground">
-                    Default value
+                    默认值
                   </span>
                   <Input
                     value={variable.defaultValue}
@@ -140,7 +140,7 @@ export function PromptVariablesEditor({
 
               <label className="space-y-2">
                 <span className="text-xs font-medium text-foreground">
-                  Description
+                  描述
                 </span>
                 <Input
                   value={variable.description}
@@ -178,7 +178,7 @@ export function PromptVariablesEditor({
                     );
                   }}
                 />
-                Required
+                必填
               </label>
             </div>
           ))}

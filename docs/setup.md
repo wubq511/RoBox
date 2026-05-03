@@ -28,6 +28,7 @@ Current MVP behavior:
 - Imported GitHub Skills copy `source_url`; manual Skills continue to copy raw content.
 - Phase 4 was verified on `2026-05-02` with local Supabase and real DeepSeek `deepseek-v4-flash` analyze.
 - Phase 5 was verified on `2026-05-02` with local `test/typecheck/lint/build`, live README fetch for `https://github.com/tw93/Waza`, and a browser smoke test against local Supabase + DeepSeek: login by magic link, import Waza, view analyzed Skill detail, copy source URL, search it, reject an invalid GitHub URL, then manually save and copy a Skill.
+- Production deployment verified on `2026-05-03`: Supabase cloud project `robox` (`ap-northeast-1`), Vercel at `robox.vercel.app`, 94 tests passing, full Chinese UI.
 
 Verification commands:
 
@@ -150,6 +151,34 @@ Current code placement:
 - GitHub import is wired through a server-only route. It does not fetch arbitrary URLs and uses `GITHUB_TOKEN` only when provided.
 
 For architecture and smoke-test details, see `docs/architecture.md` and `docs/integration-guide.md`.
+
+## 8. Vercel deployment
+
+Production is deployed on Vercel. The project name is `robox`.
+
+Required Vercel environment variables:
+
+| Key | Value | Notes |
+|-----|-------|-------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` | Must include `https://` prefix |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb-xxxx` | From Supabase Dashboard → API |
+| `NEXT_PUBLIC_APP_ORIGIN` | `https://robox.vercel.app` | Required in production; errors if missing |
+| `ALLOWED_EMAILS` | `user@example.com` | Comma-separated allowlist |
+| `DEEPSEEK_API_KEY` | `sk-xxxx` | Server only |
+| `DEEPSEEK_MODEL` | `deepseek-v4-flash` | Optional, defaults to this |
+| `DEEPSEEK_API_BASE_URL` | `https://api.deepseek.com` | Optional |
+| `GITHUB_TOKEN` | `ghp_xxxx` | Optional, server only |
+
+Supabase Auth URL Configuration must include the Vercel domain:
+
+- Site URL: `https://robox.vercel.app`
+- Redirect URLs: `https://robox.vercel.app/auth/confirm`
+
+Deploy command:
+
+```bash
+vercel --prod --yes --name robox
+```
 
 ## 7. MVP route map
 

@@ -52,12 +52,12 @@ export function ItemForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
-          <span className="text-sm font-medium">Title</span>
+          <span className="text-sm font-medium">标题</span>
           <Input name="title" defaultValue={initialValues.title} maxLength={120} />
         </label>
 
         <label className="space-y-2">
-          <span className="text-sm font-medium">Category</span>
+          <span className="text-sm font-medium">分类</span>
           <select
             name="category"
             defaultValue={initialValues.category}
@@ -73,7 +73,7 @@ export function ItemForm({
       </div>
 
       <label className="space-y-2">
-        <span className="text-sm font-medium">Summary</span>
+        <span className="text-sm font-medium">摘要</span>
         <Textarea
           name="summary"
           defaultValue={initialValues.summary}
@@ -83,17 +83,17 @@ export function ItemForm({
       </label>
 
       <label className="space-y-2">
-        <span className="text-sm font-medium">Tags</span>
+        <span className="text-sm font-medium">标签</span>
         <Input
           name="tags"
           defaultValue={(initialValues.tags ?? []).join(", ")}
-          placeholder="comma, separated, tags"
+          placeholder="用逗号分隔标签"
         />
       </label>
 
       {type === "skill" ? (
         <label className="space-y-2">
-          <span className="text-sm font-medium">Source URL</span>
+          <span className="text-sm font-medium">来源链接</span>
           <Input name="sourceUrl" defaultValue={initialValues.sourceUrl} />
         </label>
       ) : (
@@ -101,7 +101,7 @@ export function ItemForm({
       )}
 
       <label className="space-y-2">
-        <span className="text-sm font-medium">Content</span>
+        <span className="text-sm font-medium">内容</span>
         <Textarea
           name="content"
           defaultValue={initialValues.content}

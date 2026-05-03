@@ -19,7 +19,7 @@ type DeleteItemButtonProps = {
 export function DeleteItemButton({
   itemId,
   type,
-  label = "Delete",
+  label = "删除",
 }: Readonly<DeleteItemButtonProps>) {
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useActionState(
@@ -38,7 +38,7 @@ export function DeleteItemButton({
         onClick={() => {
           if (typeof window !== "undefined") {
             const confirmed = window.confirm(
-              `Delete this ${type}? This cannot be undone.`,
+              `确定删除此${type === "prompt" ? "Prompt" : "Skill"}？此操作不可撤销。`,
             );
 
             if (!confirmed) {

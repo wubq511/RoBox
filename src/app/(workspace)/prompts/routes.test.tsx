@@ -83,7 +83,7 @@ describe("prompt routes", () => {
       "prompt",
     );
     expect(mocks.listItems).toHaveBeenCalledWith(filters);
-    expect(markup).toContain("Prompt library");
+    expect(markup).toContain("Prompt 库");
     expect(markup).toContain('href="/prompts/prompt-1"');
   });
 
@@ -91,9 +91,9 @@ describe("prompt routes", () => {
     const markup = renderToStaticMarkup(await NewPromptPage());
 
     expect(markup).toContain('name="type" value="prompt"');
-    expect(markup).toContain("New Prompt");
-    expect(markup).toContain("Save Prompt");
-    expect(markup).toContain("Variables");
+    expect(markup).toContain("新建 Prompt");
+    expect(markup).toContain("保存 Prompt");
+    expect(markup).toContain("变量");
     expect(markup).toContain('<option value="Other" selected="">Other</option>');
   });
 
@@ -158,8 +158,8 @@ describe("prompt routes", () => {
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("prompt-1");
     expect(markup).toContain('name="type" value="prompt"');
-    expect(markup).toContain("Edit Prompt");
-    expect(markup).toContain("Update Prompt");
+    expect(markup).toContain("编辑 Prompt");
+    expect(markup).toContain("更新 Prompt");
     expect(markup).toContain('name="title" value="Prompt title"');
   });
 
