@@ -1,4 +1,5 @@
 import type { StoredItem } from "@/server/db/types";
+import { getServerEnv } from "@/lib/env";
 import { requestDeepSeekAnalysis } from "@/server/analyze/deepseek";
 import { createItem, updateItem } from "@/server/db/items";
 
@@ -34,6 +35,7 @@ type GithubSkillImportResult = {
 const allowedHosts = new Set(["github.com", "raw.githubusercontent.com"]);
 const defaultReadmeCandidates = ["README.md", "README.mdx", "README.txt", "README"];
 const maxReadmeAnalysisCharacters = 24_000;
+const maxReadmeFetchCharacters = 100_000;
 
 export class GithubImportError extends Error {
   statusCode: number;
@@ -201,7 +203,7 @@ export function resolveGithubSkillUrl(input: string): GithubSkillTarget {
 }
 
 function buildFetchHeaders(githubToken?: string) {
-  const token = githubToken ?? process.env.GITHUB_TOKEN?.trim();
+  const token = githubToken ?? getServerEnv("GITHUB_TOKEN");
   const headers: Record<string, string> = {
     Accept: "text/plain",
     "User-Agent": "RoBox GitHub Import",
@@ -239,6 +241,13 @@ export async function fetchGithubReadme(
     }
 
     const content = await response.text();
+
+    if (content.length > maxReadmeFetchCharacters) {
+      throw new GithubImportError(
+        "README file is too large to import.",
+        422,
+      );
+    }
 
     if (content.trim()) {
       return {

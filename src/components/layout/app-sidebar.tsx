@@ -14,20 +14,20 @@ export function AppSidebar({ userEmail }: Readonly<{ userEmail: string }>) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[260px] shrink-0 border-r border-border/60 bg-sidebar lg:flex lg:flex-col">
-      <div className="flex h-16 items-center gap-3 border-b border-border/50 px-6">
+    <aside className="fixed left-0 top-0 hidden h-screen w-[260px] flex-col overflow-y-auto border-r border-border/60 bg-sidebar lg:flex">
+      <div className="flex h-[60px] items-center gap-3 px-6">
         <div className="flex size-[34px] items-center justify-center rounded-xl bg-primary text-[13px] font-bold text-primary-foreground shadow-sm">
           RB
         </div>
         <div className="space-y-0.5">
           <div className="text-[15px] font-semibold tracking-tight text-sidebar-foreground">RoBox</div>
-          <p className="text-[11px] font-medium text-sidebar-foreground/60 tracking-wider uppercase">
+          <p className="text-xs font-medium text-sidebar-foreground/60 tracking-wider uppercase">
             Prompt / Skill 库
           </p>
         </div>
       </div>
 
-      <nav className="grid gap-1 px-3 py-6">
+      <nav className="grid gap-1 px-3 pt-4 pb-6">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, pathname);
@@ -57,14 +57,12 @@ export function AppSidebar({ userEmail }: Readonly<{ userEmail: string }>) {
         <div className="rounded-[14px] border border-border/50 bg-background/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <div className="size-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
               当前账号
             </h2>
           </div>
-          <p className="text-[13px] text-foreground/80 leading-relaxed mb-3">
-            受保护的单用户会话。
-          </p>
-          <p className="border-t border-border/50 pt-3 text-[12px] font-medium truncate text-muted-foreground/80">
+
+          <p className="text-[13px] font-medium truncate text-muted-foreground/80">
             {userEmail}
           </p>
         </div>

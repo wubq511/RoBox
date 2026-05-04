@@ -1,6 +1,9 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getAppOrigin } from "@/lib/env";
+import { getOptionalAppUser } from "@/server/auth/session";
 import { analyzeStoredItem } from "@/server/analyze/service";
 
 type RouteContext = {
@@ -10,7 +13,11 @@ type RouteContext = {
 };
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Analyze failed.";
+  if (process.env.NODE_ENV === "development") {
+    return error instanceof Error ? error.message : "Analyze failed.";
+  }
+
+  return "Smart analyze failed. Please try again.";
 }
 
 function getErrorStatus(error: unknown) {
@@ -34,7 +41,25 @@ function revalidateItemPaths(type: "prompt" | "skill", itemId: string) {
   revalidatePath(`${collectionPath}/${itemId}`);
 }
 
-export async function POST(_request: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
+  const origin = request.headers.get("origin");
+
+  if (origin && origin !== getAppOrigin()) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const user = await getOptionalAppUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { allowed } = checkRateLimit(request, 30, 3_600_000);
+
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const { id } = await context.params;
 
   try {

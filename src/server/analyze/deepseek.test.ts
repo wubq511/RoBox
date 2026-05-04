@@ -35,8 +35,8 @@ describe("requestDeepSeekAnalysis", () => {
         {
           apiKey: "test-key",
           baseUrl: "https://api.deepseek.com",
-          fetcher,
           model: "deepseek-v4-flash",
+          fetcher,
         },
       ),
     ).resolves.toMatchObject({

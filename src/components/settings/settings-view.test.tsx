@@ -8,7 +8,6 @@ describe("SettingsView", () => {
     const html = renderToStaticMarkup(<SettingsView />);
 
     expect(html).toContain("DEEPSEEK_API_KEY");
-    expect(html).toContain("DEEPSEEK_MODEL");
     expect(html).toContain("Writing");
     expect(html).toContain("Coding");
     expect(html).toContain("Other");

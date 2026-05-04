@@ -16,33 +16,26 @@ import {
 const settingsCards = [
   {
     title: "DeepSeek API",
-    description:
-      "保存时不调用模型；手动智能整理和 GitHub 导入整理才请求 DeepSeek。",
-    detail:
-      "服务端环境变量：DEEPSEEK_API_KEY。可选：DEEPSEEK_MODEL 默认 deepseek-v4-flash，DEEPSEEK_API_BASE_URL 默认 https://api.deepseek.com。",
+    description: "配置 AI 模型用于智能整理内容。",
+    detail: "在服务端环境变量中设置 DEEPSEEK_API_KEY 即可启用。",
     icon: SparklesIcon,
   },
   {
     title: "固定分类",
-    description:
-      "固定分类，不开放动态分类配置，避免第一版变成通用知识库。",
-    detail:
-      "允许分类：Writing, Coding, Research, Design, Study, Agent, Content, Other。标签仍然可以按条目手动编辑。",
+    description: "使用预设分类管理你的 Prompt 和 Skill。",
+    detail: "支持 Writing、Coding、Research、Design、Study、Agent、Content、Other 分类。",
     icon: DatabaseIcon,
   },
   {
     title: "GitHub 导入",
-    description:
-      "只允许 GitHub 仓库、README 链接和 raw README/SKILL.md 链接。",
-    detail:
-      "允许域名：github.com 和 raw.githubusercontent.com。可选 GITHUB_TOKEN 只放服务端，用于降低 API 限流影响。",
+    description: "从 GitHub 仓库导入 Skill 文件。",
+    detail: "支持 github.com 和 raw.githubusercontent.com 链接。",
     icon: GitBranchIcon,
   },
   {
     title: "数据导出",
-    description:
-      "导出 JSON / Markdown 是后续优化项，本阶段只保留清晰占位。",
-    detail: "仅占位：MVP 收口阶段还没有实现 JSON / Markdown 导出。",
+    description: "导出你的 Prompt 和 Skill 数据。",
+    detail: "即将支持 JSON 和 Markdown 格式导出。",
     icon: FolderDownIcon,
   },
 ];
@@ -53,7 +46,7 @@ export function SettingsView() {
       <div className="space-y-3">
         <h1 className="text-3xl font-semibold tracking-[-0.04em]">设置</h1>
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-          MVP 保留外部服务、固定分类和导出占位说明；当前不引入多用户配置面板。
+          配置外部服务和数据管理选项。
         </p>
       </div>
 

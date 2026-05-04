@@ -1,5 +1,5 @@
 export type ItemFormState = {
-  status: "idle" | "error";
+  status: "idle" | "error" | "pending";
   message: string;
 };
 

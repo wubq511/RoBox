@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { CopyIcon } from "lucide-react";
+import { CopyIcon, CheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { buildFinalPrompt } from "@/features/items/final-prompt";
 import type { StoredPromptVariable } from "@/server/db/types";
 import { recordCopyActionAction } from "@/server/items/actions";
@@ -37,114 +36,105 @@ export function PromptFinalPanel({
     [content, values, variables],
   );
 
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold">变量</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            填写变量值以生成可直接复制的 Prompt。
-          </p>
-        </div>
-        <span className="font-mono text-xs text-muted-foreground">
-          {variables.length}
-        </span>
-      </div>
+  const handleCopy = () => {
+    startTransition(async () => {
+      try {
+        await copyText(finalPrompt);
+        const result = await recordCopyActionAction({
+          itemId,
+          action: "copy_final",
+          revalidatePaths,
+        });
 
-      {variables.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-          暂无变量。智能分析可自动提取变量，原始复制仍然可用。
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {variables.map((variable) => (
-            <label
-              key={variable.name}
-              className="block rounded-2xl border border-border/70 bg-muted/30 p-4"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="font-mono text-sm font-medium">
+        if (result?.status === "error") {
+          setFeedback(result.message);
+          return;
+        }
+
+        setFeedback("已复制");
+        setTimeout(() => setFeedback(""), 2000);
+      } catch (error) {
+        setFeedback(error instanceof Error ? error.message : "复制失败");
+      }
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 变量区域 */}
+      {variables.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">变量</h3>
+            <span className="text-xs text-muted-foreground">
+              {variables.length} 个
+            </span>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {variables.map((variable) => (
+              <div
+                key={variable.name}
+                className="space-y-2 rounded-xl border border-border/60 bg-background p-4 focus-within:border-primary/30 focus-within:ring-2 focus-within:ring-primary/10 transition-all"
+              >
+                <label
+                  htmlFor={`var-${variable.name}`}
+                  className="text-sm font-medium"
+                >
                   {variable.name}
-                </span>
-                {variable.required ? (
-                  <Badge variant="outline" className="rounded-full px-2.5">
-                    必填
-                  </Badge>
-                ) : null}
+                  {variable.required && (
+                    <span className="text-destructive">*</span>
+                  )}
+                </label>
+                <Input
+                  id={`var-${variable.name}`}
+                  value={values[variable.name] ?? ""}
+                  placeholder={variable.defaultValue || variable.description || "请输入..."}
+                  className="h-9 text-sm"
+                  onChange={(event) => {
+                    setValues((currentValues) => ({
+                      ...currentValues,
+                      [variable.name]: event.target.value,
+                    }));
+                  }}
+                />
               </div>
-              <Input
-                value={values[variable.name] ?? ""}
-                placeholder={variable.description}
-                className="mt-3 font-mono"
-                onChange={(event) => {
-                  setValues((currentValues) => ({
-                    ...currentValues,
-                    [variable.name]: event.target.value,
-                  }));
-                }}
-              />
-              {variable.description ? (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {variable.description}
-                </p>
-              ) : null}
-              {variable.defaultValue ? (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  默认值: {variable.defaultValue}
-                </p>
-              ) : null}
-            </label>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       )}
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold">最终 Prompt 预览</h3>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              disabled={isPending}
-              onClick={() => {
-                startTransition(async () => {
-                  try {
-                    await copyText(finalPrompt);
-                    const result = await recordCopyActionAction({
-                      itemId,
-                      action: "copy_final",
-                      revalidatePaths,
-                    });
-
-                    if (result?.status === "error") {
-                      setFeedback(result.message);
-                      return;
-                    }
-
-                    setFeedback("已复制最终 Prompt");
-                  } catch (error) {
-                    setFeedback(
-                      error instanceof Error ? error.message : "复制失败",
-                    );
-                  }
-                });
-              }}
-            >
-              <CopyIcon className="size-4" />
-              复制最终内容
-            </Button>
-            {feedback ? (
-              <span className="text-xs text-muted-foreground" role="status">
-                {feedback}
-              </span>
-            ) : null}
-          </div>
+      {/* 最终 Prompt 预览 */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">预览</h3>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            disabled={isPending}
+            onClick={handleCopy}
+            className="gap-1.5"
+          >
+            {feedback === "已复制" ? (
+              <>
+                <CheckIcon className="size-4" />
+                已复制
+              </>
+            ) : (
+              <>
+                <CopyIcon className="size-4" />
+                复制
+              </>
+            )}
+          </Button>
         </div>
-        <pre className="overflow-x-auto rounded-[22px] border border-border/70 bg-muted/30 p-4 font-mono text-xs leading-6 whitespace-pre-wrap text-muted-foreground">
-          {finalPrompt}
-        </pre>
-      </div>
-    </section>
+        <div className="relative">
+          <pre className="overflow-x-auto rounded-2xl border border-border/60 bg-muted/30 p-5 font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground/80 min-h-[120px]">
+            {finalPrompt}
+          </pre>
+        </div>
+      </section>
+    </div>
   );
 }

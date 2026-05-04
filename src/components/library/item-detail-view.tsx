@@ -1,18 +1,16 @@
 import Link from "next/link";
+import { ArrowLeftIcon, CalendarIcon, ExternalLinkIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { ItemDetail } from "@/server/db/types";
-
-import { toggleFavoriteAction } from "@/server/items/actions";
 
 import { AnalyzeButton } from "./analyze-button";
 import { CopyRawButton } from "./copy-raw-button";
@@ -24,6 +22,26 @@ type ItemDetailViewProps = {
   item: ItemDetail;
   returnPath: string;
 };
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "刚刚";
+  if (diffMins < 60) return `${diffMins} 分钟前`;
+  if (diffHours < 24) return `${diffHours} 小时前`;
+  if (diffDays < 7) return `${diffDays} 天前`;
+
+  return date.toLocaleDateString("zh-CN", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export function ItemDetailView({
   item,
@@ -40,117 +58,128 @@ export function ItemDetailView({
   ];
   const isImportedSkill = item.type === "skill" && Boolean(item.sourceUrl);
   const copyContent = isImportedSkill ? item.sourceUrl : item.content;
-  const copyLabel =
-    item.type === "prompt"
-      ? "复制原始内容"
-      : isImportedSkill
-        ? "复制来源链接"
-        : "复制原始 Skill";
-  const rawContentLabel =
-    item.type === "prompt"
-      ? "原始 Prompt"
-      : isImportedSkill
-        ? "保存的链接"
-        : "原始 Skill";
+  const copyLabel = item.type === "prompt" ? "复制" : isImportedSkill ? "复制链接" : "复制";
 
   return (
-    <Card className="rounded-[28px] border-border/70">
-      <CardHeader className="gap-4 border-b border-border/70 pb-5">
-        <div className="flex items-center justify-between gap-3">
-          <Badge variant="outline" className="rounded-full px-2.5">
-            {item.type}
-          </Badge>
-          {!item.isAnalyzed ? (
-            <Badge
-              variant="outline"
-              className="rounded-full border-amber-300 bg-amber-50 px-2.5 text-amber-700"
-            >
-              待整理
-            </Badge>
-          ) : null}
-          <span className="font-mono text-xs text-muted-foreground">
-            {item.updatedAt}
-          </span>
-        </div>
-        <div className="space-y-2">
-          <CardTitle className="text-2xl tracking-[-0.03em]">
-            {item.title}
-          </CardTitle>
-          <CardDescription className="text-sm leading-6">
-            {item.summary}
-          </CardDescription>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="rounded-full px-2.5">
-            {item.category}
-          </Badge>
-          {item.tags.map((tag) => (
-            <Badge key={tag} variant="outline" className="rounded-full px-2.5">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={normalizedReturnPath}
-            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
-          >
-            返回
-          </Link>
+    <div className="space-y-6">
+      {/* 顶部导航栏 */}
+      <div className="flex items-center justify-between">
+        <Link
+          href={normalizedReturnPath}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "gap-1.5 text-muted-foreground hover:text-foreground"
+          )}
+        >
+          <ArrowLeftIcon className="size-4" />
+          返回
+        </Link>
+        <div className="flex items-center gap-2">
+          <FavoriteToggleButton
+            itemId={item.id}
+            itemType={item.type}
+            isFavorite={item.isFavorite}
+          />
           <Link
             href={editPath}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
           >
             编辑
           </Link>
-          <FavoriteToggleButton
-            itemId={item.id}
-            type={item.type}
-            isFavorite={item.isFavorite}
-            toggleAction={toggleFavoriteAction}
-            variant="button"
-          />
-          <AnalyzeButton itemId={item.id} isAnalyzed={item.isAnalyzed} />
-          <DeleteItemButton itemId={item.id} type={item.type} />
+          <AnalyzeButton itemId={item.id} />
+          <DeleteItemButton itemId={item.id} />
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-6 pt-5">
-        {item.type === "prompt" ? (
-          <PromptFinalPanel
-            itemId={item.id}
-            content={item.content}
-            variables={item.variables}
-            revalidatePaths={revalidatePaths}
-          />
-        ) : null}
+      {/* 主内容卡片 */}
+      <Card className="rounded-3xl border-border/60 shadow-sm">
+        <CardHeader className="gap-4 pb-6">
+          {/* 元信息行 */}
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {item.type} / {item.category}
+              </span>
+              {!item.isAnalyzed && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 border border-amber-200">
+                  <span className="size-1.5 rounded-full bg-amber-500"></span>
+                  待整理
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <CalendarIcon className="size-3.5" />
+              <span className="text-xs">{formatDate(item.updatedAt)}</span>
+            </div>
+          </div>
 
-        {item.type === "skill" && item.sourceUrl ? (
-          <section className="rounded-2xl border border-border/70 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-              来源
-            </p>
-            <p className="mt-2 break-all font-mono text-xs leading-6 text-muted-foreground">
-              {item.sourceUrl}
-            </p>
-          </section>
-        ) : null}
+          {/* 标题和摘要 */}
+          <div className="space-y-3">
+            <CardTitle className="text-3xl font-semibold tracking-tight leading-tight">
+              {item.title}
+            </CardTitle>
+            {item.summary && (
+              <p className="text-base text-muted-foreground leading-relaxed">
+                {item.summary}
+              </p>
+            )}
+          </div>
 
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-semibold">{rawContentLabel}</h3>
-            <CopyRawButton
+          {/* 标签 */}
+          {item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {item.tags.map((tag) => (
+                <span key={tag} className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-lg">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </CardHeader>
+
+        <CardContent className="space-y-6 pt-0">
+          {/* Prompt 变量区域 */}
+          {item.type === "prompt" ? (
+            <PromptFinalPanel
               itemId={item.id}
-              content={copyContent}
-              label={copyLabel}
+              content={item.content}
+              variables={item.variables}
               revalidatePaths={revalidatePaths}
             />
-          </div>
-          <pre className="overflow-x-auto rounded-[22px] border border-border/70 bg-muted/30 p-4 font-mono text-xs leading-6 whitespace-pre-wrap text-muted-foreground">
-            {item.content}
-          </pre>
-        </section>
-      </CardContent>
-    </Card>
+          ) : null}
+
+          {/* Skill 来源链接 */}
+          {item.type === "skill" && item.sourceUrl ? (
+            <section className="rounded-2xl border border-border/60 bg-muted/30 p-5">
+              <h3 className="text-sm font-semibold mb-3">来源</h3>
+              <a
+                href={item.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-primary hover:underline break-all"
+              >
+                <ExternalLinkIcon className="size-4 shrink-0" />
+                {item.sourceUrl}
+              </a>
+            </section>
+          ) : null}
+
+          {/* 原始内容 */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">
+                {item.type === "prompt" ? "原始 Prompt" : "内容"}
+              </h3>
+              <CopyRawButton content={copyContent} />
+            </div>
+            <div className="relative group">
+              <pre className="overflow-x-auto rounded-2xl border border-border/60 bg-muted/30 p-5 font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground/80">
+                {item.content}
+              </pre>
+            </div>
+          </section>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

@@ -57,8 +57,6 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
   Public key used by `@supabase/ssr`.
 - `NEXT_PUBLIC_APP_ORIGIN`
   Required in production. Local development may omit it and fall back to `http://localhost:3000`; production must set the real app origin, for example the Vercel URL.
-- `SUPABASE_SERVICE_ROLE_KEY`
-  Reserved for server-only admin operations. Do not expose it to the browser.
 - `ALLOWED_EMAILS`
   Required in Phase 2. Comma-separated allowlist for RoBox login, for example `robert@example.com`.
 
@@ -67,7 +65,7 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 - `DEEPSEEK_API_KEY`
   Required for live smart analyze and GitHub import analysis. Server only.
 - `DEEPSEEK_MODEL`
-  Optional. Defaults to `deepseek-v4-flash`.
+  Required. The DeepSeek model name, for example `deepseek-v4-flash`. Server only.
 - `DEEPSEEK_API_BASE_URL`
   Optional. Defaults to `https://api.deepseek.com`.
 
@@ -75,6 +73,10 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 
 - `GITHUB_TOKEN`
   Optional for GitHub import rate-limit relief. Server only.
+
+### Environment variable priority
+
+All server-side environment variables are read through `getServerEnv()` (defined in `src/lib/env.ts`). This function prioritizes `.env.local` file values over system `process.env`, preventing system-level environment variables from silently overriding project-local configuration.
 
 ## 4. Supabase local development convention
 
@@ -117,10 +119,12 @@ Current code placement:
   Shared Prompt / Skill library surface
 - `src/components/settings`
   Settings page UI
+- `src/hooks`
+  Shared client-side hooks, including the toast notification system
 - `src/features/items`
   Prompt / Skill types and query-state helpers
 - `src/lib`
-  Generic helpers, navigation, env readers, shared validation schemas
+  Generic helpers, navigation, env readers, shared validation schemas, rate limiter
 - `src/lib/supabase`
   Browser/server/proxy Supabase client factories
 - `src/server/auth`
@@ -147,7 +151,7 @@ Current code placement:
 - Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
-- DeepSeek is wired through a server-only route. Live model calls need a valid `DEEPSEEK_API_KEY`; the default model is `deepseek-v4-flash`.
+- DeepSeek is wired through a server-only route. Live model calls need a valid `DEEPSEEK_API_KEY`; the model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`).
 - GitHub import is wired through a server-only route. It does not fetch arbitrary URLs and uses `GITHUB_TOKEN` only when provided.
 
 For architecture and smoke-test details, see `docs/architecture.md` and `docs/integration-guide.md`.
@@ -165,7 +169,6 @@ Required Vercel environment variables:
 | `NEXT_PUBLIC_APP_ORIGIN` | `https://robox.vercel.app` | Required in production; errors if missing |
 | `ALLOWED_EMAILS` | `user@example.com` | Comma-separated allowlist |
 | `DEEPSEEK_API_KEY` | `sk-xxxx` | Server only |
-| `DEEPSEEK_MODEL` | `deepseek-v4-flash` | Optional, defaults to this |
 | `DEEPSEEK_API_BASE_URL` | `https://api.deepseek.com` | Optional |
 | `GITHUB_TOKEN` | `ghp_xxxx` | Optional, server only |
 

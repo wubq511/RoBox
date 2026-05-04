@@ -1,75 +1,66 @@
 "use client";
 
-import { StarIcon } from "lucide-react";
-import { useFormStatus } from "react-dom";
+import { useState } from "react";
+import { HeartIcon, Loader2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-
-function SubmitButton({ isFavorite }: { isFavorite: boolean }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className={cn(
-        "inline-flex items-center justify-center rounded-lg p-1.5 transition-colors",
-        isFavorite
-          ? "text-amber-400 hover:text-amber-300"
-          : "text-muted-foreground/40 hover:text-muted-foreground",
-      )}
-      aria-label={isFavorite ? "取消收藏" : "收藏"}
-    >
-      <StarIcon
-        className="size-4"
-        fill={isFavorite ? "currentColor" : "none"}
-      />
-    </button>
-  );
-}
-
-type FavoriteToggleButtonProps = {
-  itemId: string;
-  type: "prompt" | "skill";
-  isFavorite: boolean;
-  toggleAction: (formData: FormData) => void;
-  variant?: "icon" | "button";
-};
+import { useToast } from "@/hooks/use-toast";
+import { toggleFavoriteAction } from "@/server/items/actions";
+import type { ItemType } from "@/lib/schema/items";
 
 export function FavoriteToggleButton({
   itemId,
-  type,
+  itemType,
   isFavorite,
-  toggleAction,
-  variant = "icon",
-}: Readonly<FavoriteToggleButtonProps>) {
+}: Readonly<{
+  itemId: string;
+  itemType: ItemType;
+  isFavorite: boolean;
+}>) {
+  const [favorite, setFavorite] = useState(isFavorite);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  async function toggle() {
+    if (isLoading) return;
+    setIsLoading(true);
+
+    try {
+      const formData = new FormData();
+      formData.set("itemId", itemId);
+      formData.set("type", itemType);
+
+      const result = await toggleFavoriteAction(formData);
+
+      if (result && result.status === "error") {
+        throw new Error(result.message);
+      }
+
+      setFavorite((prev) => !prev);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "操作失败，请稍后重试";
+      toast({
+        title: "操作失败",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
-    <form
-      action={toggleAction}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <input type="hidden" name="itemId" value={itemId} />
-      <input type="hidden" name="type" value={type} />
-      {variant === "button" ? (
-        <Button
-          type="submit"
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "gap-1.5",
-            isFavorite ? "text-amber-400" : "text-muted-foreground",
-          )}
-        >
-          <StarIcon
-            className="size-4"
-            fill={isFavorite ? "currentColor" : "none"}
-          />
-          {isFavorite ? "已收藏" : "收藏"}
-        </Button>
+    <Button variant="ghost" size="sm" onClick={toggle} disabled={isLoading}>
+      {isLoading ? (
+        <Loader2Icon className="size-4 animate-spin" />
       ) : (
-        <SubmitButton isFavorite={isFavorite} />
+        <HeartIcon
+          className={`size-4 transition-colors ${
+            favorite ? "fill-red-500 text-red-500" : "text-muted-foreground"
+          }`}
+        />
       )}
-    </form>
+    </Button>
   );
 }

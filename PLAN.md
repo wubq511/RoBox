@@ -165,3 +165,57 @@
 - Settings 中的“数据导出”本轮只做入口或占位，不扩展成完整备份系统。
 - `RoBox_UI_Prototype` 仅作为交互参考，不作为代码迁移源。
 - 阶段优先顺序固定，不建议跳过 Phase 2 直接做页面，否则后续会返工数据模型和权限边界。
+
+### Phase 6：UI 打磨与模型环境变量化
+状态：已完成（2026-05-04）
+
+目标：对 MVP 全链路 UI 进行专业级打磨，去除开发阶段痕迹，并将 DeepSeek 模型与 Base URL 改为环境变量配置。
+
+任务清单：
+- 登录页：标题不换行、副标题精简、去除开发注释。
+- Dashboard：去除 MetricCard 小字说明、侧边栏去除"Library health"等注释、统计数字右对齐。
+- 列表页：时间格式统一为"YYYY-MM-DD"、筛选按钮文案精简、元信息展示去冗余。
+- 详情页：时间格式优化、操作按钮布局重构、元信息去冗余、Badge 改为大写格式（PROMPT/CONTENT）。
+- 新建/编辑页：表单分区（FormSection + 左侧竖线装饰）、统一输入框高度 h-11、内容区 min-h-[400px]、变量卡片重构（VariableCard + 序号圆角背景）。
+- Button 组件：显式处理 `asChild` 属性，修复 React DOM 报错。
+- 模型环境变量化：`DEEPSEEK_MODEL` 和 `DEEPSEEK_API_BASE_URL` 均从环境变量读取，默认不再硬编码，同步更新 `.env.example`、测试文件、全部文档。
+
+阶段交付物：
+- 全页面 UI 达到可交付标准，无开发阶段注释与小字说明。
+- DeepSeek 模型与 Base URL 可通过环境变量灵活配置。
+
+验收标准：
+- 各页面在浏览器中视觉协调、信息层级清晰、交互反馈明确。
+- 控制台无 `asChild` 相关 React 报错。
+- 代码中模型和 Base URL 均从环境变量读取，无硬编码值。
+
+### Phase 7：安全审计与加固
+状态：已完成（2026-05-04）
+
+目标：全面扫描项目安全风险，修复至部署上线安全标准。
+
+任务清单：
+- proxy.ts 位置修正：Next.js 16 要求 proxy 文件在项目根目录，已从 `src/proxy.ts` 迁移到根目录 `proxy.ts`。
+- API 路由显式鉴权：`/api/items/[id]/analyze` 和 `/api/import/github` 添加 `getOptionalAppUser()` 检查，未登录返回 401。
+- 安全响应头：`next.config.ts` 配置 X-Frame-Options、X-Content-Type-Options、Referrer-Policy、HSTS、CSP、Permissions-Policy。
+- ILIKE 注入修复：`sanitizeSearchValue` 转义 PostgreSQL ILIKE 特殊字符 `%` 和 `_`。
+- 速率限制：新增 `src/lib/rate-limit.ts`，GitHub import 10次/小时，Analyze 30次/小时。
+- 请求体大小限制：GitHub import URL 长度限制 2048 字符，请求体限制 4KB。
+- DeepSeek prompt 防注入：添加内容边界标记和忽略指令注入的规则。
+- replacePromptVariables 归属校验：删除变量前先通过 `getItemById` 确认 item 存在且属于当前用户。
+- 错误信息脱敏：生产环境 API 返回通用错误信息，不再泄露内部细节。
+- README 大小限制：GitHub 导入 README 内容上限 100KB。
+- CORS 检查：API 路由添加同源限制，拒绝跨域请求。
+- `.env.example` 清理：移除未使用的 `SUPABASE_SERVICE_ROLE_KEY`。
+
+阶段交付物：
+- 项目达到部署上线安全标准。
+- 所有 API 端点有鉴权、速率限制、输入校验。
+- 安全响应头完整配置。
+
+验收标准：
+- 未认证请求无法调用 API 端点。
+- 安全响应头在所有响应中存在。
+- 搜索特殊字符不会导致异常匹配。
+- 速率超限返回 429。
+- `npm run typecheck && npm run lint && npm run test && npm run build` 全部通过。

@@ -14,7 +14,7 @@ export default async function PromptsPage({
   const items = await listItems(filters);
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-6 lg:px-8 lg:py-8">
+    <main className="mx-auto w-full max-w-[1440px] px-4 py-6 lg:px-8 lg:py-8">
       <LibraryList type="prompt" items={items} filters={filters} />
     </main>
   );

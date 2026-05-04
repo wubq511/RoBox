@@ -24,7 +24,7 @@ export function GlobalSearchForm() {
   const query = searchParams.get("search") ?? "";
 
   return (
-    <form action={actionPath} className="relative ml-auto w-full max-w-xl lg:ml-0">
+    <form action={actionPath} className="relative w-full max-w-xl">
       <SearchIcon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         key={`${actionPath}:${query}`}

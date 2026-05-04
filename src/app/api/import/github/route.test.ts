@@ -1,9 +1,18 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createGithubSkillImportMock, revalidatePathMock } = vi.hoisted(() => ({
+const {
+  createGithubSkillImportMock,
+  revalidatePathMock,
+  getOptionalAppUserMock,
+  checkRateLimitMock,
+  getAppOriginMock,
+} = vi.hoisted(() => ({
   createGithubSkillImportMock: vi.fn(),
   revalidatePathMock: vi.fn(),
+  getOptionalAppUserMock: vi.fn(),
+  checkRateLimitMock: vi.fn(),
+  getAppOriginMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -14,12 +23,55 @@ vi.mock("@/server/import/github", () => ({
   createGithubSkillImport: createGithubSkillImportMock,
 }));
 
+vi.mock("@/server/auth/session", () => ({
+  getOptionalAppUser: getOptionalAppUserMock,
+}));
+
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: checkRateLimitMock,
+}));
+
+vi.mock("@/lib/env", () => ({
+  getAppOrigin: getAppOriginMock,
+}));
+
 import { POST } from "./route";
 
 describe("POST /api/import/github", () => {
   beforeEach(() => {
     createGithubSkillImportMock.mockReset();
     revalidatePathMock.mockReset();
+    getOptionalAppUserMock.mockResolvedValue({ id: "user-1", email: "test@example.com" });
+    checkRateLimitMock.mockReturnValue({ allowed: true, ip: "127.0.0.1" });
+    getAppOriginMock.mockReturnValue("http://localhost:3000");
+  });
+
+  it("returns 401 when user is not authenticated", async () => {
+    getOptionalAppUserMock.mockResolvedValue(null);
+
+    const response = await POST(
+      new NextRequest("http://localhost:3000/api/import/github", {
+        method: "POST",
+        body: JSON.stringify({ url: "https://github.com/tw93/Waza" }),
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(createGithubSkillImportMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when rate limited", async () => {
+    checkRateLimitMock.mockReturnValue({ allowed: false, ip: "127.0.0.1" });
+
+    const response = await POST(
+      new NextRequest("http://localhost:3000/api/import/github", {
+        method: "POST",
+        body: JSON.stringify({ url: "https://github.com/tw93/Waza" }),
+      }),
+    );
+
+    expect(response.status).toBe(429);
+    expect(createGithubSkillImportMock).not.toHaveBeenCalled();
   });
 
   it("imports a GitHub skill and revalidates workspace pages", async () => {
@@ -70,10 +122,32 @@ describe("POST /api/import/github", () => {
       }),
     );
 
-    await expect(response.json()).resolves.toEqual({
-      error: "Only github.com and raw.githubusercontent.com URLs are allowed.",
-    });
     expect(response.status).toBe(400);
     expect(revalidatePathMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 422 when URL exceeds max length", async () => {
+    const longUrl = "https://github.com/user/repo/" + "a".repeat(2100);
+
+    const response = await POST(
+      new NextRequest("http://localhost:3000/api/import/github", {
+        method: "POST",
+        body: JSON.stringify({ url: longUrl }),
+      }),
+    );
+
+    expect(response.status).toBe(422);
+  });
+
+  it("returns 403 for cross-origin requests", async () => {
+    const response = await POST(
+      new NextRequest("http://localhost:3000/api/import/github", {
+        method: "POST",
+        body: JSON.stringify({ url: "https://github.com/tw93/Waza" }),
+        headers: { origin: "https://evil.example.com" },
+      }),
+    );
+
+    expect(response.status).toBe(403);
   });
 });

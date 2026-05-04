@@ -39,16 +39,18 @@ Required key for live smart analyze and GitHub import analysis:
 
 ```text
 DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-v4-flash
 ```
 
-Optional DeepSeek keys:
+Optional DeepSeek base URL:
 
 ```text
-DEEPSEEK_MODEL=deepseek-v4-flash
 DEEPSEEK_API_BASE_URL=https://api.deepseek.com
 ```
 
-The repository default model is `deepseek-v4-flash`. The current DeepSeek API rejected `deepseek-v4` during `2026-05-02` verification; use `deepseek-v4-flash` or another accepted DeepSeek model name.
+The repository uses `deepseek-v4-flash` as the default model.
+
+All server-side environment variables are read through `getServerEnv()` (`src/lib/env.ts`), which prioritizes `.env.local` over system `process.env`.
 
 Optional GitHub key:
 
@@ -68,9 +70,11 @@ POST /api/items/:id/analyze
 
 Requirements:
 
-- A valid Supabase session cookie.
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
 - The item must belong to the logged-in user.
 - No request body is required.
+- Rate limit: 30 requests per IP per hour. Returns `429` when exceeded.
+- Same-origin only; cross-origin requests return `403`.
 
 Client-side usage from an authenticated app page:
 
@@ -101,6 +105,13 @@ Do not use an unauthenticated `curl` command for this route; the route depends o
 ```text
 POST /api/import/github
 ```
+
+Requirements:
+
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
+- Same-origin only; cross-origin requests return `403`.
+- Rate limit: 10 requests per IP per hour. Returns `429` when exceeded.
+- Request body must not exceed 4KB. URL must not exceed 2048 characters.
 
 Request body:
 

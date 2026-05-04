@@ -29,14 +29,11 @@ import LoginPage from "./page";
 
 describe("LoginPage", () => {
   it("renders the login page in Chinese", async () => {
-    const page = await LoginPage({
-      searchParams: Promise.resolve({ next: "/dashboard" }),
-    });
+    const page = await LoginPage();
     const html = renderToStaticMarkup(page);
 
-    expect(html).toContain("登录 RoBox");
-    expect(html).toContain("发送登录链接");
-    expect(html).toContain("允许登录的邮箱");
+    expect(html).toContain("RoBox");
+    expect(html).toContain("登录以继续管理你的 Prompt 与 Skill");
     expect(html).not.toContain("Sign in to your private");
     expect(html).not.toContain("Passwordless login");
     expect(html).not.toContain("Allowlist only");

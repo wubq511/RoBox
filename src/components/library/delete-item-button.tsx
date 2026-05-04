@@ -1,62 +1,69 @@
 "use client";
 
-import { useActionState, useRef } from "react";
-import { Trash2Icon } from "lucide-react";
+import { useState } from "react";
+import { Loader2Icon, Trash2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import {
-  deleteItemAction,
-} from "@/server/items/actions";
-import type { ItemType } from "@/lib/schema/items";
-import { initialItemFormState } from "@/server/items/form-state";
-
-type DeleteItemButtonProps = {
-  itemId: string;
-  type: ItemType;
-  label?: string;
-};
+import { useToast } from "@/hooks/use-toast";
 
 export function DeleteItemButton({
   itemId,
-  type,
-  label = "删除",
-}: Readonly<DeleteItemButtonProps>) {
-  const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction] = useActionState(
-    deleteItemAction,
-    initialItemFormState,
-  );
+}: Readonly<{
+  itemId: string;
+}>) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  async function handleDelete() {
+    if (isDeleting) return;
+    const ok = window.confirm("确定要删除这条内容吗？此操作不可撤销。");
+    if (!ok) return;
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/items/${itemId}`, { method: "DELETE" });
+      if (res.ok) {
+        toast({
+          title: "已删除",
+          description: "内容已成功删除。",
+        });
+        router.push("/library");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "删除失败，请稍后重试");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "删除失败，请稍后重试";
+      toast({
+        title: "删除失败",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
-    <form ref={formRef} action={formAction} className="flex items-center gap-2">
-      <input type="hidden" name="itemId" value={itemId} />
-      <input type="hidden" name="type" value={type} />
-      <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={() => {
-          if (typeof window !== "undefined") {
-            const confirmed = window.confirm(
-              `确定删除此${type === "prompt" ? "Prompt" : "Skill"}？此操作不可撤销。`,
-            );
-
-            if (!confirmed) {
-              return;
-            }
-          }
-
-          formRef.current?.requestSubmit();
-        }}
-      >
-        <Trash2Icon className="size-4" />
-        {label}
-      </Button>
-      {state.status === "error" ? (
-        <span className="text-xs text-destructive" role="alert">
-          {state.message}
-        </span>
-      ) : null}
-    </form>
+    <Button
+      variant="destructive"
+      onClick={handleDelete}
+      disabled={isDeleting}
+    >
+      {isDeleting ? (
+        <>
+          <Loader2Icon className="size-4 animate-spin" />
+          删除中
+        </>
+      ) : (
+        <>
+          <Trash2Icon className="size-4" />
+          删除
+        </>
+      )}
+    </Button>
   );
 }

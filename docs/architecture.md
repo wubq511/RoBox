@@ -16,6 +16,8 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
   Next.js App Router pages, route layouts, and API Route Handlers.
 - `src/components`
   Dashboard, library, settings, and shared UI components.
+- `src/hooks`
+  Shared client-side hooks, including the toast notification system (`useToast`).
 - `src/features/items`
   Item query-state parsing and Prompt / Skill feature types.
 - `src/lib`
@@ -30,8 +32,10 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
   DeepSeek prompt construction, model call, JSON repair/parsing, and persistence orchestration.
 - `src/server/import`
   GitHub URL validation, raw README/SKILL.md fetch, Skill creation, and README-based analysis orchestration.
-- `src/proxy`
-  Next.js middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on every matched request.
+- `src/lib/rate-limit`
+  IP-based sliding-window rate limiter used by API Route Handlers.
+- `proxy.ts` (project root)
+  Next.js 16 proxy entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on every matched request.
 
 ## Data Model
 
@@ -53,20 +57,22 @@ Supabase Row Level Security keeps each user scoped to their own rows. Server cod
 1. The user saves a Prompt or Skill as raw content. The item can remain `is_analyzed=false`.
 2. The detail page triggers manual smart analyze; saving content does not call the model.
 3. The route verifies the Supabase session and loads the current user's item.
-4. `src/server/analyze/deepseek.ts` calls DeepSeek. The default model is `deepseek-v4-flash`.
+4. `src/server/analyze/deepseek.ts` calls DeepSeek. The model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`) via `getServerEnv()`, which prioritizes `.env.local` over system environment variables. User content is wrapped in boundary markers to mitigate prompt injection.
 5. `src/server/analyze/parser.ts` strips markdown fences, repairs common JSON issues, and validates the structured response.
 6. `src/server/analyze/service.ts` updates `items` metadata and sets `is_analyzed=true`.
 7. Prompt analysis replaces that prompt's `prompt_variables`; Skill analysis ignores variable output.
 8. On model or parse failure, the route returns a recoverable error and the original item content stays unchanged.
 
-Required server-only environment variable:
+Required server-only environment variables:
 
 - `DEEPSEEK_API_KEY`
+- `DEEPSEEK_MODEL`
 
 Optional environment variables:
 
-- `DEEPSEEK_MODEL`, default `deepseek-v4-flash`
 - `DEEPSEEK_API_BASE_URL`, default `https://api.deepseek.com`
+
+All server-side environment variables are read through `getServerEnv()` (defined in `src/lib/env.ts`), which prioritizes `.env.local` file values over system `process.env`. This prevents system-level environment variables from silently overriding project-local configuration.
 
 ## GitHub Skill Import Flow
 
@@ -75,7 +81,7 @@ Optional environment variables:
 1. The route accepts a JSON body with `url`.
 2. `src/server/import/github.ts` only allows `github.com` and `raw.githubusercontent.com`.
 3. Repository URLs are converted into raw README candidates. GitHub blob/raw README or `SKILL.md` links are converted or used directly.
-4. The fetched README/SKILL.md body is used only as analysis context.
+4. The fetched README/SKILL.md body is used only as analysis context. README content exceeding 100KB is rejected.
 5. The stored Skill uses `items.content = submitted URL` and `items.source_url = canonical repository URL`.
 6. The import creates a Skill first, then requests DeepSeek analysis using the README context.
 7. If analysis fails after a successful README fetch, the imported Skill remains saved with `is_analyzed=false` and the API returns a warning.
@@ -121,4 +127,51 @@ Production deployment verified on `2026-05-03` with:
 - All 94 tests passing, typecheck/lint/build clean
 - Full Chinese UI localization across all components
 - Performance: `React.cache()` on `getServerSupabaseClient()` and `readSessionEmail()` to deduplicate Supabase calls per request
+
+## Security Layer
+
+Security hardening was completed on `2026-05-04`.
+
+### Authentication
+
+Both API Route Handlers (`/api/items/:id/analyze` and `/api/import/github`) enforce explicit authentication via `getOptionalAppUser()`. Unauthenticated requests receive `401 Unauthorized`.
+
+### Rate Limiting
+
+`src/lib/rate-limit.ts` implements an in-memory IP-based sliding-window rate limiter:
+
+- `/api/import/github`: 10 requests per IP per hour
+- `/api/items/:id/analyze`: 30 requests per IP per hour
+
+Exceeding the limit returns `429 Too Many Requests`.
+
+### Security Headers
+
+`next.config.ts` applies the following headers to all responses:
+
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- `Content-Security-Policy` (scoped to self, Supabase, DeepSeek, and GitHub)
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+
+### Input Validation
+
+- Search queries: `sanitizeSearchValue` escapes PostgreSQL ILIKE wildcards (`%`, `_`).
+- GitHub import: URL length capped at 2048 characters; request body capped at 4KB.
+- README fetch: content exceeding 100KB is rejected.
+- DeepSeek prompt: user content is wrapped in boundary markers with an instruction to ignore injection attempts.
+
+### CORS
+
+API Route Handlers reject cross-origin requests. Only same-origin requests are allowed.
+
+### Error Handling
+
+Production API responses use generic error messages. Detailed error information (including third-party API errors) is only exposed in development mode.
+
+### Ownership Checks
+
+`replacePromptVariables` now verifies item existence and ownership before deleting variables, adding defense-in-depth beyond RLS.
 

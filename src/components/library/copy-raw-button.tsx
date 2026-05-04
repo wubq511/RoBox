@@ -1,68 +1,52 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { CopyIcon } from "lucide-react";
+import { useState } from "react";
+import { CheckIcon, CopyIcon, Loader2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { recordCopyActionAction } from "@/server/items/actions";
-
-import { copyText } from "./clipboard";
-
-type CopyRawButtonProps = {
-  itemId: string;
-  content: string;
-  label?: string;
-  revalidatePaths: string[];
-};
+import { useToast } from "@/hooks/use-toast";
 
 export function CopyRawButton({
-  itemId,
   content,
-  label = "复制原始内容",
-  revalidatePaths,
-}: Readonly<CopyRawButtonProps>) {
-  const [feedback, setFeedback] = useState("");
-  const [isPending, startTransition] = useTransition();
+}: Readonly<{
+  content: string;
+}>) {
+  const [copied, setCopied] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+  const { toast } = useToast();
+
+  async function handleCopy() {
+    if (isCopying) return;
+    setIsCopying(true);
+
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopied(true);
+      toast({
+        title: "已复制",
+        description: "内容已复制到剪贴板。",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({
+        title: "复制失败",
+        description: "无法访问剪贴板，请手动复制。",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCopying(false);
+    }
+  }
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={isPending}
-        onClick={() => {
-          startTransition(async () => {
-            try {
-              await copyText(content);
-              const result = await recordCopyActionAction({
-                itemId,
-                action: "copy_raw",
-                revalidatePaths,
-              });
-
-              if (result?.status === "error") {
-                setFeedback(result.message);
-                return;
-              }
-
-              setFeedback("已复制");
-            } catch (error) {
-              setFeedback(
-                error instanceof Error ? error.message : "复制失败",
-              );
-            }
-          });
-        }}
-      >
+    <Button variant="ghost" size="sm" onClick={handleCopy} disabled={isCopying}>
+      {isCopying ? (
+        <Loader2Icon className="size-4 animate-spin" />
+      ) : copied ? (
+        <CheckIcon className="size-4 text-green-600" />
+      ) : (
         <CopyIcon className="size-4" />
-        {label}
-      </Button>
-      {feedback ? (
-        <span className="text-xs text-muted-foreground" role="status">
-          {feedback}
-        </span>
-      ) : null}
-    </div>
+      )}
+    </Button>
   );
 }

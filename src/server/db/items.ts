@@ -50,7 +50,12 @@ type ItemUpdatePayload = Partial<{
 }>;
 
 function sanitizeSearchValue(value: string) {
-  return value.replaceAll(",", " ").replaceAll("*", " ").trim();
+  return value
+    .replaceAll(",", " ")
+    .replaceAll("*", " ")
+    .replaceAll("%", "\\%")
+    .replaceAll("_", "\\_")
+    .trim();
 }
 
 function compareIsoDatesDesc(left: string, right: string) {
@@ -364,6 +369,13 @@ export async function replacePromptVariables(
   variables: PromptVariableInput[],
 ) {
   const { supabase } = await getDatabaseContext();
+
+  const existingItem = await getItemById(itemId);
+
+  if (!existingItem) {
+    throw new Error("Item not found.");
+  }
+
   const parsedVariables = variables.map((variable) =>
     promptVariableSchema.parse(variable),
   );

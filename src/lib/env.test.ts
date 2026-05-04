@@ -1,10 +1,17 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getAppOrigin } from "./env";
+import { getAppOrigin, resetLocalEnvCache } from "./env";
+
+vi.mock("node:fs", () => ({
+  readFileSync: vi.fn().mockImplementation(() => {
+    throw new Error("no .env.local in test");
+  }),
+}));
 
 describe("app origin env", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    resetLocalEnvCache();
   });
 
   it("uses NEXT_PUBLIC_APP_ORIGIN when configured", () => {

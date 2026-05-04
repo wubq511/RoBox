@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Loader2Icon } from "lucide-react";
 
 import { PromptVariablesEditor } from "@/components/library/prompt-variables-editor";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,23 @@ import {
   initialItemFormState,
   type ItemFormState,
 } from "@/server/items/form-state";
+
+function RequiredLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-sm font-semibold text-foreground">
+      {children}
+      <span className="ml-0.5 text-destructive">*</span>
+    </span>
+  );
+}
+
+function OptionalLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-sm font-semibold text-foreground">
+      {children}
+    </span>
+  );
+}
 
 type ItemFormAction = (
   state: ItemFormState | void,
@@ -43,81 +61,153 @@ export function ItemForm({
   submitLabel,
   initialValues,
 }: Readonly<ItemFormProps>) {
-  const [state, formAction] = useActionState(action, initialItemFormState);
+  const [state, formAction, isPending] = useActionState(
+    action,
+    initialItemFormState,
+  );
   const resolvedState = state ?? initialItemFormState;
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={formAction} className="space-y-10">
       <input type="hidden" name="type" value={type} />
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2">
-          <span className="text-sm font-medium">标题</span>
-          <Input name="title" defaultValue={initialValues.title} maxLength={120} />
+      <div className="space-y-8">
+        <label className="block">
+          <RequiredLabel>标题</RequiredLabel>
+          <div className="mt-4">
+            <Input
+              name="title"
+              defaultValue={initialValues.title}
+              maxLength={120}
+              placeholder="给这个内容起个清晰的名称"
+              className="h-11 text-base"
+            />
+          </div>
         </label>
 
-        <label className="space-y-2">
-          <span className="text-sm font-medium">分类</span>
-          <select
-            name="category"
-            defaultValue={initialValues.category}
-            className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
-          >
-            {itemCategories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-8 sm:grid-cols-2">
+          <label className="block">
+            <RequiredLabel>分类</RequiredLabel>
+            <div className="mt-4">
+              <div className="relative">
+                <select
+                  name="category"
+                  defaultValue={initialValues.category}
+                  className="flex h-11 w-full appearance-none rounded-lg border border-input bg-transparent px-3 pr-8 text-sm outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
+                >
+                  {itemCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+                <svg
+                  className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
+          </label>
+
+          <label className="block">
+            <OptionalLabel>标签</OptionalLabel>
+            <div className="mt-4">
+              <Input
+                name="tags"
+                defaultValue={(initialValues.tags ?? []).join(", ")}
+                placeholder="用逗号分隔：写作，翻译，AI"
+                className="h-11"
+              />
+            </div>
+          </label>
+        </div>
+
+        <label className="block">
+          <OptionalLabel>摘要</OptionalLabel>
+          <div className="mt-4">
+            <Textarea
+              name="summary"
+              defaultValue={initialValues.summary}
+              maxLength={240}
+              rows={2}
+              placeholder="简短描述这个内容的用途"
+            />
+          </div>
         </label>
       </div>
 
-      <label className="space-y-2">
-        <span className="text-sm font-medium">摘要</span>
-        <Textarea
-          name="summary"
-          defaultValue={initialValues.summary}
-          maxLength={240}
-          rows={3}
-        />
-      </label>
+      <div className="h-px bg-border" />
 
-      <label className="space-y-2">
-        <span className="text-sm font-medium">标签</span>
-        <Input
-          name="tags"
-          defaultValue={(initialValues.tags ?? []).join(", ")}
-          placeholder="用逗号分隔标签"
-        />
-      </label>
+      <div className="space-y-8">
+        <label className="block">
+          <RequiredLabel>内容</RequiredLabel>
+          <div className="mt-4">
+            <Textarea
+              name="content"
+              defaultValue={initialValues.content}
+              required
+              placeholder={
+                type === "prompt"
+                  ? "在这里输入 Prompt 内容，可以使用 {{变量名}} 定义动态变量"
+                  : "在这里输入 Skill 内容"
+              }
+              className="min-h-[160px] resize-y leading-relaxed"
+            />
+          </div>
+        </label>
+      </div>
 
       {type === "skill" ? (
-        <label className="space-y-2">
-          <span className="text-sm font-medium">来源链接</span>
-          <Input name="sourceUrl" defaultValue={initialValues.sourceUrl} />
-        </label>
+        <>
+          <div className="h-px bg-border" />
+          <div className="space-y-8">
+            <label className="block">
+              <OptionalLabel>来源链接</OptionalLabel>
+              <div className="mt-4">
+                <Input
+                  name="sourceUrl"
+                  defaultValue={initialValues.sourceUrl}
+                  placeholder="https://github.com/..."
+                  className="h-11"
+                />
+              </div>
+            </label>
+          </div>
+        </>
       ) : (
         <input type="hidden" name="sourceUrl" value={initialValues.sourceUrl} />
       )}
 
-      <label className="space-y-2">
-        <span className="text-sm font-medium">内容</span>
-        <Textarea
-          name="content"
-          defaultValue={initialValues.content}
-          rows={14}
-          required
-        />
-      </label>
-
       {type === "prompt" ? (
-        <PromptVariablesEditor initialVariables={initialValues.variables} />
+        <>
+          <div className="h-px bg-border" />
+          <PromptVariablesEditor initialVariables={initialValues.variables} />
+        </>
       ) : (
         <input type="hidden" name="variables" value="[]" />
       )}
 
-      <div className="flex items-center gap-3">
-        <Button type="submit">{submitLabel}</Button>
+      <div className="h-px bg-border" />
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <Button type="submit" disabled={isPending} size="lg" className="min-w-[140px]">
+          {isPending ? (
+            <>
+              <Loader2Icon className="size-4 animate-spin" />
+              保存中
+            </>
+          ) : (
+            submitLabel
+          )}
+        </Button>
         {resolvedState.status === "error" ? (
           <p className="text-sm text-destructive" role="alert">
             {resolvedState.message}

@@ -1,4 +1,5 @@
 import { getServerSupabaseClient } from "@/lib/supabase/server-client";
+import { getServerEnv } from "@/lib/env";
 
 import { isEmailAllowed, parseAllowedEmails } from "./allowlist";
 
@@ -19,7 +20,7 @@ export function buildAuthRedirectUrl(origin: string, nextPath?: string) {
 }
 
 export function getAllowedEmails() {
-  return parseAllowedEmails(process.env.ALLOWED_EMAILS);
+  return parseAllowedEmails(getServerEnv("ALLOWED_EMAILS"));
 }
 
 export function hasAllowedEmails() {

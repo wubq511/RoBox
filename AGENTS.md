@@ -13,14 +13,18 @@
 
 ## 2. 参考文档/文档索引
 
+### 长期文档（版本控制）
 - 仓库说明 D:\RoBox\README.md
 - 本文件 `AGENTS.md`
 - 启动文档 D:\RoBox\docs\setup.md
 - 架构文档 D:\RoBox\docs\architecture.md
 - 接入文档 D:\RoBox\docs\integration-guide.md
-- 项目文档 D:\RoBox\RoBox 最终项目方案.md
-- 计划文档 D:\RoBox\PLAN.md
+- 项目方案 D:\RoBox\RoBox 最终项目方案.md
 - UI原型 D:\RoBox\RoBox_UI_Prototype   注意，该原型已经定稿了，请你不要进行调整，直接改为真实落地的UI
+
+### 开发期文档（不进入版本控制）
+- 分阶段计划 D:\RoBox\PLAN.md
+- 开发计划/清单 D:\RoBox\docs\dev\
 
 如果实现与项目文档冲突，以项目文档为准；如果项目文档本身不一致，先指出冲突，再继续。
 
@@ -94,3 +98,40 @@
 ## 8. 一句话原则
 
 RoBox 追求的不是功能多，而是个人常用 Prompt / Skill 的使用路径短、查找快、复制顺。
+
+---
+
+## 9. 近期重要变更（供 Agent 快速同步）
+
+### 2026-05-04 智能分析 Bug 修复与环境变量优先级重构
+
+- **AnalyzeButton 响应格式修复**：`analyze-button.tsx` 中 `data.ok` → `data.item`，匹配后端实际返回的 `{ item }` 格式；新增 `router.refresh()` 使分析完成后页面立即刷新。
+- **CORS 403 修复**：`.env.local` 中 `NEXT_PUBLIC_APP_ORIGIN` 端口从 3004 修正为 3000，匹配实际 dev server 端口。
+- **DEEPSEEK_MODEL 补全**：`.env.local` 缺少 `DEEPSEEK_MODEL` 行，导致 `readDeepSeekModel()` 抛异常；已补加 `DEEPSEEK_MODEL=deepseek-v4-flash`。
+- **环境变量优先级重构**：新增 `src/lib/env.ts` 中的 `getServerEnv()` 函数，优先从 `.env.local` 文件读取配置，`process.env`（系统环境变量）作为 fallback。解决系统环境变量静默覆盖 `.env.local` 的问题。`deepseek.ts`、`github.ts`、`auth/service.ts` 中的直接 `process.env` 读取已全部改为 `getServerEnv()`。
+- **env.test.ts 适配**：mock `node:fs` 避免测试读真实 `.env.local`，新增 `resetLocalEnvCache()` 清缓存。
+
+### 2026-05-04 安全审计与加固
+
+- **proxy.ts 位置修正**：Next.js 16 的 proxy 约定要求文件在项目根目录（`proxy.ts`），不在 `src/` 内。已从 `src/proxy.ts` 迁移到根目录 `proxy.ts`，导出函数名为 `proxy`。
+- **API 路由鉴权**：`/api/items/[id]/analyze` 和 `/api/import/github` 已添加 `getOptionalAppUser` 显式鉴权，未登录返回 401。
+- **安全响应头**：`next.config.ts` 已配置 X-Frame-Options、X-Content-Type-Options、Referrer-Policy、HSTS、CSP、Permissions-Policy。
+- **ILIKE 注入修复**：`sanitizeSearchValue` 已转义 PostgreSQL ILIKE 特殊字符 `%` 和 `_`。
+- **速率限制**：新增 `src/lib/rate-limit.ts`，GitHub import 10次/小时，Analyze 30次/小时。
+- **请求体大小限制**：GitHub import URL 长度限制 2048 字符，请求体限制 4KB。
+- **DeepSeek prompt 防注入**：添加内容边界标记和忽略指令注入的规则。
+- **replacePromptVariables 归属校验**：删除变量前先通过 `getItemById` 确认 item 存在且属于当前用户。
+- **错误信息脱敏**：生产环境 API 返回通用错误信息，不再泄露内部细节。
+- **README 大小限制**：GitHub 导入 README 内容上限 100KB。
+- **CORS 检查**：API 路由添加同源限制，拒绝跨域请求。
+- **`.env.example` 清理**：移除未使用的 `SUPABASE_SERVICE_ROLE_KEY`。
+
+### 2026-05-04 UI 打磨与模型固定
+
+- **UI 全面优化**：登录页、Dashboard、Prompts/Skills 列表页、详情页、新建/编辑页均已完成视觉与交互优化。核心原则：去除开发阶段注释与小字说明，保持简洁专业；统一间距、字体层级、圆角与阴影体系。
+- **Button 组件修复**：`src/components/ui/button.tsx` 已显式处理 `asChild` 属性，解决 React "does not recognize the `asChild` prop on a DOM element" 报错。
+- **模型与 Base URL 环境变量化**：`src/server/analyze/deepseek.ts` 中模型和 Base URL 均从环境变量读取（`DEEPSEEK_MODEL`、`DEEPSEEK_API_BASE_URL`），支持通过 `.env.local` 配置，不再硬编码。
+- **新增/重构的组件**：
+  - `item-form.tsx`：新增 FormSection/FormDivider/RequiredLabel/OptionalLabel/FieldDescription 等辅助组件，分区展示表单。
+  - `prompt-variables-editor.tsx`：重构为 VariableCard 子组件，优化空状态和变量卡片视觉。
+  - `github-import-form.tsx`：添加标题区、统一输入框高度、使用内联 SVG 替代不存在的 GithubIcon。
