@@ -5,6 +5,22 @@ type RateLimitEntry = {
 
 const store = new Map<string, RateLimitEntry>();
 
+let lastCleanup = 0;
+
+function cleanup() {
+  const now = Date.now();
+
+  if (now - lastCleanup < 60_000) return;
+
+  lastCleanup = now;
+
+  for (const [key, entry] of store) {
+    if (now >= entry.resetAt) {
+      store.delete(key);
+    }
+  }
+}
+
 function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
 
@@ -21,6 +37,8 @@ function isRateLimited(
   windowMs: number,
 ): boolean {
   const now = Date.now();
+  cleanup();
+
   const entry = store.get(key);
 
   if (!entry || now >= entry.resetAt) {

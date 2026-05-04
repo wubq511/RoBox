@@ -124,7 +124,7 @@ Current code placement:
 - `src/features/items`
   Prompt / Skill types and query-state helpers
 - `src/lib`
-  Generic helpers, navigation, env readers, shared validation schemas, rate limiter
+  Generic helpers, navigation, env readers, shared validation schemas, rate limiter, format utilities
 - `src/lib/supabase`
   Browser/server/proxy Supabase client factories
 - `src/server/auth`

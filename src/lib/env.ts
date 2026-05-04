@@ -1,14 +1,16 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-let localEnvCache: Record<string, string> | null = null;
+type EnvRecord = Record<string, string>;
 
-function loadDotEnvLocal(): Record<string, string> {
+let localEnvCache: EnvRecord | null = null;
+
+function loadDotEnvLocal(): EnvRecord {
   if (localEnvCache) return localEnvCache;
 
   try {
     const content = readFileSync(resolve(process.cwd(), ".env.local"), "utf-8");
-    const env: Record<string, string> = {};
+    const env: EnvRecord = {};
 
     for (const line of content.split("\n")) {
       const trimmed = line.trim();

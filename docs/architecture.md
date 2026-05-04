@@ -34,8 +34,8 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
   GitHub URL validation, raw README/SKILL.md fetch, Skill creation, and README-based analysis orchestration.
 - `src/lib/rate-limit`
   IP-based sliding-window rate limiter used by API Route Handlers.
-- `proxy.ts` (project root)
-  Next.js 16 proxy entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on every matched request.
+- `middleware.ts` (project root)
+  Next.js 16 middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on every matched request. Runs in Edge Runtime; does not use `node:fs` or `env.ts`.
 
 ## Data Model
 
@@ -49,6 +49,21 @@ The MVP data model is centered on three Supabase tables:
   Copy activity records. `action` is constrained to `copy_raw` or `copy_final`.
 
 Supabase Row Level Security keeps each user scoped to their own rows. Server code should continue to read and mutate data through the repository layer instead of bypassing ownership checks.
+
+### Database RPC Functions
+
+Three PostgreSQL functions optimize hot-path operations by reducing database round trips:
+
+- `toggle_favorite(p_item_id, p_user_id)` — Atomic `NOT is_favorite` toggle in a single call.
+- `increment_usage_count(p_item_id, p_user_id, p_action)` — Atomic `usage_count + 1` with `usage_logs` insertion in a single call.
+- `get_latest_copied_at(p_item_ids)` — SQL `MAX(created_at) GROUP BY item_id` aggregation, replacing JS-side reduce.
+
+### Database Indexes
+
+Beyond the base migration indexes (`user_id + updated_at`, `user_id + type`, `user_id + category`, `tags` GIN):
+
+- `items_user_favorite_updated_idx` on `(user_id, is_favorite, updated_at DESC)` — Accelerates favorite list queries.
+- `items_title_trgm_idx` on `title` using `pg_trgm` GIN — Accelerates ILIKE search on the `title` column.
 
 ## DeepSeek Analyze Flow
 
@@ -134,13 +149,44 @@ Production deployment verified on `2026-05-03` with:
 
 Security hardening was completed on `2026-05-04`.
 
+## Performance
+
+Performance optimization was completed on `2026-05-05`.
+
+### Perceived Speed
+
+- `(workspace)/loading.tsx` provides a skeleton screen for all workspace pages during SSR data loading, eliminating blank-page waits.
+- Detail and edit pages wrap their data-fetching content components in `<Suspense>`, so the page shell (sidebar, header) renders immediately while content streams in.
+
+### Server-Side Efficiency
+
+- `getDashboardSnapshot()` uses 6 parallel queries with `limit` instead of loading all items into Node memory.
+- `toggleFavorite` and `recordCopyAction` use PostgreSQL RPC functions for single-trip atomic operations instead of read-then-write patterns.
+- `selectLatestCopiedAtByItemId` uses SQL aggregation via RPC instead of fetching all `usage_logs` rows and reducing in JS.
+
+### Client-Side Rendering
+
+- `ItemCard`, `VariableCard`, `MetricCard`, and `MiniListCard` are wrapped with `React.memo` to prevent unnecessary re-renders after actions like favoriting.
+- `formatDate` is extracted to `src/lib/format.ts` as a shared utility.
+- `BatchAnalyzeButton` runs 3 concurrent requests and calls `router.refresh()` once after all complete, instead of refreshing after each success.
+- `LibraryFilters` uses `useRouter` + `useSearchParams` for client-side navigation instead of full-page form submission.
+
+### Caching
+
+- `/_next/static/` responses include `Cache-Control: public, max-age=31536000, immutable`.
+- API route responses (`/api/items/:id/analyze`, `/api/import/github`) include `Cache-Control: no-store`.
+
+## Security Layer
+
+Security hardening was completed on `2026-05-04`.
+
 ### Authentication
 
 Both API Route Handlers (`/api/items/:id/analyze` and `/api/import/github`) enforce explicit authentication via `getOptionalAppUser()`. Unauthenticated requests receive `401 Unauthorized`.
 
 ### Rate Limiting
 
-`src/lib/rate-limit.ts` implements an in-memory IP-based sliding-window rate limiter:
+`src/lib/rate-limit.ts` implements an in-memory IP-based sliding-window rate limiter. A `cleanup()` function runs every 60 seconds to remove expired entries, preventing unbounded memory growth in long-running serverless function instances (Fluid Compute).
 
 - `/api/import/github`: 10 requests per IP per hour
 - `/api/items/:id/analyze`: 30 requests per IP per hour

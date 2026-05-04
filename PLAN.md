@@ -219,3 +219,35 @@
 - 搜索特殊字符不会导致异常匹配。
 - 速率超限返回 429。
 - `npm run typecheck && npm run lint && npm run test && npm run build` 全部通过。
+
+### Phase 8：全面性能优化
+状态：已完成（2026-05-05）
+
+目标：消除页面加载空白等待、减少数据库往返、减少客户端不必要重渲染，不牺牲功能。
+
+任务清单：
+- 新增 `(workspace)/loading.tsx` 骨架屏，消除 workspace 页面数据加载期间的空白等待。
+- 详情页/编辑页添加 Suspense 边界，页面 shell 立即显示、内容区流式加载。
+- `getDashboardSnapshot()` 从全量加载改为 6 条并行查询 + limit。
+- `toggleFavorite` 改为 RPC `toggle_favorite` 原子操作（1 次往返替代 2 次）。
+- `recordCopyAction` 改为 RPC `increment_usage_count` 原子操作（1 次往返替代 3 次）。
+- `selectLatestCopiedAtByItemId` 改为 RPC `get_latest_copied_at` SQL 聚合。
+- 新增数据库索引：`(user_id, is_favorite, updated_at DESC)` 复合索引 + `title` pg_trgm GIN 索引。
+- `ItemCard`、`VariableCard`、`MetricCard`、`MiniListCard` 用 `React.memo` 包裹。
+- `formatDate` 提取到 `src/lib/format.ts` 共享。
+- `BatchAnalyzeButton` 从串行改为并发 3 请求，只在全部完成后 `router.refresh()` 一次。
+- `DeleteItemButton` 修复：从不存在的 `DELETE /api/items/${id}` 改为 `deleteItemAction` Server Action。
+- `LibraryFilters` 从 `<form action>` 全页面导航改为 `useRouter` + `useSearchParams` 客户端导航。
+- 静态资源添加 `Cache-Control: immutable`；API 路由添加 `Cache-Control: no-store`。
+
+阶段交付物：
+- 页面加载有骨架屏反馈，不再空白。
+- 数据库操作减少往返次数。
+- 客户端操作后重渲染范围缩小。
+- Migration 已推送到远程和本地 Supabase。
+
+验收标准：
+- `npm run test && npm run build` 全部通过。
+- 浏览器中页面加载有骨架屏过渡。
+- 收藏、复制操作响应更快。
+- 批量分析并发执行，不再逐个刷新页面。
