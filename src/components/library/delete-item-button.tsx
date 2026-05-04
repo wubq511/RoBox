@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2Icon, Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Loader2Icon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { deleteItemAction } from "@/server/items/actions";
 
 export function DeleteItemButton({
   itemId,
+  itemType,
 }: Readonly<{
   itemId: string;
+  itemType: "prompt" | "skill";
 }>) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -23,17 +26,23 @@ export function DeleteItemButton({
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/items/${itemId}`, { method: "DELETE" });
-      if (res.ok) {
-        toast({
-          title: "已删除",
-          description: "内容已成功删除。",
-        });
-        router.push("/library");
-      } else {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "删除失败，请稍后重试");
+      const formData = new FormData();
+      formData.set("itemId", itemId);
+      formData.set("type", itemType);
+
+      const result = await deleteItemAction(void 0, formData);
+
+      if (result && result.status === "error") {
+        throw new Error(result.message);
       }
+
+      toast({
+        title: "已删除",
+        description: "内容已成功删除。",
+      });
+
+      const collectionPath = itemType === "prompt" ? "/prompts" : "/skills";
+      router.push(collectionPath);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "删除失败，请稍后重试";

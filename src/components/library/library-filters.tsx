@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback } from "react";
 import { RotateCcwIcon, SearchIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,11 +21,51 @@ export function LibraryFilters({
   type,
   filters,
 }: Readonly<LibraryFiltersProps>) {
-  const action = type === "prompt" ? "/prompts" : "/skills";
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const basePath = type === "prompt" ? "/prompts" : "/skills";
+
+  const updateFilters = useCallback(
+    (updates: Record<string, string>) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      for (const [key, value] of Object.entries(updates)) {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      }
+
+      router.push(`${basePath}?${params.toString()}`);
+    },
+    [router, searchParams, basePath],
+  );
+
+  const handleSearch = useCallback(
+    (formData: FormData) => {
+      const search = (formData.get("search") as string) ?? "";
+      const category = (formData.get("category") as string) ?? "";
+      const sort = (formData.get("sort") as string) ?? "updated";
+      const favorite = formData.get("favorite") as string;
+
+      updateFilters({
+        search: search.trim(),
+        category,
+        sort,
+        ...(favorite ? { favorite } : {}),
+      });
+    },
+    [updateFilters],
+  );
+
+  const handleReset = useCallback(() => {
+    router.push(basePath);
+  }, [router, basePath]);
 
   return (
     <form
-      action={action}
+      action={handleSearch}
       className="flex flex-wrap items-end gap-3 rounded-[24px] border border-border/70 bg-background/90 p-4"
     >
       <div className="flex flex-1 items-end gap-3 min-w-0">
@@ -82,12 +125,16 @@ export function LibraryFilters({
       </div>
 
       <div className="flex items-end gap-2 shrink-0">
-        <Link href={action}>
-          <Button type="button" variant="outline" size="sm" className="h-8 gap-1.5 px-4">
-            <RotateCcwIcon className="size-3.5" />
-            重置
-          </Button>
-        </Link>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 px-4"
+          onClick={handleReset}
+        >
+          <RotateCcwIcon className="size-3.5" />
+          重置
+        </Button>
         <Button type="submit" size="sm" className="h-8 px-6">
           应用筛选
         </Button>

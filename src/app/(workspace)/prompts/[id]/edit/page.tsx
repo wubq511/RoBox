@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
@@ -17,12 +18,28 @@ type Params = {
   id: string;
 };
 
-export default async function EditPromptPage({
-  params,
-}: Readonly<{
-  params: Promise<Params>;
-}>) {
-  const { id } = await params;
+function EditSkeleton() {
+  return (
+    <div className="mx-auto w-full max-w-4xl px-4 py-6 lg:px-8 lg:py-8">
+      <div className="mb-6">
+        <div className="h-9 w-24 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="rounded-3xl border border-border/60 overflow-hidden">
+        <div className="space-y-2 border-b border-border/60 px-6 py-6">
+          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        </div>
+        <div className="space-y-4 px-6 py-8">
+          <div className="h-10 animate-pulse rounded bg-muted" />
+          <div className="h-10 animate-pulse rounded bg-muted" />
+          <div className="h-32 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export async function EditPromptContent({ id }: { id: string }) {
   const item = await getItemDetail(id);
 
   if (!item || item.type !== "prompt") {
@@ -69,5 +86,19 @@ export default async function EditPromptPage({
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default async function EditPromptPage({
+  params,
+}: Readonly<{
+  params: Promise<Params>;
+}>) {
+  const { id } = await params;
+
+  return (
+    <Suspense fallback={<EditSkeleton />}>
+      <EditPromptContent id={id} />
+    </Suspense>
   );
 }

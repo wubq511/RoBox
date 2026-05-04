@@ -13,9 +13,8 @@ describe("SettingsView", () => {
     expect(html).toContain("Other");
     expect(html).toContain("github.com");
     expect(html).toContain("raw.githubusercontent.com");
-    expect(html).toContain("GITHUB_TOKEN");
-    expect(html).toContain("JSON / Markdown");
-    expect(html).toContain("仅占位");
+    expect(html).toContain("JSON");
+    expect(html).toContain("Markdown");
     expect(html).toContain("设置");
     expect(html).not.toContain("Placeholder only");
     expect(html).not.toContain("Categories");

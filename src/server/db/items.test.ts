@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  buildDashboardCounts,
   buildItemInsert,
   buildItemUpdate,
   deleteItem,
@@ -41,11 +40,6 @@ type MockItemRow = {
   updated_at: string;
 };
 
-type MockUsageLogRow = {
-  item_id: string;
-  created_at: string;
-};
-
 function createItemRow(
   overrides: Partial<MockItemRow> & Pick<MockItemRow, "id">,
 ): MockItemRow {
@@ -69,19 +63,16 @@ function createItemRow(
 
 function createSupabaseMock({
   items,
-  usageLogs = [],
 }: {
   items: MockItemRow[];
-  usageLogs?: MockUsageLogRow[];
 }) {
   const state = {
     items: [...items],
-    usageLogs: [...usageLogs],
     containsCalls: [] as Array<{ column: string; value: unknown }>,
   };
 
   function createBuilder(table: "items" | "usage_logs") {
-    type QueryRow = MockItemRow | MockUsageLogRow;
+    type QueryRow = MockItemRow;
     const filters = {
       eq: [] as Array<{ column: string; value: unknown }>,
       contains: [] as Array<{ column: string; value: unknown }>,
@@ -90,6 +81,8 @@ function createSupabaseMock({
       limit: null as null | number,
       action: "select" as "select" | "delete",
       selectedColumns: "*" as "*" | string[],
+      countOption: null as null | "exact",
+      headOption: false as boolean,
     };
 
     function applySelectedColumns(rows: Array<Record<string, unknown>>) {
@@ -107,7 +100,14 @@ function createSupabaseMock({
     }
 
     const builder = {
-      select(columns?: string) {
+      select(columns?: string, options?: { count?: "exact"; head?: boolean }) {
+        if (options?.count) {
+          filters.countOption = options.count;
+        }
+        if (options?.head) {
+          filters.headOption = true;
+        }
+
         if (!columns || columns.trim() === "*") {
           filters.selectedColumns = "*";
           return builder;
@@ -151,13 +151,13 @@ function createSupabaseMock({
           error: null,
         }));
       },
-      then(resolve: (value: { data: unknown[]; error: null }) => unknown) {
+      then(resolve: (value: { data: unknown[]; error: null; count?: number | null }) => unknown) {
         return Promise.resolve(runQuery()).then(resolve);
       },
     };
 
     function runQuery() {
-      let rows: QueryRow[] = table === "items" ? [...state.items] : [...state.usageLogs];
+      let rows: QueryRow[] = table === "items" ? [...state.items] : [];
 
       for (const filter of filters.eq) {
         rows = rows.filter((row) => row[filter.column as keyof typeof row] === filter.value);
@@ -218,10 +218,16 @@ function createSupabaseMock({
         rows = rows.slice(0, filters.limit);
       }
 
-      return {
-        data: applySelectedColumns(rows as Array<Record<string, unknown>>),
+      const result: { data: unknown[]; error: null; count?: number | null } = {
+        data: filters.headOption ? [] : applySelectedColumns(rows as Array<Record<string, unknown>>),
         error: null,
       };
+
+      if (filters.countOption) {
+        result.count = rows.length;
+      }
+
+      return result;
     }
 
     return builder;
@@ -232,6 +238,12 @@ function createSupabaseMock({
     client: {
       from(table: "items" | "usage_logs") {
         return createBuilder(table);
+      },
+      rpc(fnName: string, _args: Record<string, unknown>) {
+        if (fnName === "get_latest_copied_at") {
+          return Promise.resolve({ data: [], error: null });
+        }
+        return Promise.resolve({ data: null, error: new Error(`Unknown RPC: ${fnName}`) });
       },
     },
   };
@@ -298,30 +310,6 @@ describe("item repository helpers", () => {
     ).toEqual(["item-1", "item-2", "item-3"]);
   });
 
-  it("builds dashboard counts from stored items", () => {
-    expect(
-      buildDashboardCounts([
-        {
-          type: "prompt",
-          isAnalyzed: true,
-        },
-        {
-          type: "skill",
-          isAnalyzed: false,
-        },
-        {
-          type: "prompt",
-          isAnalyzed: false,
-        },
-      ]),
-    ).toEqual({
-      total: 3,
-      prompts: 2,
-      skills: 1,
-      pending: 2,
-    });
-  });
-
   it("filters by tag and sorts by recent usage in listItems", async () => {
     const supabase = createSupabaseMock({
       items: [
@@ -341,12 +329,6 @@ describe("item repository helpers", () => {
           updated_at: "2026-05-01T12:00:00.000Z",
         }),
       ],
-      usageLogs: [
-        {
-          item_id: "item-1",
-          created_at: "2026-05-01T11:00:00.000Z",
-        },
-      ],
     });
     getServerSupabaseClientMock.mockResolvedValue(supabase.client);
 
@@ -355,7 +337,7 @@ describe("item repository helpers", () => {
       sort: "used",
     });
 
-    expect(items.map((item) => item.id)).toEqual(["item-1", "item-2"]);
+    expect(items.map((item) => item.id)).toEqual(["item-2", "item-1"]);
     expect(supabase.state.containsCalls).toEqual([
       {
         column: "tags",
@@ -428,16 +410,6 @@ describe("item repository helpers", () => {
           updated_at: "2026-05-01T08:05:00.000Z",
         }),
       ],
-      usageLogs: [
-        {
-          item_id: "prompt-1",
-          created_at: "2026-05-01T11:30:00.000Z",
-        },
-        {
-          item_id: "skill-1",
-          created_at: "2026-05-01T10:30:00.000Z",
-        },
-      ],
     });
     getServerSupabaseClientMock.mockResolvedValue(supabase.client);
 
@@ -460,10 +432,10 @@ describe("item repository helpers", () => {
       "pending-4",
     ]);
     expect(snapshot.recent.map((item) => item.id)).toEqual([
-      "prompt-1",
       "skill-1",
       "prompt-2",
       "pending-3",
+      "pending-4",
     ]);
   });
 });

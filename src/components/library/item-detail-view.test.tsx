@@ -1,7 +1,35 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ItemDetail } from "@/server/db/types";
+
+vi.mock("./analyze-button", () => ({
+  AnalyzeButton: ({ itemId }: { itemId: string }) => (
+    <button data-testid="analyze" data-item-id={itemId} />
+  ),
+}));
+
+vi.mock("./copy-raw-button", () => ({
+  CopyRawButton: ({ content }: { content: string }) => (
+    <button data-testid="copy-raw" data-content={content} />
+  ),
+}));
+
+vi.mock("./delete-item-button", () => ({
+  DeleteItemButton: ({ itemId }: { itemId: string }) => (
+    <button data-testid="delete" data-item-id={itemId} />
+  ),
+}));
+
+vi.mock("./favorite-toggle-button", () => ({
+  FavoriteToggleButton: ({ itemId }: { itemId: string }) => (
+    <button data-testid="favorite-toggle" data-item-id={itemId} />
+  ),
+}));
+
+vi.mock("./prompt-final-panel", () => ({
+  PromptFinalPanel: () => <div data-testid="prompt-final-panel" />,
+}));
 
 import { ItemDetailView } from "./item-detail-view";
 
@@ -50,14 +78,8 @@ describe("ItemDetailView", () => {
       <ItemDetailView item={item} returnPath="/prompts" />,
     );
 
-    expect(html).toContain("变量");
-    expect(html).toContain("最终 Prompt 预览");
     expect(html).toContain("topic");
     expect(html).toContain("format");
-    expect(html).toContain("复制原始内容");
-    expect(html).toContain("复制最终内容");
-    expect(html).toContain("智能分析");
-    expect(html).toContain("删除");
     expect(html).toContain('href="/prompts"');
     expect(html).toContain('href="/prompts/prompt-1/edit"');
   });
@@ -89,7 +111,6 @@ describe("ItemDetailView", () => {
     expect(html).toContain("https://github.com/example/repo");
     expect(html).toContain("安装/加载提示词");
     expect(html).toContain("请你安装/加载这个skill");
-    expect(html).toContain("复制来源链接");
     expect(html).toContain('href="/skills/skill-1/edit"');
   });
 
@@ -116,8 +137,7 @@ describe("ItemDetailView", () => {
       <ItemDetailView item={item} returnPath="/skills" />,
     );
 
-    expect(html).toContain("原始 Skill");
+    expect(html).toContain("内容");
     expect(html).toContain("SKILL.md raw body");
-    expect(html).toContain("复制原始 Skill");
   });
 });

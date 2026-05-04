@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, useRef, useCallback } from "react";
+import { memo, useId, useState, useRef, useCallback } from "react";
 import { PlusIcon, Trash2Icon, VariableIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ const emptyVariable: EditableVariable = {
   required: false,
 };
 
-function VariableCard({
+const VariableCard = memo(function VariableCard({
   variable,
   index,
   onChange,
@@ -124,7 +124,7 @@ function VariableCard({
       </label>
     </div>
   );
-}
+});
 
 export function PromptVariablesEditor({
   initialVariables = [],

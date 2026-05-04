@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowRightIcon,
@@ -30,6 +31,30 @@ export function DashboardView({
   snapshot: DashboardSnapshot;
 }>) {
   const { counts, favorites, pending, recent } = snapshot;
+
+  const favoriteItems = useMemo(
+    () =>
+      favorites.map((item) => ({
+        key: item.id,
+        label: item.title,
+        meta: item.category,
+        href: getItemHref(item),
+        type: item.type,
+      })),
+    [favorites],
+  );
+
+  const pendingItems = useMemo(
+    () =>
+      pending.map((item) => ({
+        key: item.id,
+        label: item.title,
+        meta: item.category,
+        href: getItemHref(item),
+        type: item.type,
+      })),
+    [pending],
+  );
 
   return (
     <section className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-8 lg:px-8 lg:py-10">
@@ -118,25 +143,13 @@ export function DashboardView({
             title="收藏内容"
             icon={<StarIcon className="size-[18px] text-amber-500" />}
             empty="暂无收藏"
-            items={favorites.map((item) => ({
-              key: item.id,
-              label: item.title,
-              meta: item.category,
-              href: getItemHref(item),
-              type: item.type,
-            }))}
+            items={favoriteItems}
           />
           <MiniListCard
             title="未整理草稿"
             icon={<CircleDashedIcon className="size-[18px] text-blue-500" />}
             empty="目前没有需要分析的草稿"
-            items={pending.map((item) => ({
-              key: item.id,
-              label: item.title,
-              meta: item.category,
-              href: getItemHref(item),
-              type: item.type,
-            }))}
+            items={pendingItems}
           />
         </div>
       </div>
@@ -144,7 +157,7 @@ export function DashboardView({
   );
 }
 
-function MetricCard({
+const MetricCard = memo(function MetricCard({
   label,
   value,
 }: Readonly<{
@@ -159,9 +172,9 @@ function MetricCard({
       </div>
     </div>
   );
-}
+});
 
-function MiniListCard({
+const MiniListCard = memo(function MiniListCard({
   title,
   icon,
   empty,
@@ -218,4 +231,4 @@ function MiniListCard({
       </CardContent>
     </Card>
   );
-}
+});

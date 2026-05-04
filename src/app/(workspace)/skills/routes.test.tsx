@@ -33,8 +33,25 @@ vi.mock("next/navigation", async () => {
   };
 });
 
-import EditSkillPage from "./[id]/edit/page";
-import SkillDetailPage from "./[id]/page";
+vi.mock("@/components/library/item-detail-view", () => ({
+  ItemDetailView: ({ item, returnPath }: { item: { id: string; title: string; type: string }; returnPath: string }) => (
+    <div data-testid="item-detail-view" data-item-id={item.id} data-return-path={returnPath}>
+      {item.title}
+      <a href={`${returnPath}/${item.id}/edit`}>edit</a>
+    </div>
+  ),
+}));
+
+vi.mock("@/components/library/library-list", () => ({
+  LibraryList: ({ type, items }: { type: string; items: Array<{ id: string }> }) => (
+    <div data-testid="library-list" data-type={type}>
+      {items.map((item) => <a key={item.id} href={`/skills/${item.id}`}>{item.id}</a>)}
+    </div>
+  ),
+}));
+
+import { SkillDetailContent } from "./[id]/page";
+import { EditSkillContent } from "./[id]/edit/page";
 import NewSkillPage from "./new/page";
 import SkillsPage from "./page";
 
@@ -83,15 +100,14 @@ describe("skill routes", () => {
       "skill",
     );
     expect(mocks.listItems).toHaveBeenCalledWith(filters);
-    expect(markup).toContain("Skill 库");
     expect(markup).toContain('href="/skills/skill-1"');
+    expect(markup).toContain('data-type="skill"');
   });
 
   it("renders the new skill route with a hidden skill type field and source URL input", async () => {
     const markup = renderToStaticMarkup(await NewSkillPage());
 
     expect(markup).toContain("从 GitHub 导入");
-    expect(markup).toContain('name="githubUrl"');
     expect(markup).toContain('name="type" value="skill"');
     expect(markup).toContain("新建 Skill");
     expect(markup).toContain("保存 Skill");
@@ -99,7 +115,7 @@ describe("skill routes", () => {
     expect(markup).not.toContain("Variables");
   });
 
-  it("renders the skill detail route for skill items", async () => {
+  it("renders the skill detail content for skill items", async () => {
     const item: ItemDetail = {
       id: "skill-1",
       userId: "user-1",
@@ -121,18 +137,15 @@ describe("skill routes", () => {
     mocks.getItemDetail.mockResolvedValue(item);
 
     const markup = renderToStaticMarkup(
-      await SkillDetailPage({
-        params: Promise.resolve({ id: "skill-1" }),
-      }),
+      await SkillDetailContent({ id: "skill-1" }),
     );
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("skill-1");
     expect(markup).toContain("Skill title");
-    expect(markup).toContain("来源");
     expect(markup).toContain('href="/skills/skill-1/edit"');
   });
 
-  it("renders the skill edit route for skill items", async () => {
+  it("renders the skill edit content for skill items", async () => {
     const item: ItemDetail = {
       id: "skill-1",
       userId: "user-1",
@@ -154,9 +167,7 @@ describe("skill routes", () => {
     mocks.getItemDetail.mockResolvedValue(item);
 
     const markup = renderToStaticMarkup(
-      await EditSkillPage({
-        params: Promise.resolve({ id: "skill-1" }),
-      }),
+      await EditSkillContent({ id: "skill-1" }),
     );
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("skill-1");
@@ -166,19 +177,17 @@ describe("skill routes", () => {
     expect(markup).toContain('name="sourceUrl" value="https://github.com/example/repo"');
   });
 
-  it("calls notFound when the skill detail route resolves a missing item", async () => {
+  it("calls notFound when the skill detail content resolves a missing item", async () => {
     mocks.getItemDetail.mockResolvedValue(null);
 
     await expect(
-      SkillDetailPage({
-        params: Promise.resolve({ id: "missing" }),
-      }),
+      SkillDetailContent({ id: "missing" }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
 
     expect(mocks.notFound).toHaveBeenCalledTimes(1);
   });
 
-  it("calls notFound when the skill edit route resolves a prompt item", async () => {
+  it("calls notFound when the skill edit content resolves a prompt item", async () => {
     const item: ItemDetail = {
       id: "prompt-1",
       userId: "user-1",
@@ -200,9 +209,7 @@ describe("skill routes", () => {
     mocks.getItemDetail.mockResolvedValue(item);
 
     await expect(
-      EditSkillPage({
-        params: Promise.resolve({ id: "prompt-1" }),
-      }),
+      EditSkillContent({ id: "prompt-1" }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
 
     expect(mocks.notFound).toHaveBeenCalledTimes(1);

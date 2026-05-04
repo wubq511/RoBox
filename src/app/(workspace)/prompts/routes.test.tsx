@@ -33,8 +33,25 @@ vi.mock("next/navigation", async () => {
   };
 });
 
-import PromptDetailPage from "./[id]/page";
-import EditPromptPage from "./[id]/edit/page";
+vi.mock("@/components/library/item-detail-view", () => ({
+  ItemDetailView: ({ item, returnPath }: { item: { id: string; title: string; type: string }; returnPath: string }) => (
+    <div data-testid="item-detail-view" data-item-id={item.id} data-return-path={returnPath}>
+      {item.title}
+      <a href={`${returnPath}/${item.id}/edit`}>edit</a>
+    </div>
+  ),
+}));
+
+vi.mock("@/components/library/library-list", () => ({
+  LibraryList: ({ type, items }: { type: string; items: Array<{ id: string }> }) => (
+    <div data-testid="library-list" data-type={type}>
+      {items.map((item) => <a key={item.id} href={`/prompts/${item.id}`}>{item.id}</a>)}
+    </div>
+  ),
+}));
+
+import { PromptDetailContent } from "./[id]/page";
+import { EditPromptContent } from "./[id]/edit/page";
 import NewPromptPage from "./new/page";
 import PromptsPage from "./page";
 
@@ -83,8 +100,8 @@ describe("prompt routes", () => {
       "prompt",
     );
     expect(mocks.listItems).toHaveBeenCalledWith(filters);
-    expect(markup).toContain("Prompt 库");
     expect(markup).toContain('href="/prompts/prompt-1"');
+    expect(markup).toContain('data-type="prompt"');
   });
 
   it("renders the new prompt route with a hidden prompt type field", async () => {
@@ -97,7 +114,7 @@ describe("prompt routes", () => {
     expect(markup).toContain('<option value="Other" selected="">Other</option>');
   });
 
-  it("renders the prompt detail route for prompt items", async () => {
+  it("renders the prompt detail content for prompt items", async () => {
     const item: ItemDetail = {
       id: "prompt-1",
       userId: "user-1",
@@ -119,9 +136,7 @@ describe("prompt routes", () => {
     mocks.getItemDetail.mockResolvedValue(item);
 
     const markup = renderToStaticMarkup(
-      await PromptDetailPage({
-        params: Promise.resolve({ id: "prompt-1" }),
-      }),
+      await PromptDetailContent({ id: "prompt-1" }),
     );
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("prompt-1");
@@ -129,7 +144,7 @@ describe("prompt routes", () => {
     expect(markup).toContain('href="/prompts/prompt-1/edit"');
   });
 
-  it("renders the prompt edit route for prompt items", async () => {
+  it("renders the prompt edit content for prompt items", async () => {
     const item: ItemDetail = {
       id: "prompt-1",
       userId: "user-1",
@@ -151,9 +166,7 @@ describe("prompt routes", () => {
     mocks.getItemDetail.mockResolvedValue(item);
 
     const markup = renderToStaticMarkup(
-      await EditPromptPage({
-        params: Promise.resolve({ id: "prompt-1" }),
-      }),
+      await EditPromptContent({ id: "prompt-1" }),
     );
 
     expect(mocks.getItemDetail).toHaveBeenCalledWith("prompt-1");
@@ -163,13 +176,11 @@ describe("prompt routes", () => {
     expect(markup).toContain('name="title" value="Prompt title"');
   });
 
-  it("calls notFound when the prompt detail route resolves a missing item", async () => {
+  it("calls notFound when the prompt detail content resolves a missing item", async () => {
     mocks.getItemDetail.mockResolvedValue(null);
 
     await expect(
-      PromptDetailPage({
-        params: Promise.resolve({ id: "missing" }),
-      }),
+      PromptDetailContent({ id: "missing" }),
     ).rejects.toThrow("NEXT_NOT_FOUND");
 
     expect(mocks.notFound).toHaveBeenCalledTimes(1);

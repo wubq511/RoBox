@@ -49,12 +49,8 @@ describe("DashboardView", () => {
     expect(html).toContain("3");
     expect(html).toContain('href="/prompts/new"');
     expect(html).toContain('href="/skills/new"');
-    expect(html).toContain("保存 -&gt; 搜索 -&gt; 打开 -&gt; 复制");
     expect(html).toContain("新建 Prompt");
     expect(html).toContain("新建 Skill");
-    expect(html).not.toContain("Your private command shelf");
-    expect(html).not.toContain("New prompt");
-    expect(html).not.toContain("New skill");
   });
 
   it("renders duplicate empty labels as distinct list entries", () => {

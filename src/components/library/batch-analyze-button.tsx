@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
 
@@ -20,8 +20,30 @@ type BatchAnalyzeButtonProps = {
   type?: ItemType;
 };
 
-function delay(ms: number) {
-  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+const CONCURRENCY = 3;
+
+async function analyzeItem(itemId: string): Promise<AnalyzeResult> {
+  try {
+    const response = await fetch(`/api/items/${itemId}/analyze`, {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      return { itemId, success: false, error: data.error || `HTTP ${response.status}` };
+    }
+
+    const data = await response.json();
+
+    if (data.item) {
+      return { itemId, success: true };
+    }
+
+    return { itemId, success: false, error: data.error || "未知错误" };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "网络错误";
+    return { itemId, success: false, error: message };
+  }
 }
 
 export function BatchAnalyzeButton({
@@ -29,69 +51,56 @@ export function BatchAnalyzeButton({
   type = "prompt",
 }: Readonly<BatchAnalyzeButtonProps>) {
   const [isRunning, setIsRunning] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
   const { toast } = useToast();
   const router = useRouter();
+  const abortRef = useRef(false);
 
   const total = items.length;
   const typeLabel = type === "prompt" ? "Prompt" : "Skill";
-
-  const analyzeItem = async (itemId: string): Promise<AnalyzeResult> => {
-    try {
-      const response = await fetch(`/api/items/${itemId}/analyze`, {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        return { itemId, success: false, error: data.error || `HTTP ${response.status}` };
-      }
-
-      const data = await response.json();
-
-      if (data.item) {
-        return { itemId, success: true };
-      }
-
-      return { itemId, success: false, error: data.error || "未知错误" };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "网络错误";
-      return { itemId, success: false, error: message };
-    }
-  };
 
   const handleBatchAnalyze = useCallback(async () => {
     if (isRunning || total === 0) return;
 
     setIsRunning(true);
-    setCurrentIndex(0);
+    setCompletedCount(0);
+    abortRef.current = false;
 
-    const batchResults: AnalyzeResult[] = [];
+    const results: AnalyzeResult[] = [];
+    let index = 0;
 
-    for (let i = 0; i < total; i++) {
-      setCurrentIndex(i);
-      const item = items[i];
+    async function runNext(): Promise<void> {
+      while (index < total && !abortRef.current) {
+        const currentIndex = index++;
+        const item = items[currentIndex];
 
-      let result = await analyzeItem(item.id);
+        let result = await analyzeItem(item.id);
 
-      if (!result.success && result.error?.includes("429")) {
-        await delay(5000);
-        result = await analyzeItem(item.id);
-      }
+        if (!result.success && result.error?.includes("429")) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 5000));
+          if (!abortRef.current) {
+            result = await analyzeItem(item.id);
+          }
+        }
 
-      batchResults.push(result);
-
-      if (result.success) {
-        router.refresh();
-      }
-
-      if (i < total - 1) {
-        await delay(500);
+        results.push(result);
+        setCompletedCount(results.length);
       }
     }
 
-    const successCount = batchResults.filter((r) => r.success).length;
-    const failCount = batchResults.length - successCount;
+    const workers = Array.from(
+      { length: Math.min(CONCURRENCY, total) },
+      () => runNext(),
+    );
+
+    await Promise.all(workers);
+
+    const successCount = results.filter((r) => r.success).length;
+    const failCount = results.length - successCount;
+
+    if (successCount > 0) {
+      router.refresh();
+    }
 
     if (failCount === 0) {
       toast({
@@ -113,7 +122,7 @@ export function BatchAnalyzeButton({
     }
 
     setIsRunning(false);
-    setCurrentIndex(0);
+    setCompletedCount(0);
   }, [isRunning, total, items, router, toast, typeLabel]);
 
   if (total === 0) {
@@ -134,7 +143,7 @@ export function BatchAnalyzeButton({
       {isRunning ? (
         <>
           <Loader2Icon className="size-4 animate-spin" />
-          分析中 {currentIndex + 1}/{total}
+          分析中 {completedCount}/{total}
         </>
       ) : (
         <>

@@ -93,6 +93,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result, {
       status: 201,
+      headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
     return NextResponse.json(

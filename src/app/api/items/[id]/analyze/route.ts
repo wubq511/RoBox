@@ -66,7 +66,9 @@ export async function POST(request: Request, context: RouteContext) {
     const item = await analyzeStoredItem(id);
     revalidateItemPaths(item.type, item.id);
 
-    return NextResponse.json({ item });
+    return NextResponse.json({ item }, {
+      headers: { "Cache-Control": "no-store" },
+    });
   } catch (error) {
     return NextResponse.json(
       {

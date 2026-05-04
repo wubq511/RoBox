@@ -17,14 +17,12 @@ import { requireAppUser } from "@/server/auth/session";
 
 import { mapItemRow, mapPromptVariableRow } from "./mappers";
 import type {
-  DashboardCounts,
   DashboardSnapshot,
   ItemDetail,
   ItemRow,
   PromptVariableRow,
   StoredItem,
   StoredPromptVariable,
-  UsageLogRow,
 } from "./types";
 
 type ItemInsertPayload = {
@@ -151,17 +149,6 @@ export function sortItemsByRecentUsage<T extends Pick<StoredItem, "id" | "update
   });
 }
 
-export function buildDashboardCounts(
-  items: Array<Pick<StoredItem, "type" | "isAnalyzed">>,
-): DashboardCounts {
-  return {
-    total: items.length,
-    prompts: items.filter((item) => item.type === "prompt").length,
-    skills: items.filter((item) => item.type === "skill").length,
-    pending: items.filter((item) => !item.isAnalyzed).length,
-  };
-}
-
 async function selectLatestCopiedAtByItemId(
   supabase: SupabaseClient,
   itemIds: string[],
@@ -170,24 +157,18 @@ async function selectLatestCopiedAtByItemId(
     return {} satisfies Record<string, string>;
   }
 
-  const { data, error } = await supabase
-    .from("usage_logs")
-    .select("item_id, created_at")
-    .in("item_id", itemIds);
+  const { data, error } = await supabase.rpc("get_latest_copied_at", {
+    p_item_ids: itemIds,
+  });
 
   if (error) {
     throw error;
   }
 
-  return ((data ?? []) as Pick<UsageLogRow, "item_id" | "created_at">[]).reduce<
+  return ((data ?? []) as Array<{ item_id: string; latest_copied_at: string }>).reduce<
     Record<string, string>
   >((accumulator, row) => {
-    const currentValue = accumulator[row.item_id];
-
-    if (!currentValue || row.created_at > currentValue) {
-      accumulator[row.item_id] = row.created_at;
-    }
-
+    accumulator[row.item_id] = row.latest_copied_at;
     return accumulator;
   }, {});
 }
@@ -416,84 +397,85 @@ export async function replacePromptVariables(
 }
 
 export async function toggleFavorite(itemId: string) {
-  const current = await getItemById(itemId);
+  const { userId } = await getDatabaseContext();
+  const { supabase } = await getDatabaseContext();
 
-  if (!current) {
+  const { data, error } = await supabase.rpc("toggle_favorite", {
+    p_item_id: itemId,
+    p_user_id: userId,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data || (Array.isArray(data) && data.length === 0)) {
     return null;
   }
 
-  return updateItem(itemId, {
-    isFavorite: !current.isFavorite,
-  });
+  const row = Array.isArray(data) ? data[0] : data;
+  return mapItemRow(row as ItemRow);
 }
 
 export async function recordCopyAction(itemId: string, action: CopyAction) {
   const parsedAction = copyActionSchema.parse(action);
   const { supabase, userId } = await getDatabaseContext();
 
-  const { data: currentRow, error: currentError } = await supabase
-    .from("items")
-    .select("id, usage_count")
-    .eq("id", itemId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (currentError) {
-    throw currentError;
-  }
-
-  if (!currentRow) {
-    return null;
-  }
-
-  const { error: logError } = await supabase.from("usage_logs").insert({
-    item_id: itemId,
-    action: parsedAction,
+  const { data, error } = await supabase.rpc("increment_usage_count", {
+    p_item_id: itemId,
+    p_user_id: userId,
+    p_action: parsedAction,
   });
-
-  if (logError) {
-    throw logError;
-  }
-
-  const { data, error } = await supabase
-    .from("items")
-    .update({
-      usage_count: Number(currentRow.usage_count ?? 0) + 1,
-    })
-    .eq("id", itemId)
-    .eq("user_id", userId)
-    .select("*")
-    .maybeSingle();
 
   if (error) {
     throw error;
   }
 
-  return data ? mapItemRow(data as ItemRow) : null;
+  if (!data || (Array.isArray(data) && data.length === 0)) {
+    return null;
+  }
+
+  const row = Array.isArray(data) ? data[0] : data;
+  return mapItemRow(row as ItemRow);
 }
 
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   const { supabase, userId } = await getDatabaseContext();
-  const { data, error } = await supabase
-    .from("items")
-    .select("*")
-    .eq("user_id", userId)
-    .order("updated_at", { ascending: false });
 
-  if (error) {
-    throw error;
-  }
+  const [totalResult, promptsResult, skillsResult, pendingResult, favoritesResult, recentResult] =
+    await Promise.all([
+      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId),
+      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "prompt"),
+      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "skill"),
+      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_analyzed", false),
+      supabase.from("items").select("*").eq("user_id", userId).eq("is_favorite", true).order("updated_at", { ascending: false }).limit(3),
+      supabase.from("items").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(20),
+    ]);
 
-  const items = ((data ?? []) as ItemRow[]).map(mapItemRow);
+  if (totalResult.error) throw totalResult.error;
+  if (promptsResult.error) throw promptsResult.error;
+  if (skillsResult.error) throw skillsResult.error;
+  if (pendingResult.error) throw pendingResult.error;
+  if (favoritesResult.error) throw favoritesResult.error;
+  if (recentResult.error) throw recentResult.error;
+
+  const favorites = ((favoritesResult.data ?? []) as ItemRow[]).map(mapItemRow);
+  const recentItems = ((recentResult.data ?? []) as ItemRow[]).map(mapItemRow);
+
   const copiedAtByItemId = await selectLatestCopiedAtByItemId(
     supabase,
-    items.map((item) => item.id),
+    recentItems.map((item) => item.id),
   );
 
   return {
-    counts: buildDashboardCounts(items),
-    favorites: items.filter((item) => item.isFavorite).slice(0, 3),
-    pending: items.filter((item) => !item.isAnalyzed).slice(0, 4),
-    recent: sortItemsByRecentUsage(items, copiedAtByItemId).slice(0, 4),
+    counts: {
+      total: totalResult.count ?? 0,
+      prompts: promptsResult.count ?? 0,
+      skills: skillsResult.count ?? 0,
+      pending: pendingResult.count ?? 0,
+    },
+    favorites,
+    pending: recentItems.filter((item) => !item.isAnalyzed).slice(0, 4),
+    recent: sortItemsByRecentUsage(recentItems, copiedAtByItemId).slice(0, 4),
   };
 }
