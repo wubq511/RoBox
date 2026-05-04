@@ -7,7 +7,10 @@ import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-export function AnalyzeButton({ itemId }: Readonly<{ itemId: string }>) {
+export function AnalyzeButton({
+  itemId,
+  isAnalyzed,
+}: Readonly<{ itemId: string; isAnalyzed?: boolean }>) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -64,7 +67,7 @@ export function AnalyzeButton({ itemId }: Readonly<{ itemId: string }>) {
       ) : (
         <>
           <SparklesIcon className="size-4" />
-          智能分析
+          {isAnalyzed ? "重新分析" : "智能分析"}
         </>
       )}
     </Button>

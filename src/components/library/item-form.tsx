@@ -73,7 +73,7 @@ export function ItemForm({
 
       <div className="space-y-8">
         <label className="block">
-          <RequiredLabel>标题</RequiredLabel>
+          <OptionalLabel>标题</OptionalLabel>
           <div className="mt-4">
             <Input
               name="title"
@@ -87,7 +87,7 @@ export function ItemForm({
 
         <div className="grid gap-8 sm:grid-cols-2">
           <label className="block">
-            <RequiredLabel>分类</RequiredLabel>
+            <OptionalLabel>分类</OptionalLabel>
             <div className="mt-4">
               <div className="relative">
                 <select

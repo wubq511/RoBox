@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import type { ListItemsFilters, ItemType } from "@/lib/schema/items";
 import type { StoredItem } from "@/server/db/types";
 
+import { BatchAnalyzeButton } from "./batch-analyze-button";
 import { FavoriteToggleButton } from "./favorite-toggle-button";
 import { LibraryFilters } from "./library-filters";
 
@@ -158,20 +159,26 @@ export function LibraryList({
   return (
     <section className="space-y-4">
       <Card className="rounded-[28px] border-border/70">
-        <CardHeader className="border-b border-border/70 pb-5">
+        <CardHeader className="border-b border-border/70 pb-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <CardTitle className="text-3xl tracking-[-0.04em]">
               {shellCopy.shellTitle}
             </CardTitle>
-            <Link
-              href={createHref}
-              className={cn(buttonVariants({ variant: "default" }))}
-            >
-              {shellCopy.createLabel}
-            </Link>
+            <div className="flex items-center gap-2">
+              <BatchAnalyzeButton
+                type={type}
+                items={items.filter((item) => !item.isAnalyzed)}
+              />
+              <Link
+                href={createHref}
+                className={cn(buttonVariants({ variant: "default" }))}
+              >
+                {shellCopy.createLabel}
+              </Link>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-5">
+        <CardContent className="pt-3">
           <LibraryFilters type={type} filters={filters} />
         </CardContent>
       </Card>

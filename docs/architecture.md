@@ -98,6 +98,8 @@ Optional server-only environment variable:
   Prompt-only action that fills Prompt variables, copies the rendered final prompt, and logs `usage_logs.action=copy_final`.
 - GitHub-imported Skill copy
   The detail page still logs `copy_raw`, but copies `items.source_url` so linked Skills behave as source links instead of fake README bodies.
+- GitHub-imported Skill detail display
+  The content section heading shows "安装/加载提示词" instead of "内容", and the `<pre>` block displays "请你安装/加载这个skill：" followed by a clickable `items.source_url` link, instead of rendering the raw `items.content` URL text.
 
 Copy logging is implemented through Server Actions. There is no `POST /api/items/:id/copy` Route Handler yet; that route name is reserved only if an external API surface is needed later.
 

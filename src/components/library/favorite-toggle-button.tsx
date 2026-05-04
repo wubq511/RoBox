@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { HeartIcon, Loader2Icon } from "lucide-react";
+import { StarIcon, Loader2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -55,9 +55,9 @@ export function FavoriteToggleButton({
       {isLoading ? (
         <Loader2Icon className="size-4 animate-spin" />
       ) : (
-        <HeartIcon
+        <StarIcon
           className={`size-4 transition-colors ${
-            favorite ? "fill-red-500 text-red-500" : "text-muted-foreground"
+            favorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
           }`}
         />
       )}

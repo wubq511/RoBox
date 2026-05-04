@@ -28,9 +28,9 @@ export function WorkspaceShell({
               <div className="absolute right-4 flex items-center lg:right-6">
                 <div className="hidden items-center sm:flex">
                   <form action={signOutAction}>
-                    <Button type="submit" variant="ghost" size="sm" className="h-9 w-9 rounded-xl px-0 text-muted-foreground hover:text-foreground">
+                    <Button type="submit" variant="ghost" size="sm" className="h-9 gap-2 rounded-xl px-3 text-muted-foreground hover:text-foreground">
                       <LogOutIcon className="size-4" />
-                      <span className="sr-only">退出</span>
+                      <span>退出登录</span>
                     </Button>
                   </form>
                 </div>

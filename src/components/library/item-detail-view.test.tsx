@@ -87,7 +87,8 @@ describe("ItemDetailView", () => {
 
     expect(html).toContain("来源");
     expect(html).toContain("https://github.com/example/repo");
-    expect(html).toContain("https://github.com/example/repo/blob/main/README.md");
+    expect(html).toContain("安装/加载提示词");
+    expect(html).toContain("请你安装/加载这个skill");
     expect(html).toContain("复制来源链接");
     expect(html).toContain('href="/skills/skill-1/edit"');
   });

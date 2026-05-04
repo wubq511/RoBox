@@ -6,6 +6,7 @@ import {
   StarIcon,
   GitBranchIcon,
   SquarePenIcon,
+  PlusIcon,
 } from "lucide-react";
 
 import {
@@ -35,10 +36,10 @@ export function DashboardView({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex flex-col gap-6">
           <Card className="surface-noise overflow-hidden rounded-[28px] border border-border/60 shadow-[0_20px_60px_-36px_rgba(0,0,0,0.08)] transition-all">
-            <CardHeader className="gap-4 border-b border-border/40 pb-8">
+            <CardHeader className="gap-4 border-b border-border/40 pb-4">
               <div className="space-y-3">
                 <CardTitle className="max-w-3xl text-[2rem] leading-[1.15] font-semibold tracking-[-0.04em] lg:text-[2.75rem]">
-                  RoBox 个人工作台
+                  RoBox Collection
                 </CardTitle>
               </div>
               <div className="flex flex-wrap gap-4 pt-2">
@@ -50,14 +51,14 @@ export function DashboardView({
                 </Link>
                 <Link
                   href="/skills/new"
-                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "h-12 rounded-[14px] px-6 text-[15px] font-medium shadow-sm bg-background/50 hover:bg-background")}
+                  className={cn(buttonVariants({ variant: "default", size: "lg" }), "h-12 rounded-[14px] px-6 text-[15px] font-medium shadow-sm")}
                 >
                   新建 Skill
                 </Link>
               </div>
             </CardHeader>
 
-            <CardContent className="grid gap-4 bg-muted/20 pt-8 sm:grid-cols-2 xl:grid-cols-4">
+            <CardContent className="grid gap-4 bg-muted/20 pt-3 sm:grid-cols-2 xl:grid-cols-4">
               <MetricCard label="总计资源" value={counts.total} />
               <MetricCard label="Prompts" value={counts.prompts} />
               <MetricCard label="Skills" value={counts.skills} />
@@ -151,9 +152,9 @@ function MetricCard({
   value: number;
 }>) {
   return (
-    <div className="rounded-[20px] border border-border/50 bg-card p-6 shadow-sm transition-all hover:shadow-md hover:border-border/80">
+    <div className="rounded-[20px] border border-border/50 bg-card p-5 shadow-sm transition-all hover:shadow-md hover:border-border/80">
       <div className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-3 font-mono text-4xl font-bold tracking-tight text-foreground">
+      <div className="mt-2.5 font-mono text-4xl font-bold tracking-tight text-foreground">
         {value}
       </div>
     </div>

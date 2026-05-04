@@ -86,7 +86,7 @@ export function ItemDetailView({
           >
             编辑
           </Link>
-          <AnalyzeButton itemId={item.id} />
+          <AnalyzeButton itemId={item.id} isAnalyzed={item.isAnalyzed} />
           <DeleteItemButton itemId={item.id} />
         </div>
       </div>
@@ -168,13 +168,15 @@ export function ItemDetailView({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                {item.type === "prompt" ? "原始 Prompt" : "内容"}
+                {item.type === "prompt" ? "原始 Prompt" : isImportedSkill ? "安装/加载提示词" : "内容"}
               </h3>
               <CopyRawButton content={copyContent} />
             </div>
             <div className="relative group">
               <pre className="overflow-x-auto rounded-2xl border border-border/60 bg-muted/30 p-5 font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground/80">
-                {item.content}
+                {isImportedSkill
+                  ? <>请你安装/加载这个skill：<a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{item.sourceUrl}</a></>
+                  : item.content}
               </pre>
             </div>
           </section>
