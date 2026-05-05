@@ -4,6 +4,24 @@ import type {
   PromptVariableInput,
 } from "@/lib/schema/items";
 
+export interface UserCategoryRow {
+  id: string;
+  user_id: string;
+  type: "prompt" | "skill";
+  name: string;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface StoredUserCategory {
+  id: string;
+  userId: string;
+  type: "prompt" | "skill";
+  name: string;
+  sortOrder: number;
+  createdAt: string;
+}
+
 export interface ItemRow {
   id: string;
   user_id: string;

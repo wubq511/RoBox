@@ -9,9 +9,14 @@ import {
 } from "./items";
 
 describe("item schemas", () => {
-  it("accepts only phase 2 categories", () => {
+  it("accepts valid category names", () => {
     expect(itemCategorySchema.parse("Coding")).toBe("Coding");
-    expect(() => itemCategorySchema.parse("Workflow")).toThrow();
+    expect(itemCategorySchema.parse("Workflow")).toBe("Workflow");
+  });
+
+  it("rejects empty or too long category names", () => {
+    expect(() => itemCategorySchema.parse("")).toThrow();
+    expect(() => itemCategorySchema.parse("a".repeat(33))).toThrow();
   });
 
   it("requires raw content when creating an item", () => {

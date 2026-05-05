@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getAppOrigin } from "@/lib/env";
 import { getOptionalAppUser } from "@/server/auth/session";
+import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
 import { createGithubSkillImport } from "@/server/import/github";
 
 function getErrorMessage(error: unknown) {
@@ -87,7 +88,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await createGithubSkillImport({ url });
+    await ensureDefaultCategories(user.id);
+    const userCategories = await getUserCategoryNames(user.id, "skill");
+
+    const result = await createGithubSkillImport({
+      url,
+      categories: userCategories,
+    });
 
     revalidateSkillImportPaths(result.item.id);
 

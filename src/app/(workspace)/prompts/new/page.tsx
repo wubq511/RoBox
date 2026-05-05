@@ -9,9 +9,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
+import { requireAppUser } from "@/server/auth/session";
 import { createPromptAction } from "@/server/items/actions";
 
 export default async function NewPromptPage() {
+  const user = await requireAppUser();
+  await ensureDefaultCategories(user.id);
+  const categories = await getUserCategoryNames(user.id, "prompt");
+
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 lg:px-8 lg:py-8">
       <div className="mb-6">
@@ -39,10 +45,11 @@ export default async function NewPromptPage() {
             type="prompt"
             action={createPromptAction}
             submitLabel="保存 Prompt"
+            categories={categories}
             initialValues={{
               title: "",
               summary: "",
-              category: "Other",
+              category: categories[0] ?? "Other",
               tags: [],
               content: "",
               sourceUrl: "",

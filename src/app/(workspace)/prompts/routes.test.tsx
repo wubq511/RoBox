@@ -8,6 +8,9 @@ const mocks = vi.hoisted(() => ({
   parseLibrarySearchParams: vi.fn(),
   listItems: vi.fn(),
   getItemDetail: vi.fn(),
+  requireAppUser: vi.fn(),
+  ensureDefaultCategories: vi.fn(),
+  getUserCategoryNames: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NEXT_NOT_FOUND");
   }),
@@ -20,6 +23,15 @@ vi.mock("@/features/items/query-state", () => ({
 vi.mock("@/server/db/items", () => ({
   listItems: mocks.listItems,
   getItemDetail: mocks.getItemDetail,
+}));
+
+vi.mock("@/server/auth/session", () => ({
+  requireAppUser: mocks.requireAppUser,
+}));
+
+vi.mock("@/server/db/categories", () => ({
+  ensureDefaultCategories: mocks.ensureDefaultCategories,
+  getUserCategoryNames: mocks.getUserCategoryNames,
 }));
 
 vi.mock("next/navigation", async () => {
@@ -43,7 +55,7 @@ vi.mock("@/components/library/item-detail-view", () => ({
 }));
 
 vi.mock("@/components/library/library-list", () => ({
-  LibraryList: ({ type, items }: { type: string; items: Array<{ id: string }> }) => (
+  LibraryList: ({ type, items, categories }: { type: string; items: Array<{ id: string }>; categories: string[] }) => (
     <div data-testid="library-list" data-type={type}>
       {items.map((item) => <a key={item.id} href={`/prompts/${item.id}`}>{item.id}</a>)}
     </div>
@@ -55,9 +67,14 @@ import { EditPromptContent } from "./[id]/edit/page";
 import NewPromptPage from "./new/page";
 import PromptsPage from "./page";
 
+const defaultCategories = ["Writing", "Coding", "Research", "Design", "Study", "Agent", "Content", "Other"];
+
 describe("prompt routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.requireAppUser.mockResolvedValue({ id: "user-1", email: "test@example.com" });
+    mocks.ensureDefaultCategories.mockResolvedValue(undefined);
+    mocks.getUserCategoryNames.mockResolvedValue(defaultCategories);
   });
 
   it("renders the prompt list route from parsed search params and Supabase items", async () => {
@@ -111,7 +128,7 @@ describe("prompt routes", () => {
     expect(markup).toContain("新建 Prompt");
     expect(markup).toContain("保存 Prompt");
     expect(markup).toContain("变量");
-    expect(markup).toContain('<option value="Other" selected="">Other</option>');
+    expect(markup).toContain('<option value="Writing" selected="">Writing</option>');
   });
 
   it("renders the prompt detail content for prompt items", async () => {

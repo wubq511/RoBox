@@ -3,7 +3,8 @@ import { z } from "zod";
 export const itemTypeSchema = z.enum(["prompt", "skill"]);
 export const itemTypes = [...itemTypeSchema.options];
 
-export const itemCategorySchema = z.enum([
+export const itemCategorySchema = z.string().trim().min(1).max(32);
+export const DEFAULT_CATEGORIES = [
   "Writing",
   "Coding",
   "Research",
@@ -12,8 +13,7 @@ export const itemCategorySchema = z.enum([
   "Agent",
   "Content",
   "Other",
-]);
-export const itemCategories = [...itemCategorySchema.options];
+] as const;
 
 export const copyActionSchema = z.enum(["copy_raw", "copy_final"]);
 export const copyActions = [...copyActionSchema.options];

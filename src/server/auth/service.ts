@@ -81,6 +81,20 @@ export async function requestMagicLink(options: {
   };
 }
 
+export function buildGitHubOAuthUrl(options: {
+  origin: string;
+  nextPath?: string;
+}) {
+  const supabaseUrl = getServerEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const redirectTo = buildAuthRedirectUrl(options.origin, options.nextPath);
+  const params = new URLSearchParams({
+    provider: "github",
+    redirect_to: redirectTo,
+  });
+
+  return `${supabaseUrl}/auth/v1/authorize?${params.toString()}`;
+}
+
 export async function signOutWorkspaceSession() {
   const supabase = await getServerSupabaseClient();
 

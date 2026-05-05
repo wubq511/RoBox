@@ -1,4 +1,11 @@
-import type { ItemRow, PromptVariableRow, StoredItem, StoredPromptVariable } from "./types";
+import type {
+  ItemRow,
+  PromptVariableRow,
+  StoredItem,
+  StoredPromptVariable,
+  StoredUserCategory,
+  UserCategoryRow,
+} from "./types";
 
 export function mapItemRow(row: ItemRow): StoredItem {
   return {
@@ -29,6 +36,17 @@ export function mapPromptVariableRow(
     description: row.description,
     defaultValue: row.default_value,
     required: row.required,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+  };
+}
+
+export function mapUserCategoryRow(row: UserCategoryRow): StoredUserCategory {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    name: row.name,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
   };

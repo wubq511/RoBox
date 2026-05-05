@@ -7,7 +7,6 @@ import { RotateCcwIcon, SearchIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  itemCategories,
   type ListItemsFilters,
   type ItemType,
 } from "@/lib/schema/items";
@@ -15,11 +14,13 @@ import {
 type LibraryFiltersProps = {
   type: ItemType;
   filters: ListItemsFilters;
+  categories: string[];
 };
 
 export function LibraryFilters({
   type,
   filters,
+  categories,
 }: Readonly<LibraryFiltersProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,7 +91,7 @@ export function LibraryFilters({
             className="flex h-8 w-full rounded-lg border border-input bg-transparent px-3 text-sm outline-none"
           >
             <option value="">全部分类</option>
-            {itemCategories.map((option) => (
+            {categories.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>

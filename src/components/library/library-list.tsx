@@ -23,6 +23,7 @@ type LibraryListProps = {
   type: ItemType;
   items: StoredItem[];
   filters: ListItemsFilters;
+  categories: string[];
 };
 
 function getShellCopy(type: ItemType) {
@@ -111,6 +112,7 @@ export function LibraryList({
   type,
   items,
   filters,
+  categories,
 }: Readonly<LibraryListProps>) {
   const shellCopy = getShellCopy(type);
   const createHref = getCreateHref(type);
@@ -162,7 +164,7 @@ export function LibraryList({
         </CardHeader>
         <CardContent className="pt-3">
           <Suspense>
-            <LibraryFilters type={type} filters={filters} />
+            <LibraryFilters type={type} filters={filters} categories={categories} />
           </Suspense>
         </CardContent>
       </Card>

@@ -10,9 +10,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
+import { requireAppUser } from "@/server/auth/session";
 import { createSkillAction } from "@/server/items/actions";
 
 export default async function NewSkillPage() {
+  const user = await requireAppUser();
+  await ensureDefaultCategories(user.id);
+  const categories = await getUserCategoryNames(user.id, "skill");
+
   return (
     <main className="mx-auto w-full max-w-4xl space-y-6 px-4 py-6 lg:px-8 lg:py-8">
       <div className="mb-2">
@@ -46,10 +52,11 @@ export default async function NewSkillPage() {
             type="skill"
             action={createSkillAction}
             submitLabel="保存 Skill"
+            categories={categories}
             initialValues={{
               title: "",
               summary: "",
-              category: "Other",
+              category: categories[0] ?? "Other",
               tags: [],
               content: "",
               sourceUrl: "",

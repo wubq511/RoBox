@@ -1,5 +1,4 @@
 import {
-  itemCategorySchema,
   itemSortSchema,
   type ItemType,
   type ListItemsFilters,
@@ -30,10 +29,7 @@ function normalizeString(value: string | undefined) {
 function normalizeCategory(
   value: string | undefined,
 ): ListItemsFilters["category"] {
-  const normalized = normalizeString(value);
-  const parsed = itemCategorySchema.safeParse(normalized);
-
-  return parsed.success ? parsed.data : undefined;
+  return normalizeString(value);
 }
 
 function normalizeSort(value: string | undefined): ListItemsFilters["sort"] {

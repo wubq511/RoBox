@@ -117,13 +117,14 @@ describe("GitHub skill import helpers", () => {
   });
 
   it("saves the submitted link as skill content and analyzes README context", async () => {
+    const userCategories = ["Writing", "Coding", "Agent", "Other"];
     const createdItem = {
       id: "skill-1",
       type: "skill",
       title: "tw93/Waza",
       summary: "",
       content: "https://github.com/tw93/Waza",
-      category: "Agent",
+      category: "Writing",
       tags: ["GitHub"],
       sourceUrl: "https://github.com/tw93/Waza",
       isAnalyzed: false,
@@ -132,6 +133,7 @@ describe("GitHub skill import helpers", () => {
       ...createdItem,
       title: "Waza",
       summary: "汇总常用 AI 编程工作流的 Skill。",
+      category: "Agent",
       tags: ["AI", "Skill"],
       isAnalyzed: true,
     };
@@ -154,7 +156,7 @@ describe("GitHub skill import helpers", () => {
 
     await expect(
       createGithubSkillImport(
-        { url: "https://github.com/tw93/Waza" },
+        { url: "https://github.com/tw93/Waza", categories: userCategories },
         { fetcher },
       ),
     ).resolves.toMatchObject({
@@ -167,13 +169,14 @@ describe("GitHub skill import helpers", () => {
       title: "tw93/Waza",
       summary: "",
       content: "https://github.com/tw93/Waza",
-      category: "Agent",
+      category: "Writing",
       tags: ["GitHub"],
       sourceUrl: "https://github.com/tw93/Waza",
     });
     expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "skill",
+        categories: userCategories,
         content: expect.stringContaining("# Waza"),
       }),
     );
@@ -198,7 +201,7 @@ describe("GitHub skill import helpers", () => {
       title: "tw93/Waza",
       summary: "",
       content: "https://github.com/tw93/Waza",
-      category: "Agent",
+      category: "Writing",
       tags: ["GitHub"],
       sourceUrl: "https://github.com/tw93/Waza",
       isAnalyzed: false,
@@ -215,7 +218,7 @@ describe("GitHub skill import helpers", () => {
 
     await expect(
       createGithubSkillImport(
-        { url: "https://github.com/tw93/Waza" },
+        { url: "https://github.com/tw93/Waza", categories: ["Writing", "Coding", "Other"] },
         { fetcher },
       ),
     ).resolves.toEqual({

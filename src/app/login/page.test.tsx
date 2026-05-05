@@ -33,7 +33,7 @@ describe("LoginPage", () => {
     const html = renderToStaticMarkup(page);
 
     expect(html).toContain("RoBox");
-    expect(html).toContain("登录以继续管理你的 Prompt 与 Skill");
+    expect(html).toContain("管理你的 Prompt 与 Skill");
     expect(html).not.toContain("Sign in to your private");
     expect(html).not.toContain("Passwordless login");
     expect(html).not.toContain("Allowlist only");

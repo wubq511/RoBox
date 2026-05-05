@@ -4,6 +4,8 @@ import {
   replacePromptVariables,
   updateItem,
 } from "@/server/db/items";
+import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
+import { validateAnalysisCategory } from "./parser";
 
 import { requestDeepSeekAnalysis } from "./deepseek";
 
@@ -24,15 +26,24 @@ export async function analyzeStoredItem(itemId: string) {
     throw new AnalyzeItemError("Item not found.", 404);
   }
 
+  await ensureDefaultCategories(item.userId);
+  const categories = await getUserCategoryNames(item.userId, item.type);
+
   const analysis = await requestDeepSeekAnalysis({
     content: item.content,
     type: item.type,
+    categories,
   });
+
+  const validatedCategory = validateAnalysisCategory(
+    analysis.category,
+    categories,
+  );
 
   const updatedItem = await updateItem(item.id, {
     title: analysis.title,
     summary: analysis.summary,
-    category: analysis.category,
+    category: validatedCategory,
     tags: analysis.tags,
     isAnalyzed: true,
   });

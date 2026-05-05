@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getItemDetail } from "@/server/db/items";
+import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
+import { requireAppUser } from "@/server/auth/session";
 import { updateSkillAction } from "@/server/items/actions";
 
 type Params = {
@@ -46,6 +48,10 @@ export async function EditSkillContent({ id }: { id: string }) {
     notFound();
   }
 
+  const user = await requireAppUser();
+  await ensureDefaultCategories(user.id);
+  const categories = await getUserCategoryNames(user.id, "skill");
+
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-6 lg:px-8 lg:py-8">
       <div className="mb-6">
@@ -73,6 +79,7 @@ export async function EditSkillContent({ id }: { id: string }) {
             type="skill"
             action={updateSkillAction.bind(null, item.id)}
             submitLabel="更新 Skill"
+            categories={categories}
             initialValues={{
               title: item.title,
               summary: item.summary,

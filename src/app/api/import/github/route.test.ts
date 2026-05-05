@@ -7,12 +7,16 @@ const {
   getOptionalAppUserMock,
   checkRateLimitMock,
   getAppOriginMock,
+  ensureDefaultCategoriesMock,
+  getUserCategoryNamesMock,
 } = vi.hoisted(() => ({
   createGithubSkillImportMock: vi.fn(),
   revalidatePathMock: vi.fn(),
   getOptionalAppUserMock: vi.fn(),
   checkRateLimitMock: vi.fn(),
   getAppOriginMock: vi.fn(),
+  ensureDefaultCategoriesMock: vi.fn(),
+  getUserCategoryNamesMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -27,6 +31,11 @@ vi.mock("@/server/auth/session", () => ({
   getOptionalAppUser: getOptionalAppUserMock,
 }));
 
+vi.mock("@/server/db/categories", () => ({
+  ensureDefaultCategories: ensureDefaultCategoriesMock,
+  getUserCategoryNames: getUserCategoryNamesMock,
+}));
+
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: checkRateLimitMock,
 }));
@@ -37,6 +46,8 @@ vi.mock("@/lib/env", () => ({
 
 import { POST } from "./route";
 
+const defaultCategories = ["Writing", "Coding", "Research", "Design", "Study", "Agent", "Content", "Other"];
+
 describe("POST /api/import/github", () => {
   beforeEach(() => {
     createGithubSkillImportMock.mockReset();
@@ -44,6 +55,8 @@ describe("POST /api/import/github", () => {
     getOptionalAppUserMock.mockResolvedValue({ id: "user-1", email: "test@example.com" });
     checkRateLimitMock.mockReturnValue({ allowed: true, ip: "127.0.0.1" });
     getAppOriginMock.mockReturnValue("http://localhost:3000");
+    ensureDefaultCategoriesMock.mockResolvedValue(undefined);
+    getUserCategoryNamesMock.mockResolvedValue(defaultCategories);
   });
 
   it("returns 401 when user is not authenticated", async () => {
@@ -101,6 +114,7 @@ describe("POST /api/import/github", () => {
     expect(response.status).toBe(201);
     expect(createGithubSkillImportMock).toHaveBeenCalledWith({
       url: "https://github.com/tw93/Waza",
+      categories: defaultCategories,
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
     expect(revalidatePathMock).toHaveBeenCalledWith("/skills");

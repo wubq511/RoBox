@@ -1,7 +1,9 @@
 import type { StoredItem } from "@/server/db/types";
 import { getServerEnv } from "@/lib/env";
 import { requestDeepSeekAnalysis } from "@/server/analyze/deepseek";
+import { DEFAULT_CATEGORIES } from "@/lib/schema/items";
 import { createItem, updateItem } from "@/server/db/items";
+import { validateAnalysisCategory } from "@/server/analyze/parser";
 
 type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -19,6 +21,7 @@ type GithubReadmeResult = {
 
 type CreateGithubSkillImportInput = {
   url: string;
+  categories?: string[];
 };
 
 type CreateGithubSkillImportOptions = {
@@ -286,12 +289,14 @@ export async function createGithubSkillImport(
 ): Promise<GithubSkillImportResult> {
   const target = resolveGithubSkillUrl(input.url);
   const readme = await fetchGithubReadme(target, options);
+  const userCategories = input.categories ?? [...DEFAULT_CATEGORIES];
+  const defaultCategory = userCategories[0] ?? "Other";
   const createdItem = await createItem({
     type: "skill",
     title: target.repositoryName,
     summary: "",
     content: target.originalUrl,
-    category: "Agent",
+    category: defaultCategory,
     tags: ["GitHub"],
     sourceUrl: target.repositoryUrl,
   });
@@ -300,11 +305,16 @@ export async function createGithubSkillImport(
     const analysis = await requestDeepSeekAnalysis({
       type: "skill",
       content: buildAnalysisContent(target, readme),
+      categories: userCategories,
     });
+    const validatedCategory = validateAnalysisCategory(
+      analysis.category,
+      userCategories,
+    );
     const updatedItem = await updateItem(createdItem.id, {
       title: analysis.title,
       summary: analysis.summary,
-      category: analysis.category,
+      category: validatedCategory,
       tags: analysis.tags,
       isAnalyzed: true,
     });

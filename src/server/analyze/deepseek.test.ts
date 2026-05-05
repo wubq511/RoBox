@@ -31,6 +31,7 @@ describe("requestDeepSeekAnalysis", () => {
         {
           type: "prompt",
           content: "请写一篇文章",
+          categories: ["Writing", "Coding", "Other"],
         },
         {
           apiKey: "test-key",

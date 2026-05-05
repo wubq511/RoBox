@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ItemForm } from "./item-form";
 
 const noopAction = async () => undefined;
+const defaultCategories = ["Writing", "Coding", "Research", "Design", "Study", "Agent", "Content", "Other"];
 
 describe("ItemForm", () => {
   it("uses the explicit type prop for the hidden type field and prompt variable section", () => {
@@ -12,6 +13,7 @@ describe("ItemForm", () => {
         type="prompt"
         action={noopAction}
         submitLabel="Save prompt"
+        categories={defaultCategories}
         initialValues={{
           title: "Prompt title",
           summary: "Prompt summary",
@@ -35,6 +37,7 @@ describe("ItemForm", () => {
         type="skill"
         action={noopAction}
         submitLabel="Save skill"
+        categories={defaultCategories}
         initialValues={{
           title: "Skill title",
           summary: "Skill summary",

@@ -140,6 +140,85 @@ Successful response shape:
 
 Import stores the submitted link in `items.content`, stores the canonical repository link in `items.source_url`, and uses fetched README/SKILL.md content only as DeepSeek analysis context.
 
+### List Categories
+
+```text
+GET /api/categories?type=<prompt|skill>
+```
+
+Requirements:
+
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
+- Same-origin only; cross-origin requests return `403`.
+- The `type` query parameter is required and must be `prompt` or `skill`.
+
+Client-side usage from an authenticated app page:
+
+```ts
+const res = await fetch("/api/categories?type=prompt");
+const data = await res.json();
+// data.categories: Array<{ id, userId, type, name, sortOrder, createdAt }>
+```
+
+If the user has no categories yet, the endpoint seeds 8 default categories automatically.
+
+### Add Category
+
+```text
+POST /api/categories
+```
+
+Requirements:
+
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
+- Same-origin only; cross-origin requests return `403`.
+
+Request body:
+
+```ts
+{
+  type: "prompt" | "skill",
+  name: "My Category"
+}
+```
+
+Category names must be 1-32 characters. Duplicate names within the same type return `409`.
+
+### Delete Category
+
+```text
+DELETE /api/categories/<name>?type=<prompt|skill>
+```
+
+Requirements:
+
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
+- Same-origin only; cross-origin requests return `403`.
+- The `type` query parameter is required.
+- The last category in a type cannot be deleted (`400`).
+
+If the category has items in use, the response returns `409` with `{ error, usageCount, requiresReplacement: true }`. To force-delete, re-send the request with header `x-replacement-category: <name>` specifying which category to migrate items to.
+
+### Reorder Categories
+
+```text
+PATCH /api/categories/reorder
+```
+
+Requirements:
+
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
+- Same-origin only; cross-origin requests return `403`.
+
+Request body:
+
+```ts
+{
+  type: "prompt" | "skill",
+  orderedNames: ["Writing", "Coding", "Other"]
+}
+```
+
 ## Manual Smoke Test
 
 1. Start Supabase and the Next.js dev server.

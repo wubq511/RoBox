@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  itemCategories,
   type ItemCategory,
   type ItemType,
 } from "@/lib/schema/items";
@@ -44,6 +43,7 @@ type ItemFormProps = {
   type: ItemType;
   action: ItemFormAction;
   submitLabel: string;
+  categories: string[];
   initialValues: {
     title: string;
     summary: string;
@@ -59,6 +59,7 @@ export function ItemForm({
   type,
   action,
   submitLabel,
+  categories,
   initialValues,
 }: Readonly<ItemFormProps>) {
   const [state, formAction, isPending] = useActionState(
@@ -95,7 +96,7 @@ export function ItemForm({
                   defaultValue={initialValues.category}
                   className="flex h-11 w-full appearance-none rounded-lg border border-input bg-transparent px-3 pr-8 text-sm outline-none transition-all focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/40"
                 >
-                  {itemCategories.map((category) => (
+                  {categories.map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>

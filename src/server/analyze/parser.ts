@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import {
-  itemCategorySchema,
   itemTypeSchema,
   promptVariableSchema,
   type ItemType,
@@ -22,7 +21,7 @@ const analysisSchema = z.object({
   type: itemTypeSchema,
   title: z.string().trim().min(1).max(120),
   summary: z.string().trim().max(240),
-  category: itemCategorySchema,
+  category: z.string().trim().min(1).max(32),
   tags: z.array(z.string().trim().min(1).max(32)).max(8).default([]),
   variables: z.array(rawVariableSchema).default([]),
 });
@@ -31,10 +30,21 @@ export type AnalysisResult = {
   type: ItemType;
   title: string;
   summary: string;
-  category: z.infer<typeof itemCategorySchema>;
+  category: string;
   tags: string[];
   variables: PromptVariableInput[];
 };
+
+export function validateAnalysisCategory(
+  category: string,
+  allowedCategories: string[],
+): string {
+  if (allowedCategories.includes(category)) {
+    return category;
+  }
+
+  return allowedCategories[0] ?? "Other";
+}
 
 function stripCodeFence(content: string) {
   const trimmed = content.trim();

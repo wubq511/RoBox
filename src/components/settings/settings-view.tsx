@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   DatabaseIcon,
   FolderDownIcon,
@@ -12,6 +15,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CategoryManager } from "@/components/settings/category-manager";
+import type { ItemType } from "@/lib/schema/items";
 
 const settingsCards = [
   {
@@ -19,12 +24,6 @@ const settingsCards = [
     description: "配置 AI 模型用于智能整理内容。",
     detail: "在服务端环境变量中设置 DEEPSEEK_API_KEY 即可启用。",
     icon: SparklesIcon,
-  },
-  {
-    title: "固定分类",
-    description: "使用预设分类管理你的 Prompt 和 Skill。",
-    detail: "支持 Writing、Coding、Research、Design、Study、Agent、Content、Other 分类。",
-    icon: DatabaseIcon,
   },
   {
     title: "GitHub 导入",
@@ -40,7 +39,11 @@ const settingsCards = [
   },
 ];
 
+type CategoryTab = "prompt" | "skill";
+
 export function SettingsView() {
+  const [categoryTab, setCategoryTab] = useState<CategoryTab>("prompt");
+
   return (
     <section className="mx-auto flex w-full max-w-[960px] flex-col gap-6 px-4 py-6 lg:px-8 lg:py-8">
       <div className="space-y-3">
@@ -49,6 +52,47 @@ export function SettingsView() {
           配置外部服务和数据管理选项。
         </p>
       </div>
+
+      <Card className="rounded-[28px] border-border/70 shadow-[0_18px_42px_-34px_rgba(17,17,17,0.28)]">
+        <CardHeader className="gap-4">
+          <div className="flex size-11 items-center justify-center rounded-2xl bg-muted text-foreground">
+            <DatabaseIcon className="size-5" />
+          </div>
+          <div className="space-y-2">
+            <CardTitle className="text-xl">自定义分类</CardTitle>
+            <CardDescription className="text-sm leading-6">
+              分别管理 Prompt 和 Skill 的分类，支持自定义增删和排序。
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="rounded-2xl border border-border bg-muted/30 p-4">
+            <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
+              <button
+                onClick={() => setCategoryTab("prompt")}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  categoryTab === "prompt"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Prompt 分类
+              </button>
+              <button
+                onClick={() => setCategoryTab("skill")}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  categoryTab === "skill"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Skill 分类
+              </button>
+            </div>
+            <CategoryManager type={categoryTab as ItemType} />
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-2">
         {settingsCards.map((card) => {

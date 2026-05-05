@@ -8,12 +8,16 @@ const {
   replacePromptVariablesMock,
   requestDeepSeekAnalysisMock,
   updateItemMock,
+  ensureDefaultCategoriesMock,
+  getUserCategoryNamesMock,
 } = vi.hoisted(() => ({
   getItemByIdMock: vi.fn(),
   getItemDetailMock: vi.fn(),
   replacePromptVariablesMock: vi.fn(),
   requestDeepSeekAnalysisMock: vi.fn(),
   updateItemMock: vi.fn(),
+  ensureDefaultCategoriesMock: vi.fn(),
+  getUserCategoryNamesMock: vi.fn(),
 }));
 
 vi.mock("@/server/db/items", () => ({
@@ -21,6 +25,11 @@ vi.mock("@/server/db/items", () => ({
   getItemDetail: getItemDetailMock,
   replacePromptVariables: replacePromptVariablesMock,
   updateItem: updateItemMock,
+}));
+
+vi.mock("@/server/db/categories", () => ({
+  ensureDefaultCategories: ensureDefaultCategoriesMock,
+  getUserCategoryNames: getUserCategoryNamesMock,
 }));
 
 vi.mock("./deepseek", () => ({
@@ -34,11 +43,16 @@ describe("analyzeStoredItem", () => {
     replacePromptVariablesMock.mockReset();
     requestDeepSeekAnalysisMock.mockReset();
     updateItemMock.mockReset();
+    ensureDefaultCategoriesMock.mockReset();
+    getUserCategoryNamesMock.mockReset();
+    ensureDefaultCategoriesMock.mockResolvedValue(undefined);
+    getUserCategoryNamesMock.mockResolvedValue(["Writing", "Coding", "Other"]);
   });
 
   it("updates prompt metadata and replaces prompt variables without changing raw content", async () => {
     getItemByIdMock.mockResolvedValue({
       id: "prompt-1",
+      userId: "user-1",
       type: "prompt",
       content: "请围绕 {{topic}} 输出文章",
     });
@@ -69,6 +83,7 @@ describe("analyzeStoredItem", () => {
     expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith({
       content: "请围绕 {{topic}} 输出文章",
       type: "prompt",
+      categories: ["Writing", "Coding", "Other"],
     });
     expect(updateItemMock).toHaveBeenCalledWith("prompt-1", {
       title: "文章生成 Prompt",
@@ -91,6 +106,7 @@ describe("analyzeStoredItem", () => {
   it("does not write variables for skills even if the model returns them", async () => {
     getItemByIdMock.mockResolvedValue({
       id: "skill-1",
+      userId: "user-1",
       type: "skill",
       content: "SKILL.md raw content",
     });
@@ -111,7 +127,7 @@ describe("analyzeStoredItem", () => {
     expect(updateItemMock).toHaveBeenCalledWith("skill-1", {
       title: "调试 Skill",
       summary: "用于系统化调试。",
-      category: "Agent",
+      category: "Writing",
       tags: ["调试"],
       isAnalyzed: true,
     });
@@ -120,6 +136,7 @@ describe("analyzeStoredItem", () => {
   it("leaves the stored item untouched when DeepSeek analysis fails", async () => {
     getItemByIdMock.mockResolvedValue({
       id: "prompt-1",
+      userId: "user-1",
       type: "prompt",
       content: "raw prompt",
     });

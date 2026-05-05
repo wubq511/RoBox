@@ -10,6 +10,7 @@ type Fetcher = (input: string, init?: RequestInit) => Promise<Response>;
 type RequestDeepSeekAnalysisInput = {
   type: ItemType;
   content: string;
+  categories: string[];
 };
 
 type RequestDeepSeekAnalysisOptions = {
@@ -62,13 +63,15 @@ function getDeepSeekBaseUrl(baseUrl?: string) {
   return url;
 }
 
-function buildAnalyzePrompt({ type, content }: RequestDeepSeekAnalysisInput) {
+function buildAnalyzePrompt({ type, content, categories }: RequestDeepSeekAnalysisInput) {
+  const categoryList = categories.join(", ");
+
   return `你是一个严谨的信息整理助手。请根据用户提供的 ${type} 原文输出结构化 JSON。
 
 要求：
 1. 只能输出 JSON，不要输出 Markdown。
 2. type 必须是 "${type}"。
-3. category 必须从以下分类中选择：Writing, Coding, Research, Design, Study, Agent, Content, Other。
+3. category 必须从以下分类中选择：${categoryList}。
 4. tags 输出 3-8 个中文标签；如果内容很短，至少输出 1 个标签。
 5. 如果 type 是 "prompt"，请识别需要用户填写的变量，变量名优先匹配 {{variable}} 占位符。
 6. 如果 type 是 "skill"，variables 必须输出空数组。

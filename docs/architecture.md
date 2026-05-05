@@ -25,7 +25,7 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
 - `src/server/auth`
   Supabase Auth allowlist checks and session guards.
 - `src/server/db`
-  Supabase repository functions for `items`, `prompt_variables`, and `usage_logs`.
+  Supabase repository functions for `items`, `prompt_variables`, `usage_logs`, and `user_categories`.
 - `src/server/items`
   Form parsing and Server Actions for create, update, delete, favorite, and copy logging.
 - `src/server/analyze`
@@ -39,10 +39,12 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
 
 ## Data Model
 
-The MVP data model is centered on three Supabase tables:
+The MVP data model is centered on four Supabase tables:
 
 - `items`
-  The unified Prompt / Skill entity. Important fields include `type`, `title`, `summary`, `content`, `category`, `tags`, `source_url`, `is_favorite`, `is_analyzed`, and `usage_count`.
+  The unified Prompt / Skill entity. Important fields include `type`, `title`, `summary`, `content`, `category`, `tags`, `source_url`, `is_favorite`, `is_analyzed`, and `usage_count`. The `category` field stores free-text values validated against the user's custom categories in `user_categories`.
+- `user_categories`
+  Per-user custom category definitions, scoped by item type (`prompt` or `skill`). Each user can independently manage their Prompt and Skill categories. New users are seeded with 8 default categories per type. The `UNIQUE(user_id, type, name)` constraint prevents duplicates within the same type.
 - `prompt_variables`
   Prompt-only variable definitions used to render the final prompt copy surface.
 - `usage_logs`
@@ -72,8 +74,8 @@ Beyond the base migration indexes (`user_id + updated_at`, `user_id + type`, `us
 1. The user saves a Prompt or Skill as raw content. The item can remain `is_analyzed=false`.
 2. The detail page triggers manual smart analyze; saving content does not call the model.
 3. The route verifies the Supabase session and loads the current user's item.
-4. `src/server/analyze/deepseek.ts` calls DeepSeek. The model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`) via `getServerEnv()`, which prioritizes `.env.local` over system environment variables. User content is wrapped in boundary markers to mitigate prompt injection.
-5. `src/server/analyze/parser.ts` strips markdown fences, repairs common JSON issues, and validates the structured response.
+4. `src/server/analyze/deepseek.ts` calls DeepSeek. The model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`) via `getServerEnv()`, which prioritizes `.env.local` over system environment variables. User content is wrapped in boundary markers to mitigate prompt injection. The prompt includes the user's custom category list (fetched from `user_categories`) so the model selects from valid categories.
+5. `src/server/analyze/parser.ts` strips markdown fences, repairs common JSON issues, and validates the structured response. The `category` field is validated as a free-text string; `validateAnalysisCategory` checks it against the user's custom categories and falls back to the first category if the model returns an invalid value.
 6. `src/server/analyze/service.ts` updates `items` metadata and sets `is_analyzed=true`.
 7. Prompt analysis replaces that prompt's `prompt_variables`; Skill analysis ignores variable output.
 8. On model or parse failure, the route returns a recoverable error and the original item content stays unchanged.
@@ -222,4 +224,15 @@ Production API responses use generic error messages. Detailed error information 
 ### Ownership Checks
 
 `replacePromptVariables` now verifies item existence and ownership before deleting variables, adding defense-in-depth beyond RLS.
+
+## Custom Categories
+
+Categories are no longer a fixed enum. Each user manages their own Prompt and Skill categories independently through the `user_categories` table.
+
+- New users are seeded with 8 default categories (Writing, Coding, Research, Design, Study, Agent, Content, Other) per type.
+- The Settings page provides a Category Manager with Prompt/Skill tabs for adding, deleting, and reordering categories.
+- Deleting a category that has items in use requires selecting a replacement category; those items are migrated before the category is removed.
+- The last category in a type cannot be deleted.
+- `items.category` stores free-text values. Application-layer validation (via `validateCategoryBelongsToUser`) ensures the value exists in the user's `user_categories` for the corresponding type.
+- DeepSeek analysis dynamically injects the user's category list into the prompt and validates the returned category against it, falling back to the first category if invalid.
 

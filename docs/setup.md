@@ -110,7 +110,7 @@ Current code placement:
 - `src/app`
   App Router routes and shared route layouts
 - `src/app/api`
-  Route Handlers, including `POST /api/items/:id/analyze` and `POST /api/import/github`
+  Route Handlers, including `POST /api/items/:id/analyze`, `POST /api/import/github`, and `GET/POST/DELETE/PATCH /api/categories`
 - `src/components/layout`
   App shell, sidebar, mobile nav
 - `src/components/dashboard`
@@ -134,7 +134,7 @@ Current code placement:
 - `src/server/import`
   GitHub Skill URL validation, README/SKILL.md fetch, Skill creation, and README-based analyze orchestration
 - `src/server/db`
-  Supabase-backed repository for `items`, `prompt_variables`, and `usage_logs`
+  Supabase-backed repository for `items`, `prompt_variables`, `usage_logs`, and `user_categories`
 - `src/server/items`
   Prompt / Skill form parsing and mutation Server Actions
 - `supabase`
@@ -205,3 +205,5 @@ Implemented workspace routes:
   Skill detail with source URL metadata when present, raw content, copy feedback, smart analyze, edit, and delete.
 - `/skills/[id]/edit`
   Manual Skill edit form.
+- `/settings`
+  Settings page with custom category management (Prompt/Skill tabs with add, delete, reorder) and external service configuration.
