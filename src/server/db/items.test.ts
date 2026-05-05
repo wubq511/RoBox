@@ -69,6 +69,7 @@ function createSupabaseMock({
   const state = {
     items: [...items],
     containsCalls: [] as Array<{ column: string; value: unknown }>,
+    orCalls: [] as string[],
   };
 
   function createBuilder(table: "items" | "usage_logs") {
@@ -127,6 +128,10 @@ function createSupabaseMock({
       contains(column: string, value: unknown) {
         filters.contains.push({ column, value });
         state.containsCalls.push({ column, value });
+        return builder;
+      },
+      or(value: string) {
+        state.orCalls.push(value);
         return builder;
       },
       in(column: string, values: unknown[]) {
@@ -239,7 +244,7 @@ function createSupabaseMock({
       from(table: "items" | "usage_logs") {
         return createBuilder(table);
       },
-      rpc(fnName: string, _args: Record<string, unknown>) {
+      rpc(fnName: string) {
         if (fnName === "get_latest_copied_at") {
           return Promise.resolve({ data: [], error: null });
         }
@@ -344,6 +349,27 @@ describe("item repository helpers", () => {
         value: ["react"],
       },
     ]);
+  });
+
+  it("strips raw PostgREST OR syntax characters from search input", async () => {
+    const supabase = createSupabaseMock({
+      items: [
+        createItemRow({
+          id: "item-1",
+          title: "Prompt",
+        }),
+      ],
+    });
+    getServerSupabaseClientMock.mockResolvedValue(supabase.client);
+
+    await listItems({
+      search: 'alpha),id.neq.1,{x}"_%*',
+    });
+
+    expect(supabase.state.orCalls).toHaveLength(1);
+    expect(supabase.state.orCalls[0]).toBe(
+      "title.ilike.*alpha  id.neq.1  x  \\_\\%*,summary.ilike.*alpha  id.neq.1  x  \\_\\%*,content.ilike.*alpha  id.neq.1  x  \\_\\%*",
+    );
   });
 
   it("deletes a single item for the current user", async () => {

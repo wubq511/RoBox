@@ -38,31 +38,56 @@ export async function ensureDefaultCategories(
 
   const { data: existing, error: selectError } = await supabase
     .from("user_categories")
-    .select("id")
-    .eq("user_id", userId)
-    .limit(1);
+    .select("type,name,sort_order")
+    .eq("user_id", userId);
 
   if (selectError) {
     throw selectError;
   }
 
-  if (existing && existing.length > 0) {
+  const existingRows = (existing ?? []) as Array<{
+    type: ItemType;
+    name: string;
+    sort_order: number;
+  }>;
+  const rowsToInsert: Array<{
+    user_id: string;
+    type: ItemType;
+    name: string;
+    sort_order: number;
+  }> = [];
+  const types: ItemType[] = ["prompt", "skill"];
+
+  for (const type of types) {
+    const rowsForType = existingRows.filter((row) => row.type === type);
+    const existingNames = new Set(rowsForType.map((row) => row.name));
+    let nextSortOrder =
+      rowsForType.length > 0
+        ? Math.max(...rowsForType.map((row) => row.sort_order)) + 1
+        : 0;
+
+    for (const name of DEFAULT_CATEGORIES) {
+      if (existingNames.has(name)) {
+        continue;
+      }
+
+      rowsToInsert.push({
+        user_id: userId,
+        type,
+        name,
+        sort_order: nextSortOrder,
+      });
+      nextSortOrder++;
+    }
+  }
+
+  if (rowsToInsert.length === 0) {
     return;
   }
 
-  const types: ItemType[] = ["prompt", "skill"];
-  const rows = types.flatMap((type) =>
-    DEFAULT_CATEGORIES.map((name, index) => ({
-      user_id: userId,
-      type,
-      name,
-      sort_order: index,
-    })),
-  );
-
   const { error: insertError } = await supabase
     .from("user_categories")
-    .insert(rows);
+    .insert(rowsToInsert);
 
   if (insertError) {
     throw insertError;

@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ArrowLeftIcon, CalendarIcon, ExternalLinkIcon } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -39,7 +38,6 @@ export function ItemDetailView({
   ];
   const isImportedSkill = item.type === "skill" && Boolean(item.sourceUrl);
   const copyContent = isImportedSkill ? item.sourceUrl : item.content;
-  const copyLabel = item.type === "prompt" ? "复制" : isImportedSkill ? "复制链接" : "复制";
 
   return (
     <div className="space-y-6">

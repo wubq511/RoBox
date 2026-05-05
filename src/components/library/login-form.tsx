@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { Loader2Icon, CheckIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requestMagicLinkAction } from "@/server/auth/actions";
 

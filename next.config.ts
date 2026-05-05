@@ -2,6 +2,13 @@ import path from "node:path";
 
 import type { NextConfig } from "next";
 
+const scriptSrc = [
+  "script-src",
+  "'self'",
+  "'unsafe-inline'",
+  ...(process.env.NODE_ENV === "production" ? [] : ["'unsafe-eval'"]),
+].join(" ");
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -14,7 +21,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",

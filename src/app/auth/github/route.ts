@@ -1,18 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getAppOrigin } from "@/lib/env";
+import { getAppOrigin, getSupabasePublicEnv } from "@/lib/env";
 import { buildAuthRedirectUrl, sanitizeNextPath } from "@/server/auth/service";
-
-function readEnv(name: string) {
-  const value = process.env[name]?.trim();
-
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
-}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -32,8 +22,7 @@ export async function GET(request: NextRequest) {
 
   let supabaseResponse = NextResponse.next({ request });
 
-  const url = readEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const publishableKey = readEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
+  const { url, publishableKey } = getSupabasePublicEnv();
 
   const supabase = createServerClient(url, publishableKey, {
     cookies: {

@@ -4,7 +4,10 @@ import { NextResponse } from "next/server";
 import { getAppOrigin } from "@/lib/env";
 import { itemTypeSchema } from "@/lib/schema/items";
 import { getOptionalAppUser } from "@/server/auth/session";
-import { reorderUserCategories } from "@/server/db/categories";
+import {
+  getUserCategoryNames,
+  reorderUserCategories,
+} from "@/server/db/categories";
 
 export async function PATCH(request: Request) {
   const origin = request.headers.get("origin");
@@ -65,7 +68,22 @@ export async function PATCH(request: Request) {
     );
   }
 
-  await reorderUserCategories(user.id, parsedType.data, orderedNames);
+  const currentNames = await getUserCategoryNames(user.id, parsedType.data);
+  const normalizedOrderedNames = orderedNames.map((name) => name.trim());
+  const uniqueOrderedNames = new Set(normalizedOrderedNames);
+
+  if (
+    uniqueOrderedNames.size !== currentNames.length ||
+    normalizedOrderedNames.length !== currentNames.length ||
+    currentNames.some((name) => !uniqueOrderedNames.has(name))
+  ) {
+    return NextResponse.json(
+      { error: "orderedNames must include each existing category exactly once" },
+      { status: 400 },
+    );
+  }
+
+  await reorderUserCategories(user.id, parsedType.data, normalizedOrderedNames);
 
   revalidatePath("/settings");
 

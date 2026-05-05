@@ -8,12 +8,17 @@ import {
   updateItemInputSchema,
   type CopyAction,
   type CreateItemInput,
+  type ItemType,
   type ListItemsFilters,
   type PromptVariableInput,
   type UpdateItemInput,
 } from "@/lib/schema/items";
 import { getServerSupabaseClient } from "@/lib/supabase/server-client";
 import { requireAppUser } from "@/server/auth/session";
+import {
+  ensureDefaultCategories,
+  validateCategoryBelongsToUser,
+} from "@/server/db/categories";
 
 import { mapItemRow, mapPromptVariableRow } from "./mappers";
 import type {
@@ -31,7 +36,7 @@ type ItemInsertPayload = {
   title: string;
   summary: string;
   content: string;
-  category: CreateItemInput["category"];
+  category: string;
   tags: string[];
   source_url: string | null;
 };
@@ -51,6 +56,7 @@ function sanitizeSearchValue(value: string) {
   return value
     .replaceAll(",", " ")
     .replaceAll("*", " ")
+    .replace(/[(){}"]/g, " ")
     .replaceAll("%", "\\%")
     .replaceAll("_", "\\_")
     .trim();
@@ -70,6 +76,24 @@ async function getDatabaseContext(nextPath = "/dashboard") {
     supabase,
     userId: user.id,
   };
+}
+
+async function assertCategoryBelongsToUser(
+  userId: string,
+  type: ItemType,
+  category: string,
+) {
+  await ensureDefaultCategories(userId);
+
+  const isValidCategory = await validateCategoryBelongsToUser(
+    userId,
+    type,
+    category,
+  );
+
+  if (!isValidCategory) {
+    throw new Error("Invalid category.");
+  }
 }
 
 export function buildItemInsert(
@@ -292,6 +316,9 @@ export async function getItemDetail(itemId: string): Promise<ItemDetail | null> 
 export async function createItem(input: CreateItemInput) {
   const { supabase, userId } = await getDatabaseContext();
   const payload = buildItemInsert(userId, input);
+
+  await assertCategoryBelongsToUser(userId, payload.type, payload.category);
+
   const { data, error } = await supabase
     .from("items")
     .insert(payload)
@@ -311,6 +338,29 @@ export async function updateItem(itemId: string, input: UpdateItemInput) {
 
   if (Object.keys(payload).length === 0) {
     return getItemById(itemId);
+  }
+
+  if (payload.category !== undefined) {
+    const { data: existingItem, error: selectError } = await supabase
+      .from("items")
+      .select("type")
+      .eq("id", itemId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selectError) {
+      throw selectError;
+    }
+
+    if (!existingItem) {
+      return null;
+    }
+
+    await assertCategoryBelongsToUser(
+      userId,
+      (existingItem as Pick<ItemRow, "type">).type,
+      payload.category,
+    );
   }
 
   const { data, error } = await supabase

@@ -21,6 +21,8 @@ vi.mock("./favorite-toggle-button", () => ({
 import { LibraryList } from "./library-list";
 
 describe("LibraryList", () => {
+  const categories = ["Writing", "Coding", "Other"];
+
   it("renders the prompt library shell with header and create CTA", () => {
     const filters: ListItemsFilters = {
       type: "prompt",
@@ -30,7 +32,12 @@ describe("LibraryList", () => {
     };
 
     const html = renderToStaticMarkup(
-      <LibraryList type="prompt" items={[]} filters={filters} />,
+      <LibraryList
+        type="prompt"
+        items={[]}
+        filters={filters}
+        categories={categories}
+      />,
     );
 
     expect(html).toContain("Prompt 库");
@@ -48,7 +55,12 @@ describe("LibraryList", () => {
     };
 
     const html = renderToStaticMarkup(
-      <LibraryList type="skill" items={[]} filters={filters} />,
+      <LibraryList
+        type="skill"
+        items={[]}
+        filters={filters}
+        categories={categories}
+      />,
     );
 
     expect(html).toContain("Skill 库");
@@ -83,7 +95,12 @@ describe("LibraryList", () => {
     ];
 
     const html = renderToStaticMarkup(
-      <LibraryList type="prompt" items={items} filters={filters} />,
+      <LibraryList
+        type="prompt"
+        items={items}
+        filters={filters}
+        categories={categories}
+      />,
     );
 
     expect(html).toContain('href="/prompts/prompt-1"');

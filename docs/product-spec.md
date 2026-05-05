@@ -541,7 +541,7 @@ MCP
 
 # 15. 开发阶段
 
-具体见 D:\RoBox\PLAN.md
+具体见 D:\RoBox\docs\project-plan.md
 
 # 16. 关键 API 设计
 

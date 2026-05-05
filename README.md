@@ -197,5 +197,6 @@ npm run build       # 构建
 | `docs/setup.md` | 本地启动、环境变量、Supabase 开发约定、目录说明 |
 | `docs/architecture.md` | 系统边界、数据流、DeepSeek 整理链路、GitHub 导入链路、安全层 |
 | `docs/integration-guide.md` | Route Handler 用法、MVP 冒烟流程 |
-| `PLAN.md` | 分阶段实施计划 |
-| `RoBox 最终项目方案.md` | 产品边界、数据模型、后续 API 方案 |
+| `docs/project-plan.md` | 分阶段实施计划 |
+| `docs/product-spec.md` | 产品边界、数据模型、后续 API 方案 |
+| `docs/code-wiki.md` | 代码结构索引与模块说明 |

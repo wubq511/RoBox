@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/proxy", () => ({
   updateSession: mocks.updateSession,
 }));
 
-import { config, middleware } from "./middleware";
+import { config, middleware } from "../middleware";
 
 describe("middleware", () => {
   it("refreshes the Supabase SSR session for matched requests", async () => {

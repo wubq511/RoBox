@@ -19,10 +19,11 @@
 - 启动文档 D:\RoBox\docs\setup.md
 - 架构文档 D:\RoBox\docs\architecture.md
 - 接入文档 D:\RoBox\docs\integration-guide.md
-- 项目方案 D:\RoBox\RoBox 最终项目方案.md
+- 项目方案 D:\RoBox\docs\product-spec.md
+- 分阶段计划 D:\RoBox\docs\project-plan.md
+- 代码索引 D:\RoBox\docs\code-wiki.md
 
 ### 开发期文档（不进入版本控制）
-- 分阶段计划 D:\RoBox\PLAN.md
 - 开发计划/清单 D:\RoBox\docs\dev\
 
 如果实现与项目文档冲突，以项目文档为准；如果项目文档本身不一致，先指出冲突，再继续。

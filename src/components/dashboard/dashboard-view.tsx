@@ -7,13 +7,11 @@ import {
   StarIcon,
   GitBranchIcon,
   SquarePenIcon,
-  PlusIcon,
 } from "lucide-react";
 
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";

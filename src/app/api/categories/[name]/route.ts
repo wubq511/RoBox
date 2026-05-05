@@ -71,7 +71,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   const result = await deleteUserCategory(user.id, type, name);
 
   if (!result.deleted) {
-    const replacement = request.headers.get("x-replacement-category");
+    const replacement = request.headers.get("x-replacement-category")?.trim();
 
     if (!replacement) {
       return NextResponse.json(
@@ -81,6 +81,13 @@ export async function DELETE(request: Request, context: RouteContext) {
           requiresReplacement: true,
         },
         { status: 409 },
+      );
+    }
+
+    if (replacement === name || !categoryNames.includes(replacement)) {
+      return NextResponse.json(
+        { error: "Replacement category is invalid" },
+        { status: 400 },
       );
     }
 

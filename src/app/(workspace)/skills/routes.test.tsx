@@ -55,7 +55,7 @@ vi.mock("@/components/library/item-detail-view", () => ({
 }));
 
 vi.mock("@/components/library/library-list", () => ({
-  LibraryList: ({ type, items, categories }: { type: string; items: Array<{ id: string }>; categories: string[] }) => (
+  LibraryList: ({ type, items }: { type: string; items: Array<{ id: string }> }) => (
     <div data-testid="library-list" data-type={type}>
       {items.map((item) => <a key={item.id} href={`/skills/${item.id}`}>{item.id}</a>)}
     </div>
