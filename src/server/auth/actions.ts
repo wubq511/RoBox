@@ -43,19 +43,11 @@ export async function requestMagicLinkAction(formData: FormData) {
     nextPath,
   });
 
-  const searchParams = new URLSearchParams({
-    next: nextPath,
-    email,
-  });
-
   if (result.ok) {
-    searchParams.set("sent", "1");
-    searchParams.set("email", result.email);
-    redirect(`/login?${searchParams.toString()}`);
+    return { ok: true as const, email: result.email };
   }
 
-  searchParams.set("error", result.code);
-  redirect(`/login?${searchParams.toString()}`);
+  return { ok: false as const, code: result.code };
 }
 
 export async function signOutAction() {

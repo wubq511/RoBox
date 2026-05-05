@@ -62,6 +62,28 @@ GITHUB_TOKEN=
 
 ## Implemented Route Handlers
 
+### GitHub OAuth Login
+
+```text
+GET /auth/github
+```
+
+Initiates GitHub OAuth login. The route calls `supabase.auth.signInWithOAuth({ provider: "github" })` and redirects the user to GitHub's consent screen. After consent, GitHub redirects to Supabase Auth's callback URL (`/auth/v1/callback`), which then redirects to `/auth/confirm` with the session.
+
+Optional query parameter:
+
+- `next` — path to redirect to after login (defaults to `/dashboard`)
+
+Client-side usage:
+
+```ts
+window.location.href = "/auth/github";
+// or with a next path:
+window.location.href = "/auth/github?next=/prompts/new";
+```
+
+Failure redirects to `/login?error=oauth_request_failed`.
+
 ### Analyze Item
 
 ```text

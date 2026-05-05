@@ -147,10 +147,6 @@ Production deployment verified on `2026-05-03` with:
 - Full Chinese UI localization across all components
 - Performance: `React.cache()` on `getServerSupabaseClient()` and `readSessionEmail()` to deduplicate Supabase calls per request
 
-## Security Layer
-
-Security hardening was completed on `2026-05-04`.
-
 ## Performance
 
 Performance optimization was completed on `2026-05-05`.
@@ -183,6 +179,11 @@ Performance optimization was completed on `2026-05-05`.
 Security hardening was completed on `2026-05-04`.
 
 ### Authentication
+
+RoBox supports two login methods:
+
+- **GitHub OAuth** (primary): `GET /auth/github` initiates the OAuth flow via `supabase.auth.signInWithOAuth({ provider: "github" })` with PKCE. The callback is handled by Supabase Auth at `/auth/v1/callback`, which redirects to `/auth/confirm` with the session. The `redirectTo` parameter is constructed from the request origin, so local dev redirects to `localhost:3000/auth/confirm` and production redirects to `robox-beta.vercel.app/auth/confirm`. Cloud Supabase's `site_url` and `uri_allow_list` must include the production domain; otherwise GoTrue falls back to `site_url` (which was `localhost:3000` before the fix).
+- **Magic Link** (fallback): Email-based passwordless login through `requestMagicLinkAction`. The email allowlist (`ALLOWED_EMAILS`) is enforced for both methods.
 
 Both API Route Handlers (`/api/items/:id/analyze` and `/api/import/github`) enforce explicit authentication via `getOptionalAppUser()`. Unauthenticated requests receive `401 Unauthorized`.
 

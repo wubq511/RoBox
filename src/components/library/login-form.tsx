@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Loader2Icon } from "lucide-react";
+import { Loader2Icon, CheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,19 +10,27 @@ import { requestMagicLinkAction } from "@/server/auth/actions";
 export function LoginForm() {
   const [isPending, setIsPending] = useState(false);
   const [isGitHubPending, setIsGitHubPending] = useState(false);
+  const [isSent, setIsSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   async function handleSubmit(formData: FormData) {
     setIsPending(true);
+    setIsSent(false);
     setError(null);
     try {
-      await requestMagicLinkAction(formData);
+      const result = await requestMagicLinkAction(formData);
+      if (result.ok) {
+        setIsSent(true);
+      } else {
+        setError(getErrorMessage(result.code));
+      }
     } catch (e) {
       if (e instanceof Error && e.message !== "NEXT_REDIRECT") {
         setError("发送失败，请稍后重试");
-        setIsPending(false);
       }
+    } finally {
+      setIsPending(false);
     }
   }
 
@@ -81,13 +89,15 @@ export function LoginForm() {
         </label>
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || isSent}
           className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-white text-sm font-semibold text-slate-950 transition-all hover:-translate-y-0.5 hover:bg-slate-200 active:translate-y-0 disabled:pointer-events-none disabled:opacity-50"
         >
           {isPending ? (
             <Loader2Icon className="size-4 animate-spin" />
+          ) : isSent ? (
+            <CheckIcon className="size-4" />
           ) : null}
-          {isPending ? "发送中" : "发送登录链接"}
+          {isPending ? "发送中" : isSent ? "已发送" : "发送登录链接"}
         </button>
       </form>
 
@@ -98,4 +108,19 @@ export function LoginForm() {
       ) : null}
     </div>
   );
+}
+
+function getErrorMessage(code: string): string {
+  switch (code) {
+    case "missing_email":
+      return "请输入邮箱地址";
+    case "allowlist_not_configured":
+      return "系统未配置允许列表，请联系管理员";
+    case "email_not_allowed":
+      return "该邮箱不在允许列表中";
+    case "auth_request_failed":
+      return "发送失败，请稍后重试";
+    default:
+      return "发送失败，请稍后重试";
+  }
 }

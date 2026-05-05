@@ -17,7 +17,8 @@ http://localhost:3000/login
 
 Current MVP behavior:
 
-- `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`.
+- `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`. GitHub OAuth is the primary login method; Magic Link is the fallback.
+- `/auth/github` initiates GitHub OAuth flow via `supabase.auth.signInWithOAuth({ provider: "github" })`.
 - `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
 - Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - Prompt / Skill detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
@@ -73,6 +74,17 @@ Copy `.env.example` to `.env.local` and fill only the values you actually need f
 
 - `GITHUB_TOKEN`
   Optional for GitHub import rate-limit relief. Server only.
+
+### GitHub OAuth (local Supabase)
+
+- `SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID`
+  GitHub OAuth App Client ID. Required for local GitHub OAuth login.
+- `SUPABASE_AUTH_EXTERNAL_GITHUB_SECRET`
+  GitHub OAuth App Client Secret. Required for local GitHub OAuth login.
+- `SUPABASE_AUTH_EXTERNAL_GITHUB_REDIRECT_URI`
+  GitHub OAuth callback URL for local Supabase. Defaults to `http://127.0.0.1:55421/auth/v1/callback`.
+
+These variables are read by the local Supabase stack from `supabase/config.toml` via `env(...)` substitution. Set them in `.env.local` or your shell environment before running `npm run supabase:start`.
 
 ### Environment variable priority
 
@@ -169,13 +181,14 @@ Required Vercel environment variables:
 | `NEXT_PUBLIC_APP_ORIGIN` | `https://robox.vercel.app` | Required in production; errors if missing |
 | `ALLOWED_EMAILS` | `user@example.com` | Comma-separated allowlist |
 | `DEEPSEEK_API_KEY` | `sk-xxxx` | Server only |
-| `DEEPSEEK_API_BASE_URL` | `https://api.deepseek.com` | Optional |
+| `DEEPSEEK_MODEL` | `deepseek-v4-flash` | Server only |
+| `DEEPSEEK_API_BASE_URL` | `https://api.deepseek.com` | Optional, server only |
 | `GITHUB_TOKEN` | `ghp_xxxx` | Optional, server only |
 
-Supabase Auth URL Configuration must include the Vercel domain:
+Supabase Auth URL Configuration must include the Vercel domain. Configure through Dashboard or Management API (**do not use `supabase config push`**, it overwrites cloud config):
 
-- Site URL: `https://robox.vercel.app`
-- Redirect URLs: `https://robox.vercel.app/auth/confirm`
+- Site URL: `https://robox-beta.vercel.app`
+- Redirect URLs: `https://robox-beta.vercel.app/auth/confirm`
 
 Deploy command:
 
