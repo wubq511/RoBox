@@ -8,22 +8,18 @@ import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categ
 import { validateAnalysisCategory } from "./parser";
 
 import { requestDeepSeekAnalysis } from "./deepseek";
-
-export class AnalyzeItemError extends Error {
-  statusCode: number;
-
-  constructor(message: string, statusCode = 422) {
-    super(message);
-    this.name = "AnalyzeItemError";
-    this.statusCode = statusCode;
-  }
-}
+import { AnalyzeItemError } from "./errors";
 
 export async function analyzeStoredItem(itemId: string) {
   const item = await getItemById(itemId);
 
   if (!item) {
-    throw new AnalyzeItemError("Item not found.", 404);
+    throw new AnalyzeItemError(
+      "Item not found.",
+      404,
+      "item_not_found",
+      "内容不存在或你没有访问权限。",
+    );
   }
 
   await ensureDefaultCategories(item.userId);
@@ -49,7 +45,12 @@ export async function analyzeStoredItem(itemId: string) {
   });
 
   if (!updatedItem) {
-    throw new AnalyzeItemError("Item not found.", 404);
+    throw new AnalyzeItemError(
+      "Item not found.",
+      404,
+      "item_not_found",
+      "内容不存在或你没有访问权限。",
+    );
   }
 
   if (item.type === "prompt") {
@@ -59,7 +60,12 @@ export async function analyzeStoredItem(itemId: string) {
   const detail = await getItemDetail(item.id);
 
   if (!detail) {
-    throw new AnalyzeItemError("Item not found.", 404);
+    throw new AnalyzeItemError(
+      "Item not found.",
+      404,
+      "item_not_found",
+      "内容不存在或你没有访问权限。",
+    );
   }
 
   return detail;

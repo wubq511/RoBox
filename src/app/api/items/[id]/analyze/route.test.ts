@@ -115,6 +115,28 @@ describe("POST /api/items/:id/analyze", () => {
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
+  it("returns safe error details for known analyze failures", async () => {
+    const error = Object.assign(new Error("raw upstream error"), {
+      code: "deepseek_context_length",
+      statusCode: 400,
+      safeMessage: "内容超过 DeepSeek 上下文限制，请缩短 Prompt 后重试。",
+    });
+    analyzeStoredItemMock.mockRejectedValue(error);
+
+    const response = await POST(
+      new NextRequest("http://localhost:3000/api/items/prompt-1/analyze", {
+        method: "POST",
+      }),
+      { params: Promise.resolve({ id: "prompt-1" }) },
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      error: "内容超过 DeepSeek 上下文限制，请缩短 Prompt 后重试。",
+      code: "deepseek_context_length",
+    });
+    expect(response.status).toBe(400);
+  });
+
   it("returns 403 for cross-origin requests", async () => {
     const response = await POST(
       new NextRequest("http://localhost:3000/api/items/prompt-1/analyze", {

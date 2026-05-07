@@ -5,33 +5,17 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { getAppOrigin } from "@/lib/env";
 import { getOptionalAppUser } from "@/server/auth/session";
 import { analyzeStoredItem } from "@/server/analyze/service";
+import {
+  getAnalyzeClientError,
+  getAnalyzeErrorStatus,
+  getAnalyzeLogFields,
+} from "@/server/analyze/errors";
 
 type RouteContext = {
   params: Promise<{
     id: string;
   }>;
 };
-
-function getErrorMessage(error: unknown) {
-  if (process.env.NODE_ENV === "development") {
-    return error instanceof Error ? error.message : "Analyze failed.";
-  }
-
-  return "Smart analyze failed. Please try again.";
-}
-
-function getErrorStatus(error: unknown) {
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "statusCode" in error &&
-    typeof error.statusCode === "number"
-  ) {
-    return error.statusCode;
-  }
-
-  return 422;
-}
 
 function revalidateItemPaths(type: "prompt" | "skill" | "tool", itemId: string) {
   const collectionPath =
@@ -71,12 +55,14 @@ export async function POST(request: Request, context: RouteContext) {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (error) {
+    if (process.env.NODE_ENV !== "test") {
+      console.warn("[analyze] failed", getAnalyzeLogFields(id, error));
+    }
+
     return NextResponse.json(
+      getAnalyzeClientError(error),
       {
-        error: getErrorMessage(error),
-      },
-      {
-        status: getErrorStatus(error),
+        status: getAnalyzeErrorStatus(error),
       },
     );
   }
