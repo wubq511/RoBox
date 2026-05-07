@@ -178,7 +178,7 @@ npm run build       # 构建
 |------|------|
 | `NEXT_PUBLIC_SUPABASE_URL` | 必须含 `https://` 前缀 |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase Dashboard → API 获取 |
-| `NEXT_PUBLIC_APP_ORIGIN` | 生产域名，如 `https://robox.vercel.app` |
+| `NEXT_PUBLIC_APP_ORIGIN` | 生产域名，如 `https://robox-beta.vercel.app` |
 | `ALLOWED_EMAILS` | 登录白名单 |
 | `DEEPSEEK_API_KEY` | 服务端专用 |
 | `DEEPSEEK_MODEL` | 如 `deepseek-v4-flash` |

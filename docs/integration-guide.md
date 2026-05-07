@@ -122,7 +122,7 @@ Failure response shape:
 
 Do not use an unauthenticated `curl` command for this route; the route depends on the browser session and Supabase ownership checks.
 
-### Import GitHub Skill
+### Import GitHub Skill or Tool
 
 ```text
 POST /api/import/github
@@ -140,6 +140,7 @@ Request body:
 ```ts
 {
   url: "https://github.com/tw93/Waza";
+  type?: "skill" | "tool"; // defaults to "skill"
 }
 ```
 
@@ -162,6 +163,40 @@ Successful response shape:
 
 Import stores the submitted link in `items.content`, stores the canonical repository link in `items.source_url`, and uses fetched README/SKILL.md content only as DeepSeek analysis context.
 
+### Import Web Tool
+
+```text
+POST /api/import/web
+```
+
+Requirements:
+
+- A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
+- Same-origin only; cross-origin requests return `403`.
+- Rate limit: 10 requests per IP per hour. Returns `429` when exceeded.
+- Request body must not exceed 4KB. URL must not exceed 2048 characters.
+- URL must be a public HTTPS page. Localhost, private network hosts, IP literals, non-HTTPS URLs, and redirects to blocked targets are rejected.
+
+Request body:
+
+```ts
+{
+  url: "https://example.com";
+}
+```
+
+Successful response shape:
+
+```ts
+{
+  item: Item;
+  pageUrl: string;
+  warning?: string;
+}
+```
+
+Import stores the submitted link in `items.content`, stores the final public page URL in `items.source_url`, and uses cleaned page text only as DeepSeek analysis context. The fetched page body is not stored as item content.
+
 ### List Categories
 
 ```text
@@ -172,7 +207,7 @@ Requirements:
 
 - A valid Supabase session cookie (enforced by `getOptionalAppUser()`; returns `401` if missing).
 - Same-origin only; cross-origin requests return `403`.
-- The `type` query parameter is required and must be `prompt` or `skill`.
+- The `type` query parameter is required and must be `prompt`, `skill`, or `tool`.
 
 Client-side usage from an authenticated app page:
 
@@ -253,4 +288,7 @@ Request body:
 8. Use raw copy and confirm it still copies the original content.
 9. Open `/skills/new`, import `https://github.com/tw93/Waza`, and confirm the saved Skill detail page opens.
 10. Confirm imported GitHub Skill copy uses the source URL, while manually pasted Skills still copy their raw content.
+11. Open `/tools/new`, import a GitHub repository with `type: "tool"`, and confirm the saved Tool detail page opens.
+12. Import a public HTTPS website as a Tool, then confirm the saved Tool keeps the submitted/final URL and does not render fetched page text as saved content.
+13. Open Settings and confirm Prompt / Skill / Tool category tabs are present and isolated.
 

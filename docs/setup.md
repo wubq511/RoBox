@@ -19,17 +19,19 @@ Current MVP behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`. GitHub OAuth is the primary login method; Magic Link is the fallback.
 - `/auth/github` initiates GitHub OAuth flow via `supabase.auth.signInWithOAuth({ provider: "github" })`.
-- `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
-- Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
-- Prompt / Skill detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
-- Prompt analyze writes `items` metadata and `prompt_variables`; Skill analyze updates metadata only.
+- `/dashboard`、`/prompts`、`/skills`、`/tools`、`/settings` require a valid Supabase session.
+- Prompt / Skill / Tool pages run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
+- Prompt / Skill / Tool detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
+- Prompt analyze writes `items` metadata and `prompt_variables`; Skill / Tool analyze updates metadata only.
 - Prompt detail pages support variable filling, final prompt preview, `copy_final`, and unchanged `copy_raw`.
 - `/skills/new` supports GitHub Skill import through `POST /api/import/github`.
+- `/tools/new` supports manual Tool save, GitHub Tool import through `POST /api/import/github` with `type: "tool"`, and public HTTPS website import through `POST /api/import/web`.
 - GitHub imports only allow `github.com` and `raw.githubusercontent.com`, fetch README/SKILL.md for analysis context, save the submitted URL in `content`, and save the canonical repository link in `source_url`.
-- Imported GitHub Skills copy `source_url`; manual Skills continue to copy raw content.
+- Web Tool import only fetches public HTTPS pages, rejects localhost/private network/IP literal/non-HTTPS targets and blocked redirects, and uses cleaned page text only as analysis context.
+- Imported GitHub Skills and linked Tools copy `source_url`; manual Skills and Tools continue to copy raw content.
 - Phase 4 was verified on `2026-05-02` with local Supabase and real DeepSeek `deepseek-v4-flash` analyze.
 - Phase 5 was verified on `2026-05-02` with local `test/typecheck/lint/build`, live README fetch for `https://github.com/tw93/Waza`, and a browser smoke test against local Supabase + DeepSeek: login by magic link, import Waza, view analyzed Skill detail, copy source URL, search it, reject an invalid GitHub URL, then manually save and copy a Skill.
-- Production deployment verified on `2026-05-03`: Supabase cloud project `robox` (`ap-northeast-1`), Vercel at `robox.vercel.app`, 94 tests passing, full Chinese UI.
+- Production deployment verified on `2026-05-07`: Supabase cloud project `robox` (`ap-northeast-1`), Vercel production domain `https://robox-beta.vercel.app`, Tools migration applied locally and remotely, 124 tests passing, typecheck/lint/build clean.
 
 Verification commands:
 
@@ -122,19 +124,19 @@ Current code placement:
 - `src/app`
   App Router routes and shared route layouts
 - `src/app/api`
-  Route Handlers, including `POST /api/items/:id/analyze`, `POST /api/import/github`, and `GET/POST/DELETE/PATCH /api/categories`
+  Route Handlers, including `POST /api/items/:id/analyze`, `POST /api/import/github`, `POST /api/import/web`, and `GET/POST/DELETE/PATCH /api/categories`
 - `src/components/layout`
   App shell, sidebar, mobile nav
 - `src/components/dashboard`
   Dashboard-only UI
 - `src/components/library`
-  Shared Prompt / Skill library surface
+  Shared Prompt / Skill / Tool library surface
 - `src/components/settings`
   Settings page UI
 - `src/hooks`
   Shared client-side hooks, including the toast notification system
 - `src/features/items`
-  Prompt / Skill types and query-state helpers
+  Prompt / Skill / Tool types and query-state helpers
 - `src/lib`
   Generic helpers, navigation, env readers, shared validation schemas, rate limiter, format utilities
 - `src/lib/supabase`
@@ -144,11 +146,11 @@ Current code placement:
 - `src/server/analyze`
   DeepSeek prompt construction, model call, JSON repair/parsing, and analyze persistence
 - `src/server/import`
-  GitHub Skill URL validation, README/SKILL.md fetch, Skill creation, and README-based analyze orchestration
+  GitHub Skill/Tool URL validation, README/SKILL.md fetch, public HTTPS web page fetch, import creation, and analysis orchestration
 - `src/server/db`
   Supabase-backed repository for `items`, `prompt_variables`, `usage_logs`, and `user_categories`
 - `src/server/items`
-  Prompt / Skill form parsing and mutation Server Actions
+  Prompt / Skill / Tool form parsing and mutation Server Actions
 - `supabase`
   Local config, migration SQL, and seed placeholder
 - `supabase/templates`
@@ -161,10 +163,10 @@ Current code placement:
 - UI shell and routes live in Next.js App Router.
 - Shadcn/ui remains the only component primitive layer introduced so far.
 - Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
-- `/dashboard`、`/prompts`、`/skills`、`/settings` require a valid Supabase session.
-- Prompt / Skill pages now run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
+- `/dashboard`、`/prompts`、`/skills`、`/tools`、`/settings` require a valid Supabase session.
+- Prompt / Skill / Tool pages run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - DeepSeek is wired through a server-only route. Live model calls need a valid `DEEPSEEK_API_KEY`; the model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`).
-- GitHub import is wired through a server-only route. It does not fetch arbitrary URLs and uses `GITHUB_TOKEN` only when provided.
+- GitHub import is wired through a server-only route for Skill/Tool repository links. Web Tool import is a separate server-only route that fetches only public HTTPS pages with redirect, size, timeout, and content-type limits. `GITHUB_TOKEN` is used only when provided.
 
 For architecture and smoke-test details, see `docs/architecture.md` and `docs/integration-guide.md`.
 
@@ -178,7 +180,7 @@ Required Vercel environment variables:
 |-----|-------|-------|
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://xxxx.supabase.co` | Must include `https://` prefix |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `sb-xxxx` | From Supabase Dashboard → API |
-| `NEXT_PUBLIC_APP_ORIGIN` | `https://robox.vercel.app` | Required in production; errors if missing |
+| `NEXT_PUBLIC_APP_ORIGIN` | `https://robox-beta.vercel.app` | Required in production; errors if missing |
 | `ALLOWED_EMAILS` | `user@example.com` | Comma-separated allowlist |
 | `DEEPSEEK_API_KEY` | `sk-xxxx` | Server only |
 | `DEEPSEEK_MODEL` | `deepseek-v4-flash` | Server only |
@@ -190,7 +192,7 @@ Supabase Auth URL Configuration must include the Vercel domain. Configure throug
 - Site URL: `https://robox-beta.vercel.app`
 - Redirect URLs: `https://robox-beta.vercel.app/auth/confirm`
 
-Deploy command:
+Production deploys are normally triggered by pushing `main` to GitHub. Manual production deploy command:
 
 ```bash
 vercel --prod --yes --name robox
@@ -218,5 +220,13 @@ Implemented workspace routes:
   Skill detail with source URL metadata when present, raw content, copy feedback, smart analyze, edit, and delete.
 - `/skills/[id]/edit`
   Manual Skill edit form.
+- `/tools`
+  Tool list with the same search/filter/sort contract as prompts and skills.
+- `/tools/new`
+  Manual Tool create form plus GitHub import and public HTTPS website import forms.
+- `/tools/[id]`
+  Tool detail with source URL metadata when present, source-link copy/open semantics, smart analyze, edit, and delete.
+- `/tools/[id]/edit`
+  Manual Tool edit form.
 - `/settings`
-  Settings page with custom category management (Prompt/Skill tabs with add, delete, reorder) and external service configuration.
+  Settings page with custom category management (Prompt/Skill/Tool tabs with add, delete, reorder) and external service configuration.

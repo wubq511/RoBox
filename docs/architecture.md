@@ -153,10 +153,19 @@ Phase 5 was verified on `2026-05-02` with:
 Production deployment verified on `2026-05-03` with:
 
 - Supabase cloud project `robox` in `ap-northeast-1` with migration applied
-- Vercel deployment at `robox.vercel.app`
+- Vercel deployment at `robox-beta.vercel.app`
 - All 94 tests passing, typecheck/lint/build clean
 - Full Chinese UI localization across all components
 - Performance: `React.cache()` on `getServerSupabaseClient()` and `readSessionEmail()` to deduplicate Supabase calls per request
+
+Tools deployment verified on `2026-05-07` with:
+
+- Local and remote Supabase migration `202605070001_add_tools_item_type.sql` applied.
+- Remote constraints confirmed for `items.type` and `user_categories.type`: `prompt`, `skill`, and `tool`.
+- Remote Tool default categories seeded for existing users.
+- `npm run test` (124 tests), `npm run typecheck`, `npm run lint`, and `npm run build` all passed locally before deployment.
+- Vercel production deployment `dpl_DYZAvL7FR32FdpBPpBofc9kix5cD` on commit `75f040f` completed successfully for `https://robox-beta.vercel.app`.
+- Production smoke confirmed `/tools`, `/tools/new`, `/dashboard`, `/api/import/web`, `/api/import/github`, `/api/categories?type=tool`, and `/auth/github?next=/tools` return the expected unauthenticated or redirect behavior without rendering the global error page.
 
 ## Performance
 
@@ -183,7 +192,7 @@ Performance optimization was completed on `2026-05-05`.
 ### Caching
 
 - `/_next/static/` responses include `Cache-Control: public, max-age=31536000, immutable`.
-- API route responses (`/api/items/:id/analyze`, `/api/import/github`) include `Cache-Control: no-store`.
+- API route responses (`/api/items/:id/analyze`, `/api/import/github`, `/api/import/web`, and category routes) include `Cache-Control: no-store`.
 
 ## Security Layer
 

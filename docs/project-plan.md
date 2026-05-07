@@ -30,7 +30,7 @@
 任务清单：
 - 落地 Supabase Auth，仅允许指定邮箱登录。
 - 建立 `items`、`prompt_variables`、`usage_logs` 三张表及对应访问层。
-- 明确统一 `item` 模型：`type` 仅 `prompt|skill`，`content` 保存原始输入，`is_analyzed` 替代错误命名。
+- 明确统一 `item` 模型：Phase 2 时 `type` 为 `prompt|skill`，后续 Phase 9 已扩展为 `prompt|skill|tool`；`content` 保存原始输入，`is_analyzed` 替代错误命名。
 - 实现服务端数据访问模块：创建、更新、查询列表、查询详情、收藏切换、复制计数。
 - 建立基础校验 schema 和分类枚举：`Writing/Coding/Research/Design/Study/Agent/Content/Other`。
 - 为后续 API 预留服务端边界：`server/auth`、`server/db`、`lib/schema`。
@@ -51,7 +51,7 @@
 
 任务清单：
 - 实现 Dashboard：全局搜索入口、最近使用、收藏、待整理、数量统计、快速新增。
-- 实现 Prompt/Skill 列表页：关键词搜索、类型/分类/标签/收藏筛选、最近使用/最近更新排序。
+- 实现 Prompt/Skill 列表页：关键词搜索、分类/标签/收藏筛选、最近使用/最近更新排序。
 - 实现 Prompt 新建、详情、编辑。
 - 实现 Skill 新建、详情、编辑。
 - 实现统一删除、收藏、复制原文、复制日志写入。
@@ -91,7 +91,7 @@
 - Prompt 支持复制原始版和变量填充后的最终版。
 
 ### Phase 5：GitHub Skill 导入与上线前收口
-状态：已完成（2026-05-02），已合并并推送到 `main`；已通过本地 `test/typecheck/lint/build` 与本地 Supabase + DeepSeek + GitHub 真实浏览器验收；生产环境已部署到 `robox.vercel.app`（2026-05-03）
+状态：已完成（2026-05-02），已合并并推送到 `main`；已通过本地 `test/typecheck/lint/build` 与本地 Supabase + DeepSeek + GitHub 真实浏览器验收；生产环境已部署到 `robox-beta.vercel.app`（2026-05-03）
 
 目标：补齐 Skill 的核心差异化入口，并把 MVP 收到可长期使用。
 
@@ -126,12 +126,14 @@
 - 服务端接口
   - 已实现：`POST /api/items/:id/analyze`
   - 已实现：`POST /api/import/github`
+  - 已实现：`POST /api/import/web`
   - 当前复制日志通过 Server Actions 写入；`POST /api/items/:id/copy` 仅作为后续外部 API 需求的预留名称
 - 前端页面
-  - Dashboard
-  - Prompts：列表 / 新建 / 详情 / 编辑
-  - Skills：列表 / 新建 / 详情 / 编辑 / GitHub 导入
-  - Settings
+- Dashboard
+- Prompts：列表 / 新建 / 详情 / 编辑
+- Skills：列表 / 新建 / 详情 / 编辑 / GitHub 导入
+- Tools：列表 / 新建 / 详情 / 编辑 / GitHub 导入 / 网站导入
+- Settings
 
 ## Test Plan
 
@@ -249,3 +251,31 @@
 - 浏览器中页面加载有骨架屏过渡。
 - 收藏、复制操作响应更快。
 - 批量分析并发执行，不再逐个刷新页面。
+
+### Phase 9：Tools 独立栏目
+状态：已完成（2026-05-07），已合并并推送到 `main`；本地和远程 Supabase 迁移已应用；生产已部署到 `https://robox-beta.vercel.app`
+
+目标：将 Tools 作为 RoBox 第三类独立内容，补齐工具链接、GitHub 仓库和公共 HTTPS 网站的保存、整理、搜索、复制链路。
+
+任务清单：
+- 更新产品边界为 `prompt | skill | tool`，仍限定在保存、整理、搜索、复制使用。
+- 扩展 `itemTypeSchema`、`items.type`、`user_categories.type`，加入 `tool`。
+- 为现有用户 seed Tool 默认分类，Settings 分类管理增加 Tool Tab。
+- 新增 `/tools`、`/tools/new`、`/tools/[id]`、`/tools/[id]/edit`。
+- Dashboard、侧边栏、列表、详情、新建、编辑、搜索、收藏、复制链路支持 Tool。
+- `POST /api/import/github` 支持 `type?: "skill" | "tool"`，默认仍为 Skill。
+- 新增 `POST /api/import/web`，只允许公共 HTTPS 页面，限制重定向、大小、超时和 Content-Type。
+- DeepSeek 分析支持 Tool，Tool 与 Skill 一样不生成 Prompt 变量。
+- GitHub README/SKILL.md 和网页正文只作为分析上下文，不覆盖 `items.content`。
+
+阶段交付物：
+- Tools 成为独立栏目，不依附在 Skills 分类下。
+- GitHub 仓库可作为 Tool 导入并分析。
+- 公共 HTTPS 网站可作为 Tool 导入并分析。
+- Tool 详情页以来源链接作为主要打开/复制对象。
+
+验收标准：
+- `npm run test`、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过。
+- 本地和远程 Supabase 都已应用 `202605070001_add_tools_item_type.sql`。
+- 生产部署 `dpl_DYZAvL7FR32FdpBPpBofc9kix5cD` 对应提交 `75f040f`，状态 `READY`。
+- 未登录访问 Tools 页面和 API 不出现全局错误页，API 返回预期 `401`。

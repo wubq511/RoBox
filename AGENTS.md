@@ -103,14 +103,25 @@ RoBox 追求的不是功能多，而是个人常用 Prompt / Skill / Tool 的使
 
 ## 9. 近期重要变更（供 Agent 快速同步）
 
+### 2026-05-07 Tools 栏目、迁移与生产部署
+
+- **产品边界扩展**：RoBox 当前只做 `prompt` / `skill` / `tool` 三类内容，仍只围绕保存、整理、搜索、复制使用，不扩展为通用知识库、爬虫平台、Agent 平台或万能收藏箱。
+- **新增 Tools 页面**：新增 `/tools`、`/tools/new`、`/tools/[id]`、`/tools/[id]/edit`，与 Prompts/Skills 共享列表、详情、新建、编辑、分类、搜索、收藏、复制链路。
+- **Schema 与数据库**：`itemTypeSchema` 接受 `tool`；`items.type` 与 `user_categories.type` CHECK 约束均包含 `tool`；迁移文件为 `supabase/migrations/202605070001_add_tools_item_type.sql`。
+- **Tool 分类**：`user_categories` 按 `user_id + type` 隔离，Prompt、Skill、Tool 三套分类独立管理；现有用户已 seed Tool 默认分类。
+- **GitHub 导入泛化**：`POST /api/import/github` body 支持 `type?: "skill" | "tool"`，不传仍按 Skill 导入以兼容旧调用；Tool 导入使用 README/SKILL.md 作为分析上下文。
+- **网站导入**：新增 `POST /api/import/web`，只允许公共 HTTPS 页面，拒绝 localhost、内网、IP 字面量、非 HTTPS 和重定向到受限目标；抓取文本只用于 DeepSeek 分析，不保存网页正文。
+- **AI 分析与复制语义**：DeepSeek 支持 `tool`，Skill/Tool 都不生成 Prompt 变量；链接型 Tool 详情页以 `source_url` 作为主要打开/复制对象。
+- **验证与发布**：本地 `npm run test`、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过；本地与远程 Supabase 均已应用 `202605070001`；`main` 已推送并部署到 Vercel 生产，生产部署 `dpl_DYZAvL7FR32FdpBPpBofc9kix5cD` 对应提交 `75f040f`。
+
 ### 2026-05-06 自定义分类功能
 
-- **新增 `user_categories` 表**：按 `user_id` + `type`（prompt/skill）隔离，支持用户对 Prompt 和 Skill 分类分别自定义增删。`UNIQUE(user_id, type, name)` 防止重复，RLS 限制用户只能操作自己的分类。
+- **新增 `user_categories` 表**：按 `user_id` + `type`（prompt/skill/tool）隔离，支持用户对 Prompt、Skill、Tool 分类分别自定义增删。`UNIQUE(user_id, type, name)` 防止重复，RLS 限制用户只能操作自己的分类。
 - **移除 `items.category` CHECK 约束**：category 从固定 8 值枚举变为自由文本，应用层通过 `validateCategoryBelongsToUser` 校验。
 - **Schema 变更**：`itemCategorySchema` 从 `z.enum([...])` 改为 `z.string().trim().min(1).max(32)`；`itemCategories` 常量改为 `DEFAULT_CATEGORIES`（仅用于 seed）。
 - **新增数据访问层**：`src/server/db/categories.ts`，包含 `getUserCategories`、`getUserCategoryNames`、`ensureDefaultCategories`、`createUserCategory`、`deleteUserCategory`、`forceDeleteUserCategory`、`getCategoryUsageCount`、`reorderUserCategories`、`validateCategoryBelongsToUser`。
 - **新增 API 路由**：`GET/POST /api/categories`、`DELETE /api/categories/[name]`、`PATCH /api/categories/reorder`。
-- **设置页 UI 重构**：`settings-view.tsx` 从"固定分类"只读卡片改为"自定义分类"交互式管理区，含 Prompt/Skill Tab 切换；新增 `category-manager.tsx` 客户端组件。
+- **设置页 UI 重构**：`settings-view.tsx` 从"固定分类"只读卡片改为"自定义分类"交互式管理区，含 Prompt/Skill/Tool Tab 切换；新增 `category-manager.tsx` 客户端组件。
 - **表单与筛选更新**：`ItemForm` 和 `LibraryFilters` 的分类下拉框从 `itemCategories` 常量改为 `categories` prop，由页面路由组件查询用户分类后传入。
 - **DeepSeek 分析适配**：`buildAnalyzePrompt` 接收动态 `categories` 参数；`parser.ts` 新增 `validateAnalysisCategory` 函数，校验返回的分类是否在用户自定义列表中，不合法则 fallback 为第一个分类。
 - **GitHub 导入适配**：`createGithubSkillImport` 接收 `categories` 参数，默认分类取用户自定义列表的第一个而非硬编码 `"Agent"`。

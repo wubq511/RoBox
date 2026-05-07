@@ -358,7 +358,7 @@ skill链接/SKILL.md原文
 
 # 9. 分类体系
 
-第一版固定这些分类，不要太多。
+第一版提供默认分类，但分类不是固定枚举。每个用户可以在 Settings 中分别管理 Prompt、Skill、Tool 三套分类。
 
 | 分类 | 适用内容 |
 | --- | --- |
@@ -371,7 +371,7 @@ skill链接/SKILL.md原文
 | Content | 小红书、公众号、视频脚本 |
 | Other | 其他 |
 
-标签由 DeepSeek 自动生成，用户可以手动改。
+新用户会按每个类型 seed 这 8 个默认分类。标签由 DeepSeek 自动生成，用户可以手动改。
 
 ---
 
@@ -680,17 +680,15 @@ DeepSeek 整理
 
 ## 复制记录
 
-```
-POST /api/items/:id/copy
-```
-
-用途：
+当前复制记录通过 Server Actions 写入，不暴露独立 Route Handler。复制时会：
 
 ```
 更新 usage_count
 写入 usage_logs
 更新最近使用
 ```
+
+`POST /api/items/:id/copy` 仅作为未来需要外部 API 时的预留名称。
 
 ---
 
@@ -704,8 +702,7 @@ POST /api/items/:id/copy
 要求：
 1. 只能输出 JSON，不要输出 Markdown。
 2. type 只能是 "prompt"、"skill" 或 "tool"。
-3. category 必须从以下分类中选择：
-   Writing, Coding, Research, Design, Study, Agent, Content, Other
+3. category 必须从当前用户该类型的自定义分类中选择；默认分类为 Writing, Coding, Research, Design, Study, Agent, Content, Other。
 4. tags 输出 3-8 个中文标签。
 5. 如果是 Prompt，请识别其中需要用户填写的变量。
 6. 如果是 Skill 或 Tool，variables 输出空数组；如果 Prompt 没有明显变量，variables 也输出空数组。

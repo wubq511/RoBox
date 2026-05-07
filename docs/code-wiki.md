@@ -1,6 +1,6 @@
 # RoBox Code Wiki
 
-> **生成日期**：2026-05-05  
+> **生成日期**：2026-05-07
 > **项目版本**：0.1.0  
 > **框架**：Next.js 16 (App Router) + React 19 + TypeScript  
 > **定位**：个人 Prompt / Skill / Tool 管理工具（保存 → 整理 → 搜索 → 复制使用）
@@ -749,7 +749,7 @@ RootLayout (app/layout.tsx)
            ├── requireAppUser() 鉴权守卫
            └── WorkspaceShell (components/layout/workspace-shell.tsx)
                 ├── AppSidebar (左侧导航)
-                │     ├── Logo + 导航链接 (Dashboard/Prompts/Skills/Settings)
+                │     ├── Logo + 导航链接 (Dashboard/Prompts/Skills/Tools/Settings)
                 │     └── 用户邮箱显示
                 ├── Header (顶栏)
                 │     ├── GlobalSearchForm (全局搜索)
@@ -758,14 +758,15 @@ RootLayout (app/layout.tsx)
                 └── <main /> (页面内容区)
                       ├── DashboardPage
                       │     └── DashboardView
-                      │           ├── MetricCard × 4 (总数/Prompt/Skill/待整理)
+                      │           ├── MetricCard × 5 (总数/Prompt/Skill/Tool/待整理)
                       │           ├── MiniListCard (收藏列表)
                       │           ├── MiniListCard (最近使用)
                       │           └── MiniListCard (待整理)
                       │
-                      ├── PromptsPage / SkillsPage
+                      ├── PromptsPage / SkillsPage / ToolsPage
                       │     ├── LibraryFilters (搜索 + 分类 + 标签 + 排序)
-                      │     ├── GithubImportForm (仅 Skills 页)
+                      │     ├── GithubImportForm (Skills/Tools 新建页)
+                      │     ├── WebImportForm (仅 Tools 新建页)
                       │     ├── BatchAnalyzeButton (批量分析)
                       │     └── LibraryList
                       │           └── ItemCard × N (React.memo)
@@ -774,10 +775,10 @@ RootLayout (app/layout.tsx)
                       │                 ├── AnalyzeButton
                       │                 └── DeleteItemButton
                       │
-                      ├── ItemDetailPage (Prompt/Skill [id])
+                      ├── ItemDetailPage (Prompt/Skill/Tool [id])
                       │     └── ItemDetailView
                       │           ├── 标题区 (标题/分类/标签/来源)
-                      │           ├── 内容区 (content / GitHub 安装提示)
+                      │           ├── 内容区 (content / GitHub 安装提示 / Tool 来源链接)
                       │           ├── 操作栏 (收藏/分析/复制原文/复制最终文本)
                       │           └── [仅 Prompt] PromptVariablesEditor
                       │                 └── VariableCard × N
