@@ -7,7 +7,7 @@ describe("GitHubImportForm", () => {
   it("renders a GitHub import form without replacing the manual skill path", () => {
     const html = renderToStaticMarkup(<GitHubImportForm />);
 
-    expect(html).toContain("粘贴 GitHub 文件链接");
+    expect(html).toContain("粘贴 GitHub 仓库或 README 链接");
     expect(html).toContain("导入");
   });
 });

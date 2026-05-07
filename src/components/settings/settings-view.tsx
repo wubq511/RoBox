@@ -27,19 +27,19 @@ const settingsCards = [
   },
   {
     title: "GitHub 导入",
-    description: "从 GitHub 仓库导入 Skill 文件。",
+    description: "从 GitHub 仓库导入 Skill 或 Tool。",
     detail: "支持 github.com 和 raw.githubusercontent.com 链接。",
     icon: GitBranchIcon,
   },
   {
     title: "数据导出",
-    description: "导出你的 Prompt 和 Skill 数据。",
+    description: "导出你的 Prompt、Skill 和 Tool 数据。",
     detail: "即将支持 JSON 和 Markdown 格式导出。",
     icon: FolderDownIcon,
   },
 ];
 
-type CategoryTab = "prompt" | "skill";
+type CategoryTab = "prompt" | "skill" | "tool";
 
 export function SettingsView() {
   const [categoryTab, setCategoryTab] = useState<CategoryTab>("prompt");
@@ -61,7 +61,7 @@ export function SettingsView() {
           <div className="space-y-2">
             <CardTitle className="text-xl">自定义分类</CardTitle>
             <CardDescription className="text-sm leading-6">
-              分别管理 Prompt 和 Skill 的分类，支持自定义增删和排序。
+              分别管理 Prompt、Skill 和 Tool 的分类，支持自定义增删和排序。
             </CardDescription>
           </div>
         </CardHeader>
@@ -87,6 +87,16 @@ export function SettingsView() {
                 }`}
               >
                 Skill 分类
+              </button>
+              <button
+                onClick={() => setCategoryTab("tool")}
+                className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  categoryTab === "tool"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Tool 分类
               </button>
             </div>
             <CategoryManager type={categoryTab as ItemType} />

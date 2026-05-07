@@ -41,7 +41,7 @@ export default function LoginPage() {
                 RoBox
               </h1>
               <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
-                管理你的 Prompt 与 Skill
+                管理你的 Prompt、Skill 与 Tool
               </p>
             </div>
           </div>

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     default: "RoBox",
     template: "%s | RoBox",
   },
-  description: "管理你的 Prompt 与 Skill。",
+  description: "管理你的 Prompt、Skill 与 Tool。",
   icons: {
     icon: [
       { url: "/favicon.ico" },

@@ -1,14 +1,15 @@
 # RoBox Architecture
 
-RoBox is a personal Prompt / Skill manager. The product boundary is intentionally small: save, organize, search, and copy reusable `prompt` and `skill` content.
+RoBox is a personal Prompt / Skill / Tool manager. The product boundary is intentionally small: save, organize, search, and copy reusable `prompt`, `skill`, and `tool` content.
 
 ## System Boundaries
 
-- `prompt` and `skill` are the only supported item types.
+- `prompt`, `skill`, and `tool` are the only supported item types.
 - The original user input is stored in `items.content` and must not be overwritten by model output.
 - AI analysis enriches metadata and variables; it does not replace the source text.
 - Copy behavior is split between raw copy and final prompt copy so usage logs stay explicit.
 - GitHub-imported Skills store the submitted link in `items.content` and the canonical repository link in `items.source_url`; fetched README content is analysis context, not the saved original.
+- Imported Tools follow the same preservation rule: the submitted URL stays in `items.content`, the canonical source URL stays in `items.source_url`, and fetched README or web page text is used only as analysis context.
 
 ## Runtime Layers
 
@@ -19,7 +20,7 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
 - `src/hooks`
   Shared client-side hooks, including the toast notification system (`useToast`).
 - `src/features/items`
-  Item query-state parsing and Prompt / Skill feature types.
+  Item query-state parsing and Prompt / Skill / Tool feature types.
 - `src/lib`
   Environment readers, schemas, navigation helpers, Supabase client factories, and generic utilities.
 - `src/server/auth`
@@ -31,7 +32,7 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
 - `src/server/analyze`
   DeepSeek prompt construction, model call, JSON repair/parsing, and persistence orchestration.
 - `src/server/import`
-  GitHub URL validation, raw README/SKILL.md fetch, Skill creation, and README-based analysis orchestration.
+  GitHub URL validation, raw README/SKILL.md fetch, public HTTPS web page text fetch, import creation, and analysis orchestration.
 - `src/lib/rate-limit`
   IP-based sliding-window rate limiter used by API Route Handlers.
 - `middleware.ts` (project root)
@@ -42,9 +43,9 @@ RoBox is a personal Prompt / Skill manager. The product boundary is intentionall
 The MVP data model is centered on four Supabase tables:
 
 - `items`
-  The unified Prompt / Skill entity. Important fields include `type`, `title`, `summary`, `content`, `category`, `tags`, `source_url`, `is_favorite`, `is_analyzed`, and `usage_count`. The `category` field stores free-text values validated against the user's custom categories in `user_categories`.
+  The unified Prompt / Skill / Tool entity. Important fields include `type`, `title`, `summary`, `content`, `category`, `tags`, `source_url`, `is_favorite`, `is_analyzed`, and `usage_count`. The `category` field stores free-text values validated against the user's custom categories in `user_categories`.
 - `user_categories`
-  Per-user custom category definitions, scoped by item type (`prompt` or `skill`). Each user can independently manage their Prompt and Skill categories. New users are seeded with 8 default categories per type. The `UNIQUE(user_id, type, name)` constraint prevents duplicates within the same type.
+  Per-user custom category definitions, scoped by item type (`prompt`, `skill`, or `tool`). Each user can independently manage their Prompt, Skill, and Tool categories. New users are seeded with 8 default categories per type. The `UNIQUE(user_id, type, name)` constraint prevents duplicates within the same type.
 - `prompt_variables`
   Prompt-only variable definitions used to render the final prompt copy surface.
 - `usage_logs`
@@ -71,13 +72,13 @@ Beyond the base migration indexes (`user_id + updated_at`, `user_id + type`, `us
 
 `POST /api/items/:id/analyze` handles manual smart analyze.
 
-1. The user saves a Prompt or Skill as raw content. The item can remain `is_analyzed=false`.
+1. The user saves a Prompt, Skill, or Tool as raw content. The item can remain `is_analyzed=false`.
 2. The detail page triggers manual smart analyze; saving content does not call the model.
 3. The route verifies the Supabase session and loads the current user's item.
 4. `src/server/analyze/deepseek.ts` calls DeepSeek. The model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`) via `getServerEnv()`, which prioritizes `.env.local` over system environment variables. User content is wrapped in boundary markers to mitigate prompt injection. The prompt includes the user's custom category list (fetched from `user_categories`) so the model selects from valid categories.
 5. `src/server/analyze/parser.ts` strips markdown fences, repairs common JSON issues, and validates the structured response. The `category` field is validated as a free-text string; `validateAnalysisCategory` checks it against the user's custom categories and falls back to the first category if the model returns an invalid value.
 6. `src/server/analyze/service.ts` updates `items` metadata and sets `is_analyzed=true`.
-7. Prompt analysis replaces that prompt's `prompt_variables`; Skill analysis ignores variable output.
+7. Prompt analysis replaces that prompt's `prompt_variables`; Skill and Tool analysis ignore variable output.
 8. On model or parse failure, the route returns a recoverable error and the original item content stays unchanged.
 
 Required server-only environment variables:
@@ -91,17 +92,27 @@ Optional environment variables:
 
 All server-side environment variables are read through `getServerEnv()` (defined in `src/lib/env.ts`), which prioritizes `.env.local` file values over system `process.env`. This prevents system-level environment variables from silently overriding project-local configuration.
 
-## GitHub Skill Import Flow
+## GitHub Import Flow
 
-`POST /api/import/github` imports GitHub links as Skills.
+`POST /api/import/github` imports GitHub links as Skills by default and as Tools when the request body includes `type: "tool"`.
 
 1. The route accepts a JSON body with `url`.
 2. `src/server/import/github.ts` only allows `github.com` and `raw.githubusercontent.com`.
 3. Repository URLs are converted into raw README candidates. GitHub blob/raw README or `SKILL.md` links are converted or used directly.
 4. The fetched README/SKILL.md body is used only as analysis context. README content exceeding 100KB is rejected.
-5. The stored Skill uses `items.content = submitted URL` and `items.source_url = canonical repository URL`.
-6. The import creates a Skill first, then requests DeepSeek analysis using the README context.
-7. If analysis fails after a successful README fetch, the imported Skill remains saved with `is_analyzed=false` and the API returns a warning.
+5. The stored item uses `items.content = submitted URL` and `items.source_url = canonical repository URL`.
+6. The import creates the Skill or Tool first, then requests DeepSeek analysis using the README context.
+7. If analysis fails after a successful README fetch, the imported item remains saved with `is_analyzed=false` and the API returns a warning.
+
+## Web Tool Import Flow
+
+`POST /api/import/web` imports public HTTPS web pages as Tools.
+
+1. The route accepts a JSON body with `url`.
+2. The importer only allows public `https` URLs. It rejects localhost, private network hosts, IP literals, non-HTTP schemes, and redirects that resolve to blocked hosts.
+3. The fetcher limits redirects, response size, timeout, and content type. It accepts HTML and plain text, strips scripts/styles from HTML, collapses whitespace, and uses the cleaned text only as analysis context.
+4. The stored Tool uses `items.content = submitted URL` and `items.source_url = final public page URL`.
+5. If analysis fails after a successful page fetch, the imported Tool remains saved with `is_analyzed=false` and the API returns a warning.
 
 Optional server-only environment variable:
 
@@ -113,10 +124,10 @@ Optional server-only environment variable:
   Copies `items.content` exactly as saved and logs `usage_logs.action=copy_raw`.
 - `copy_final`
   Prompt-only action that fills Prompt variables, copies the rendered final prompt, and logs `usage_logs.action=copy_final`.
-- GitHub-imported Skill copy
-  The detail page still logs `copy_raw`, but copies `items.source_url` so linked Skills behave as source links instead of fake README bodies.
-- GitHub-imported Skill detail display
-  The content section heading shows "安装/加载提示词" instead of "内容", and the `<pre>` block displays "请你安装/加载这个skill：" followed by a clickable `items.source_url` link, instead of rendering the raw `items.content` URL text.
+- Imported Skill / Tool copy
+  The detail page still logs `copy_raw`, but copies `items.source_url` so linked items behave as source links instead of fake fetched bodies.
+- Imported Skill / Tool detail display
+  Linked Skills show an install/load prompt. Linked Tools show the tool URL as the primary content to copy/open, instead of rendering fetched README or web page text.
 
 Copy logging is implemented through Server Actions. There is no `POST /api/items/:id/copy` Route Handler yet; that route name is reserved only if an external API surface is needed later.
 
@@ -185,13 +196,14 @@ RoBox supports two login methods:
 - **GitHub OAuth** (primary): `GET /auth/github` initiates the OAuth flow via `supabase.auth.signInWithOAuth({ provider: "github" })` with PKCE. The callback is handled by Supabase Auth at `/auth/v1/callback`, which redirects to `/auth/confirm` with the session. The `redirectTo` parameter is constructed from the request origin, so local dev redirects to `localhost:3000/auth/confirm` and production redirects to `robox-beta.vercel.app/auth/confirm`. Cloud Supabase's `site_url` and `uri_allow_list` must include the production domain; otherwise GoTrue falls back to `site_url` (which was `localhost:3000` before the fix).
 - **Magic Link** (fallback): Email-based passwordless login through `requestMagicLinkAction`. The email allowlist (`ALLOWED_EMAILS`) is enforced for both methods.
 
-Both API Route Handlers (`/api/items/:id/analyze` and `/api/import/github`) enforce explicit authentication via `getOptionalAppUser()`. Unauthenticated requests receive `401 Unauthorized`.
+API Route Handlers (`/api/items/:id/analyze`, `/api/import/github`, and `/api/import/web`) enforce explicit authentication via `getOptionalAppUser()`. Unauthenticated requests receive `401 Unauthorized`.
 
 ### Rate Limiting
 
 `src/lib/rate-limit.ts` implements an in-memory IP-based sliding-window rate limiter. A `cleanup()` function runs every 60 seconds to remove expired entries, preventing unbounded memory growth in long-running serverless function instances (Fluid Compute).
 
 - `/api/import/github`: 10 requests per IP per hour
+- `/api/import/web`: 10 requests per IP per hour
 - `/api/items/:id/analyze`: 30 requests per IP per hour
 
 Exceeding the limit returns `429 Too Many Requests`.
@@ -211,6 +223,7 @@ Exceeding the limit returns `429 Too Many Requests`.
 
 - Search queries: `sanitizeSearchValue` escapes PostgreSQL ILIKE wildcards (`%`, `_`).
 - GitHub import: URL length capped at 2048 characters; request body capped at 4KB.
+- Web import: URL length capped at 2048 characters; request body capped at 4KB; only public HTTPS pages are fetched, with redirect, size, timeout, and content-type limits.
 - README fetch: content exceeding 100KB is rejected.
 - DeepSeek prompt: user content is wrapped in boundary markers with an instruction to ignore injection attempts.
 
@@ -228,10 +241,10 @@ Production API responses use generic error messages. Detailed error information 
 
 ## Custom Categories
 
-Categories are no longer a fixed enum. Each user manages their own Prompt and Skill categories independently through the `user_categories` table.
+Categories are no longer a fixed enum. Each user manages their own Prompt, Skill, and Tool categories independently through the `user_categories` table.
 
 - New users are seeded with 8 default categories (Writing, Coding, Research, Design, Study, Agent, Content, Other) per type.
-- The Settings page provides a Category Manager with Prompt/Skill tabs for adding, deleting, and reordering categories.
+- The Settings page provides a Category Manager with Prompt/Skill/Tool tabs for adding, deleting, and reordering categories.
 - Deleting a category that has items in use requires selecting a replacement category; those items are migrated before the category is removed.
 - The last category in a type cannot be deleted.
 - `items.category` stores free-text values. Application-layer validation (via `validateCategoryBelongsToUser`) ensures the value exists in the user's `user_categories` for the corresponding type.

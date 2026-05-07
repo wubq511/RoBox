@@ -26,29 +26,41 @@ type LibraryListProps = {
 };
 
 function getShellCopy(type: ItemType) {
-  return type === "prompt"
-    ? {
-        shellTitle: "Prompt 库",
-        shellDescription: "管理和使用你的 Prompt 模板。",
-        createLabel: "新建 Prompt",
-        emptyTitle: "还没有 Prompt",
-        emptyDescription: "创建你的第一个 Prompt 开始。",
-      }
-    : {
-        shellTitle: "Skill 库",
-        shellDescription: "管理和使用你的 Skill 文件。",
-        createLabel: "新建 Skill",
-        emptyTitle: "还没有 Skill",
-        emptyDescription: "创建你的第一个 Skill 开始。",
-      };
+  if (type === "prompt") {
+    return {
+      shellTitle: "Prompt 库",
+      shellDescription: "管理和使用你的 Prompt 模板。",
+      createLabel: "新建 Prompt",
+      emptyTitle: "还没有 Prompt",
+      emptyDescription: "创建你的第一个 Prompt 开始。",
+    };
+  }
+
+  if (type === "tool") {
+    return {
+      shellTitle: "Tool 库",
+      shellDescription: "管理和使用你的工具仓库与网站。",
+      createLabel: "新建 Tool",
+      emptyTitle: "还没有 Tool",
+      emptyDescription: "保存你的第一个 Tool 开始。",
+    };
+  }
+
+  return {
+    shellTitle: "Skill 库",
+    shellDescription: "管理和使用你的 Skill 文件。",
+    createLabel: "新建 Skill",
+    emptyTitle: "还没有 Skill",
+    emptyDescription: "创建你的第一个 Skill 开始。",
+  };
 }
 
 function getCreateHref(type: ItemType) {
-  return type === "prompt" ? "/prompts/new" : "/skills/new";
+  return type === "prompt" ? "/prompts/new" : type === "tool" ? "/tools/new" : "/skills/new";
 }
 
 function getDetailHref(type: ItemType, itemId: string) {
-  return type === "prompt" ? `/prompts/${itemId}` : `/skills/${itemId}`;
+  return type === "prompt" ? `/prompts/${itemId}` : type === "tool" ? `/tools/${itemId}` : `/skills/${itemId}`;
 }
 
 const ItemCard = memo(function ItemCard({

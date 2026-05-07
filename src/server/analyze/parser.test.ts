@@ -59,6 +59,33 @@ describe("analysis parser", () => {
     });
   });
 
+  it("parses tool analysis and discards model-provided variables", () => {
+    expect(
+      parseAnalysisContent(`{
+        "type": "tool",
+        "title": "Raycast",
+        "summary": "用于快速启动应用和执行自动化的效率工具。",
+        "category": "Coding",
+        "tags": ["效率", "启动器"],
+        "variables": [
+          {
+            "name": "ignored",
+            "description": "Tools 不应保留变量",
+            "required": true,
+            "default_value": ""
+          }
+        ]
+      }`),
+    ).toEqual({
+      type: "tool",
+      title: "Raycast",
+      summary: "用于快速启动应用和执行自动化的效率工具。",
+      category: "Coding",
+      tags: ["效率", "启动器"],
+      variables: [],
+    });
+  });
+
   it("fails with a recoverable message when content is not valid JSON", () => {
     expect(() => parseAnalysisContent("模型输出了一段解释文字")).toThrow(
       "DeepSeek did not return valid JSON.",

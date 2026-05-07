@@ -194,6 +194,75 @@ describe("GitHub skill import helpers", () => {
     });
   });
 
+  it("imports a GitHub repository as a tool when requested", async () => {
+    const userCategories = ["Coding", "Research", "Other"];
+    const createdItem = {
+      id: "tool-1",
+      type: "tool",
+      title: "vercel/next.js",
+      summary: "",
+      content: "https://github.com/vercel/next.js",
+      category: "Coding",
+      tags: ["GitHub"],
+      sourceUrl: "https://github.com/vercel/next.js",
+      isAnalyzed: false,
+    };
+    const analyzedItem = {
+      ...createdItem,
+      title: "Next.js",
+      summary: "React 全栈框架和部署工具链。",
+      tags: ["React", "框架"],
+      isAnalyzed: true,
+    };
+
+    createItemMock.mockResolvedValue(createdItem);
+    requestDeepSeekAnalysisMock.mockResolvedValue({
+      title: "Next.js",
+      summary: "React 全栈框架和部署工具链。",
+      category: "Coding",
+      tags: ["React", "框架"],
+      variables: [{ name: "ignored", description: "", defaultValue: "", required: true }],
+    });
+    updateItemMock.mockResolvedValue(analyzedItem);
+
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response("# Next.js\n\nThe React Framework.", {
+        status: 200,
+      }),
+    );
+
+    await expect(
+      createGithubSkillImport(
+        {
+          url: "https://github.com/vercel/next.js",
+          type: "tool",
+          categories: userCategories,
+        },
+        { fetcher },
+      ),
+    ).resolves.toMatchObject({
+      item: analyzedItem,
+      readmeUrl: "https://raw.githubusercontent.com/vercel/next.js/HEAD/README.md",
+    });
+
+    expect(createItemMock).toHaveBeenCalledWith({
+      type: "tool",
+      title: "vercel/next.js",
+      summary: "",
+      content: "https://github.com/vercel/next.js",
+      category: "Coding",
+      tags: ["GitHub"],
+      sourceUrl: "https://github.com/vercel/next.js",
+    });
+    expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "tool",
+        categories: userCategories,
+        content: expect.stringContaining("# Next.js"),
+      }),
+    );
+  });
+
   it("keeps the imported skill when README analysis fails", async () => {
     const createdItem = {
       id: "skill-1",

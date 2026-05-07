@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const itemTypeSchema = z.enum(["prompt", "skill"]);
+export const itemTypeSchema = z.enum(["prompt", "skill", "tool"]);
 export const itemTypes = [...itemTypeSchema.options];
 
 export const itemCategorySchema = z.string().trim().min(1).max(32);

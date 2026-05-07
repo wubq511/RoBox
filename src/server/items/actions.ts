@@ -33,7 +33,13 @@ function getItemId(formData: FormData) {
 }
 
 function getItemType(formData: FormData): ItemType {
-  return getStringValue(formData, "type") === "skill" ? "skill" : "prompt";
+  const type = getStringValue(formData, "type");
+
+  if (type === "skill" || type === "tool") {
+    return type;
+  }
+
+  return "prompt";
 }
 
 function toMutationInput(formData: FormData, type: ItemType) {
@@ -54,7 +60,8 @@ function toMutationInput(formData: FormData, type: ItemType) {
 }
 
 function getPathsForType(type: ItemType, itemId: string) {
-  const collectionPath = type === "prompt" ? "/prompts" : "/skills";
+  const collectionPath =
+    type === "prompt" ? "/prompts" : type === "skill" ? "/skills" : "/tools";
 
   return {
     collectionPath,
@@ -121,6 +128,24 @@ export async function createSkillAction(
   redirect(`/skills/${createdItem.id}`);
 }
 
+export async function createToolAction(
+  _previousState: ItemFormState | void,
+  formData: FormData,
+) {
+  let createdItem;
+
+  try {
+    const { baseInput } = toMutationInput(formData, "tool");
+
+    createdItem = await createItem(baseInput);
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths("tool", createdItem.id);
+  redirect(`/tools/${createdItem.id}`);
+}
+
 export async function updatePromptAction(
   itemId: string,
   _previousState: ItemFormState | void,
@@ -175,6 +200,33 @@ export async function updateSkillAction(
 
   revalidateItemPaths("skill", itemId);
   redirect(`/skills/${itemId}`);
+}
+
+export async function updateToolAction(
+  itemId: string,
+  _previousState: ItemFormState | void,
+  formData: FormData,
+) {
+  try {
+    const { baseInput } = toMutationInput(formData, "tool");
+    const updatedItem = await updateItem(itemId, {
+      title: baseInput.title,
+      summary: baseInput.summary,
+      content: baseInput.content,
+      category: baseInput.category,
+      tags: baseInput.tags,
+      sourceUrl: baseInput.sourceUrl,
+    });
+
+    if (!updatedItem) {
+      throw new Error("Item not found.");
+    }
+  } catch (error) {
+    return toErrorState(error);
+  }
+
+  revalidateItemPaths("tool", itemId);
+  redirect(`/tools/${itemId}`);
 }
 
 export async function toggleFavoriteAction(formData: FormData) {

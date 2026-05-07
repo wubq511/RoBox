@@ -114,11 +114,44 @@ describe("POST /api/import/github", () => {
     expect(response.status).toBe(201);
     expect(createGithubSkillImportMock).toHaveBeenCalledWith({
       url: "https://github.com/tw93/Waza",
+      type: "skill",
       categories: defaultCategories,
     });
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
     expect(revalidatePathMock).toHaveBeenCalledWith("/skills");
     expect(revalidatePathMock).toHaveBeenCalledWith("/skills/skill-1");
+  });
+
+  it("imports a GitHub tool and revalidates tool pages", async () => {
+    createGithubSkillImportMock.mockResolvedValue({
+      item: {
+        id: "tool-1",
+        type: "tool",
+        title: "Next.js",
+      },
+      readmeUrl: "https://raw.githubusercontent.com/vercel/next.js/HEAD/README.md",
+    });
+
+    const response = await POST(
+      new NextRequest("http://localhost:3000/api/import/github", {
+        method: "POST",
+        body: JSON.stringify({
+          url: "https://github.com/vercel/next.js",
+          type: "tool",
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(getUserCategoryNamesMock).toHaveBeenCalledWith("user-1", "tool");
+    expect(createGithubSkillImportMock).toHaveBeenCalledWith({
+      url: "https://github.com/vercel/next.js",
+      type: "tool",
+      categories: defaultCategories,
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/tools");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/tools/tool-1");
   });
 
   it("returns a recoverable error for invalid GitHub URLs", async () => {

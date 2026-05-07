@@ -165,7 +165,7 @@ Import stores the submitted link in `items.content`, stores the canonical reposi
 ### List Categories
 
 ```text
-GET /api/categories?type=<prompt|skill>
+GET /api/categories?type=<prompt|skill|tool>
 ```
 
 Requirements:
@@ -199,7 +199,7 @@ Request body:
 
 ```ts
 {
-  type: "prompt" | "skill",
+  type: "prompt" | "skill" | "tool",
   name: "My Category"
 }
 ```
@@ -209,7 +209,7 @@ Category names must be 1-32 characters. Duplicate names within the same type ret
 ### Delete Category
 
 ```text
-DELETE /api/categories/<name>?type=<prompt|skill>
+DELETE /api/categories/<name>?type=<prompt|skill|tool>
 ```
 
 Requirements:
@@ -236,7 +236,7 @@ Request body:
 
 ```ts
 {
-  type: "prompt" | "skill",
+  type: "prompt" | "skill" | "tool",
   orderedNames: ["Writing", "Coding", "Other"]
 }
 ```

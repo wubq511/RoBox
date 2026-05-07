@@ -158,7 +158,9 @@ export function ItemForm({
               placeholder={
                 type === "prompt"
                   ? "在这里输入 Prompt 内容，可以使用 {{变量名}} 定义动态变量"
-                  : "在这里输入 Skill 内容"
+                  : type === "tool"
+                    ? "在这里输入工具链接、用途说明或安装方式"
+                    : "在这里输入 Skill 内容"
               }
               className="min-h-[160px] resize-y leading-relaxed"
             />
@@ -166,7 +168,7 @@ export function ItemForm({
         </label>
       </div>
 
-      {type === "skill" ? (
+      {type === "skill" || type === "tool" ? (
         <>
           <div className="h-px bg-border" />
           <div className="space-y-8">
@@ -176,7 +178,7 @@ export function ItemForm({
                 <Input
                   name="sourceUrl"
                   defaultValue={initialValues.sourceUrl}
-                  placeholder="https://github.com/..."
+                  placeholder={type === "tool" ? "https://example.com/..." : "https://github.com/..."}
                   className="h-11"
                 />
               </div>

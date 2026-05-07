@@ -34,6 +34,7 @@ describe("DashboardView", () => {
             total: 6,
             prompts: 4,
             skills: 2,
+            tools: 0,
             pending: 3,
           },
           recent: [],
@@ -49,8 +50,10 @@ describe("DashboardView", () => {
     expect(html).toContain("3");
     expect(html).toContain('href="/prompts/new"');
     expect(html).toContain('href="/skills/new"');
+    expect(html).toContain('href="/tools/new"');
     expect(html).toContain("新建 Prompt");
     expect(html).toContain("新建 Skill");
+    expect(html).toContain("新建 Tool");
   });
 
   it("renders duplicate empty labels as distinct list entries", () => {
@@ -63,6 +66,7 @@ describe("DashboardView", () => {
             total: 2,
             prompts: 2,
             skills: 0,
+            tools: 0,
             pending: 2,
           },
           recent: [],

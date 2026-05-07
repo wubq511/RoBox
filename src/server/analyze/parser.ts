@@ -103,14 +103,17 @@ export function parseAnalysisContent(content: string): AnalysisResult {
       seenTags.add(tag);
       return true;
     }),
-    variables: parsed.variables.map((variable, index) =>
-      promptVariableSchema.parse({
-        name: variable.name,
-        description: variable.description,
-        defaultValue: variable.defaultValue ?? variable.default_value ?? "",
-        required: variable.required,
-        sortOrder: index,
-      }),
-    ),
+    variables:
+      parsed.type === "prompt"
+        ? parsed.variables.map((variable, index) =>
+            promptVariableSchema.parse({
+              name: variable.name,
+              description: variable.description,
+              defaultValue: variable.defaultValue ?? variable.default_value ?? "",
+              required: variable.required,
+              sortOrder: index,
+            }),
+          )
+        : [],
   };
 }

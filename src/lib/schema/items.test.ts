@@ -5,10 +5,18 @@ import {
   createItemInputSchema,
   itemEditorInputSchema,
   itemCategorySchema,
+  itemTypeSchema,
   listItemsFiltersSchema,
 } from "./items";
 
 describe("item schemas", () => {
+  it("supports prompt skill and tool item types", () => {
+    expect(itemTypeSchema.parse("prompt")).toBe("prompt");
+    expect(itemTypeSchema.parse("skill")).toBe("skill");
+    expect(itemTypeSchema.parse("tool")).toBe("tool");
+    expect(() => itemTypeSchema.parse("reference")).toThrow();
+  });
+
   it("accepts valid category names", () => {
     expect(itemCategorySchema.parse("Coding")).toBe("Coding");
     expect(itemCategorySchema.parse("Workflow")).toBe("Workflow");

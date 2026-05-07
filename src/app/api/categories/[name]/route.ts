@@ -16,6 +16,10 @@ type RouteContext = {
   }>;
 };
 
+function getCollectionPath(type: "prompt" | "skill" | "tool") {
+  return type === "prompt" ? "/prompts" : type === "skill" ? "/skills" : "/tools";
+}
+
 export async function DELETE(request: Request, context: RouteContext) {
   const origin = request.headers.get("origin");
 
@@ -95,7 +99,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   }
 
   revalidatePath("/settings");
-  revalidatePath(type === "prompt" ? "/prompts" : "/skills");
+  revalidatePath(getCollectionPath(type));
 
   return NextResponse.json({ deleted: true });
 }

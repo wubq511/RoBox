@@ -6,6 +6,7 @@ import { Loader2Icon, Trash2Icon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import type { ItemType } from "@/lib/schema/items";
 import { deleteItemAction } from "@/server/items/actions";
 
 export function DeleteItemButton({
@@ -13,7 +14,7 @@ export function DeleteItemButton({
   itemType,
 }: Readonly<{
   itemId: string;
-  itemType: "prompt" | "skill";
+  itemType: ItemType;
 }>) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -41,7 +42,12 @@ export function DeleteItemButton({
         description: "内容已成功删除。",
       });
 
-      const collectionPath = itemType === "prompt" ? "/prompts" : "/skills";
+      const collectionPath =
+        itemType === "prompt"
+          ? "/prompts"
+          : itemType === "skill"
+            ? "/skills"
+            : "/tools";
       router.push(collectionPath);
     } catch (error) {
       const message =

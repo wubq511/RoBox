@@ -33,8 +33,9 @@ function getErrorStatus(error: unknown) {
   return 422;
 }
 
-function revalidateItemPaths(type: "prompt" | "skill", itemId: string) {
-  const collectionPath = type === "prompt" ? "/prompts" : "/skills";
+function revalidateItemPaths(type: "prompt" | "skill" | "tool", itemId: string) {
+  const collectionPath =
+    type === "prompt" ? "/prompts" : type === "skill" ? "/skills" : "/tools";
 
   revalidatePath("/dashboard");
   revalidatePath(collectionPath);

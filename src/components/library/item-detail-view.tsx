@@ -36,8 +36,9 @@ export function ItemDetailView({
     normalizedReturnPath,
     `${normalizedReturnPath}/${item.id}`,
   ];
-  const isImportedSkill = item.type === "skill" && Boolean(item.sourceUrl);
-  const copyContent = isImportedSkill ? item.sourceUrl : item.content;
+  const isLinkedSkill = item.type === "skill" && Boolean(item.sourceUrl);
+  const isLinkedTool = item.type === "tool" && Boolean(item.sourceUrl);
+  const copyContent = isLinkedSkill || isLinkedTool ? item.sourceUrl : item.content;
 
   return (
     <div className="space-y-6">
@@ -127,8 +128,8 @@ export function ItemDetailView({
             />
           ) : null}
 
-          {/* Skill 来源链接 */}
-          {item.type === "skill" && item.sourceUrl ? (
+          {/* 来源链接 */}
+          {(item.type === "skill" || item.type === "tool") && item.sourceUrl ? (
             <section className="rounded-2xl border border-border/60 bg-muted/30 p-5">
               <h3 className="text-sm font-semibold mb-3">来源</h3>
               <a
@@ -147,14 +148,22 @@ export function ItemDetailView({
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                {item.type === "prompt" ? "原始 Prompt" : isImportedSkill ? "安装/加载提示词" : "内容"}
+                {item.type === "prompt"
+                  ? "原始 Prompt"
+                  : isLinkedSkill
+                    ? "安装/加载提示词"
+                    : isLinkedTool
+                      ? "工具链接"
+                      : "内容"}
               </h3>
               <CopyRawButton content={copyContent} />
             </div>
             <div className="relative group">
               <pre className="overflow-x-auto rounded-2xl border border-border/60 bg-muted/30 p-5 font-mono text-sm leading-relaxed whitespace-pre-wrap text-foreground/80">
-                {isImportedSkill
+                {isLinkedSkill
                   ? <>请你安装/加载这个skill：<a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{item.sourceUrl}</a></>
+                  : isLinkedTool
+                    ? <>工具链接：<a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{item.sourceUrl}</a></>
                   : item.content}
               </pre>
             </div>

@@ -51,7 +51,7 @@ function normalizeLimit(value: string | number | undefined) {
 }
 
 function getLibraryPath(type: ItemType) {
-  return type === "skill" ? "/skills" : "/prompts";
+  return type === "skill" ? "/skills" : type === "tool" ? "/tools" : "/prompts";
 }
 
 export function parseLibrarySearchParams(

@@ -7,7 +7,7 @@ import type {
 export interface UserCategoryRow {
   id: string;
   user_id: string;
-  type: "prompt" | "skill";
+  type: ItemType;
   name: string;
   sort_order: number;
   created_at: string;
@@ -16,7 +16,7 @@ export interface UserCategoryRow {
 export interface StoredUserCategory {
   id: string;
   userId: string;
-  type: "prompt" | "skill";
+  type: ItemType;
   name: string;
   sortOrder: number;
   createdAt: string;
@@ -88,6 +88,7 @@ export interface DashboardCounts {
   total: number;
   prompts: number;
   skills: number;
+  tools: number;
   pending: number;
 }
 

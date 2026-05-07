@@ -56,7 +56,7 @@ export async function ensureDefaultCategories(
     name: string;
     sort_order: number;
   }> = [];
-  const types: ItemType[] = ["prompt", "skill"];
+  const types: ItemType[] = ["prompt", "skill", "tool"];
 
   for (const type of types) {
     const rowsForType = existingRows.filter((row) => row.type === type);

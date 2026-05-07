@@ -10,24 +10,25 @@
 
 ## 产品定义
 
-> **RoBox 是一个个人 Prompt 与 Skill 管理网页，用来保存、整理、搜索和快速复制你常用的 Prompt 模板与 Skill。**
+> **RoBox 是一个个人 Prompt / Skill / Tool 管理网页，用来保存、整理、搜索和快速复制你常用的 Prompt 模板、Skill 与工具链接。**
 > 
 
 ## 一句话说明
 
-> **RoBox：管理你的 Prompt 与 Skill。**
+> **RoBox：管理你的 Prompt、Skill 与 Tool。**
 > 
 
 ---
 
 # 2. 产品边界
 
-## 只做两类内容
+## 只做三类内容
 
 | 类型 | 说明 |
 | --- | --- |
 | **Prompt** | 提示词、提示词模板、可填变量的 Prompt |
 | **Skill** | `SKILL.md`、子 skill、Claude Skill、可复制使用的 Skill 文档 |
+| **Tool** | 好用工具的 GitHub 仓库、官网链接、安装/使用入口与简短说明 |
 
 ---
 
@@ -43,6 +44,8 @@
 不做 MCP 调用
 不做 Agent 运行平台
 不做浏览器插件
+不做通用网页收藏箱
+不做爬虫平台
 ```
 
 第一版核心非常明确：
@@ -96,6 +99,24 @@ DeepSeek 生成名称 / 摘要 / 使用场景 / 分类 / 标签
 
 ---
 
+## Tool 使用流程
+
+```
+新建 Tool
+↓
+粘贴 GitHub 仓库或公共 HTTPS 网站
+↓
+保存链接
+↓
+点击“智能整理”或使用导入时自动整理
+↓
+DeepSeek 生成名称 / 摘要 / 使用场景 / 分类 / 标签
+↓
+打开来源或一键复制工具链接
+```
+
+---
+
 # 4. 技术方案
 
 ## 最终技术栈
@@ -116,7 +137,8 @@ Next.js
 | 模型 | DeepSeek |
 | 部署 | Vercel Hobby |
 | 搜索 | 第一版关键词搜索 + 分类 / 标签筛选 |
-| GitHub 导入 | 服务端读取 GitHub raw 内容 |
+| GitHub 导入 | 服务端读取 GitHub README/SKILL.md 内容 |
+| 网站导入 | 服务端读取公共 HTTPS 页面文本，限 Tool 使用 |
 
 ---
 
@@ -212,6 +234,14 @@ RoBox
 │   ├── Skill 详情
 │   └── Skill 编辑
 │
+├── Tools
+│   ├── Tool 列表
+│   ├── 新建 Tool
+│   ├── GitHub 导入
+│   ├── 网站导入
+│   ├── Tool 详情
+│   └── Tool 编辑
+│
 └── Settings
     ├── DeepSeek API 设置
     ├── 分类设置
@@ -230,10 +260,10 @@ RoBox
 
 ```
 全局搜索
-最近复制过的 Prompt / Skill
+最近复制过的 Prompt / Skill / Tool
 收藏内容
 待整理内容
-Prompt / Skill 数量统计
+Prompt / Skill / Tool 数量统计
 快速新增按钮
 ```
 
@@ -349,19 +379,19 @@ skill链接/SKILL.md原文
 
 ## `items`
 
-统一存 Prompt 和 Skill。
+统一存 Prompt、Skill 和 Tool。
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | id | uuid | 主键 |
 | user_id | uuid | 用户 ID |
-| type | text | `prompt` / `skill` |
+| type | text | `prompt` / `skill` / `tool` |
 | title | text | 标题 |
 | summary | text | 摘要 |
 | content | text | 原文/链接 |
 | category | text | 一级分类 |
 | tags | text[] | 标签 |
-| source_url | text | GitHub 来源链接，可为空 |
+| source_url | text | GitHub 或网站来源链接，可为空 |
 | is_favorite | boolean | 是否收藏 |
 | is整理ed | boolean | 是否已经智能整理 |
 | usage_count | integer | 使用次数 |
@@ -407,11 +437,13 @@ is_analyzed
 
 ---
 
-# 11. GitHub Skill 导入逻辑
+# 11. GitHub / 网站导入逻辑
 
-第一版支持 GitHub Skill 链接导入。
+第一版支持 GitHub Skill 和 Tool 链接导入。
 
-对于以链接形式导入skill，不摘原文，只显示仓库链接和根据README文件总结的skill使用场景和摘要。
+对于以链接形式导入的 Skill / Tool，不保存 README 原文，只显示仓库链接和根据 README 文件总结的使用场景与摘要。
+
+网站导入只支持 Tool。系统抓取公共 HTTPS 页面文本并交给 DeepSeek 分析；数据库只保存用户提交链接和最终来源链接，不保存网页正文。
 
 ---
 
@@ -424,7 +456,7 @@ github.com
 raw.githubusercontent.com
 ```
 
-不做任意 URL 抓取。
+普通网站抓取只允许公共 HTTPS 页面，拒绝 localhost、内网、IP 字面量和非 HTTPS URL；每次重定向后重新校验目标，并限制响应大小、超时、重定向次数和 Content-Type。
 
 ---
 
@@ -441,7 +473,7 @@ raw.githubusercontent.com
 分类筛选
 标签筛选
 收藏筛选
-类型筛选：Prompt / Skill
+类型筛选：Prompt / Skill / Tool
 ```
 
 ## 第二版再做
@@ -449,7 +481,7 @@ raw.githubusercontent.com
 ```
 Embedding
 语义搜索
-相似 Prompt / Skill 推荐
+相似 Prompt / Skill / Tool 推荐
 ```
 
 原因：个人使用初期，关键词 + 标签已经够用。
@@ -502,8 +534,10 @@ Embedding
 登录
 新增 Prompt
 新增 Skill
+新增 Tool
 手动粘贴内容保存
-GitHub SKILL.md 链接导入
+GitHub SKILL.md / README 链接导入
+公共 HTTPS 网站导入 Tool
 内容列表
 内容详情
 编辑
@@ -595,7 +629,8 @@ POST /api/import/github
 
 ```json
 {
-  "url": "https://github.com/tw93/Waza"
+  "url": "https://github.com/tw93/Waza",
+  "type": "tool"
 }
 ```
 
@@ -608,7 +643,35 @@ POST /api/import/github
 ↓
 抓取README
 ↓
-保存为 Skill
+保存为 Skill 或 Tool
+↓
+返回 item id
+```
+
+## 网站导入
+
+```
+POST /api/import/web
+```
+
+请求：
+
+```json
+{
+  "url": "https://example.com"
+}
+```
+
+流程：
+
+```
+校验公共 HTTPS URL
+↓
+抓取并清洗网页文本
+↓
+保存为 Tool
+↓
+DeepSeek 整理
 ↓
 返回 item id
 ```
@@ -640,12 +703,12 @@ POST /api/items/:id/copy
 
 要求：
 1. 只能输出 JSON，不要输出 Markdown。
-2. type 只能是 "prompt" 或 "skill"。
+2. type 只能是 "prompt"、"skill" 或 "tool"。
 3. category 必须从以下分类中选择：
    Writing, Coding, Research, Design, Study, Agent, Content, Other
 4. tags 输出 3-8 个中文标签。
 5. 如果是 Prompt，请识别其中需要用户填写的变量。
-6. 如果没有明显变量，variables 输出空数组。
+6. 如果是 Skill 或 Tool，variables 输出空数组；如果 Prompt 没有明显变量，variables 也输出空数组。
 7. summary 用中文，控制在 80 字以内。
 8. title 简短清晰，不超过 30 字。
 
@@ -678,7 +741,7 @@ POST /api/items/:id/copy
 | --- | --- |
 | DeepSeek 输出不是 JSON | 做 JSON 修复或提示重新整理 |
 | DeepSeek 分类不准 | 用户可手动修改 |
-| GitHub 导入失败 | 保留手动粘贴入口 |
+| GitHub / 网站导入失败 | 保留手动粘贴入口 |
 | Prompt 变量识别错误 | 变量可编辑 |
 | 内容重复 | 提示可能重复，但允许保存 |
 | 数据库写入失败 | 不清空输入框 |
@@ -710,7 +773,7 @@ POST /api/items/:id/copy
        │
        ▼
 ┌──────────────────────────┐
-│ Prompt / Skill Library    │
+│ Prompt / Skill / Tool Library │
 │ Search / Filter / Copy    │
 └──────────────────────────┘
 ```

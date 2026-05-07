@@ -24,7 +24,8 @@ export function LibraryFilters({
 }: Readonly<LibraryFiltersProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const basePath = type === "prompt" ? "/prompts" : "/skills";
+  const basePath =
+    type === "prompt" ? "/prompts" : type === "skill" ? "/skills" : "/tools";
 
   const updateFilters = useCallback(
     (updates: Record<string, string>) => {
@@ -77,7 +78,7 @@ export function LibraryFilters({
             <Input
               name="search"
               defaultValue={filters.search ?? ""}
-              placeholder="搜索 Prompt / 标签 / 描述"
+              placeholder="搜索标题 / 标签 / 描述"
               className="h-8 rounded-lg pl-9"
             />
           </div>

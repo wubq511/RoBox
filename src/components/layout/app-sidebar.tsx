@@ -22,7 +22,7 @@ export function AppSidebar({ userEmail }: Readonly<{ userEmail: string }>) {
         <div className="space-y-0.5">
           <div className="text-[15px] font-semibold tracking-tight text-sidebar-foreground">RoBox</div>
           <p className="text-xs font-medium text-sidebar-foreground/60 tracking-wider uppercase">
-            Prompt / Skill 库
+            Prompt / Skill / Tool 库
           </p>
         </div>
       </div>

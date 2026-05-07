@@ -219,9 +219,11 @@ export async function listItems(filters: Partial<ListItemsFilters> = {}) {
   const nextPath =
     parsed.type === "skill"
       ? "/skills"
-      : parsed.type === "prompt"
-        ? "/prompts"
-        : "/dashboard";
+      : parsed.type === "tool"
+        ? "/tools"
+        : parsed.type === "prompt"
+          ? "/prompts"
+          : "/dashboard";
   const { supabase, userId } = await getDatabaseContext(nextPath);
 
   let query = supabase.from("items").select("*").eq("user_id", userId);
@@ -492,11 +494,12 @@ export async function recordCopyAction(itemId: string, action: CopyAction) {
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   const { supabase, userId } = await getDatabaseContext();
 
-  const [totalResult, promptsResult, skillsResult, pendingResult, favoritesResult, recentResult] =
+  const [totalResult, promptsResult, skillsResult, toolsResult, pendingResult, favoritesResult, recentResult] =
     await Promise.all([
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId),
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "prompt"),
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "skill"),
+      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "tool"),
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_analyzed", false),
       supabase.from("items").select("*").eq("user_id", userId).eq("is_favorite", true).order("updated_at", { ascending: false }).limit(3),
       supabase.from("items").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(20),
@@ -505,6 +508,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   if (totalResult.error) throw totalResult.error;
   if (promptsResult.error) throw promptsResult.error;
   if (skillsResult.error) throw skillsResult.error;
+  if (toolsResult.error) throw toolsResult.error;
   if (pendingResult.error) throw pendingResult.error;
   if (favoritesResult.error) throw favoritesResult.error;
   if (recentResult.error) throw recentResult.error;
@@ -522,6 +526,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       total: totalResult.count ?? 0,
       prompts: promptsResult.count ?? 0,
       skills: skillsResult.count ?? 0,
+      tools: toolsResult.count ?? 0,
       pending: pendingResult.count ?? 0,
     },
     favorites,

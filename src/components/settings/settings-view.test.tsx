@@ -10,6 +10,7 @@ describe("SettingsView", () => {
     expect(html).toContain("自定义分类");
     expect(html).toContain("Prompt 分类");
     expect(html).toContain("Skill 分类");
+    expect(html).toContain("Tool 分类");
     expect(html).toContain("DEEPSEEK_API_KEY");
     expect(html).toContain("github.com");
     expect(html).toContain("raw.githubusercontent.com");

@@ -26,7 +26,7 @@ vi.mock("@/lib/supabase/server-client", () => ({
 type MockItemRow = {
   id: string;
   user_id: string;
-  type: "prompt" | "skill";
+  type: "prompt" | "skill" | "tool";
   title: string;
   summary: string;
   content: string;
@@ -445,6 +445,7 @@ describe("item repository helpers", () => {
       total: 6,
       prompts: 3,
       skills: 3,
+      tools: 0,
       pending: 5,
     });
     expect(snapshot.favorites.map((item) => item.id)).toEqual([

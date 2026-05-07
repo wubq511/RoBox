@@ -1,19 +1,20 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { checkRateLimit } from "@/lib/rate-limit";
 import { getAppOrigin } from "@/lib/env";
-import type { ItemType } from "@/lib/schema/items";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { getOptionalAppUser } from "@/server/auth/session";
-import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
-import { createGithubSkillImport } from "@/server/import/github";
+import { ensureDefaultCategories, getUserCategoryNames } from "@/server/db/categories";
+import { createWebToolImport } from "@/server/import/web";
+
+const MAX_URL_LENGTH = 2048;
 
 function getErrorMessage(error: unknown) {
   if (process.env.NODE_ENV === "development") {
-    return error instanceof Error ? error.message : "GitHub import failed.";
+    return error instanceof Error ? error.message : "Web import failed.";
   }
 
-  return "GitHub import failed. Please try again.";
+  return "Web import failed. Please try again.";
 }
 
 function getErrorStatus(error: unknown) {
@@ -29,20 +30,6 @@ function getErrorStatus(error: unknown) {
   return 422;
 }
 
-function getImportPath(type: Extract<ItemType, "skill" | "tool">) {
-  return type === "tool" ? "/tools" : "/skills";
-}
-
-function revalidateGithubImportPaths(itemId: string, type: Extract<ItemType, "skill" | "tool">) {
-  const collectionPath = getImportPath(type);
-
-  revalidatePath("/dashboard");
-  revalidatePath(collectionPath);
-  revalidatePath(`${collectionPath}/${itemId}`);
-}
-
-const MAX_URL_LENGTH = 2048;
-
 async function readRequestBody(request: Request) {
   const contentLength = request.headers.get("content-length");
 
@@ -51,10 +38,16 @@ async function readRequestBody(request: Request) {
   }
 
   try {
-    return (await request.json()) as { url?: unknown; type?: unknown };
+    return (await request.json()) as { url?: unknown };
   } catch {
     return {};
   }
+}
+
+function revalidateWebImportPaths(itemId: string) {
+  revalidatePath("/dashboard");
+  revalidatePath("/tools");
+  revalidatePath(`/tools/${itemId}`);
 }
 
 export async function POST(request: Request) {
@@ -87,8 +80,6 @@ export async function POST(request: Request) {
     }
 
     const url = typeof body.url === "string" ? body.url : "";
-    const type: Extract<ItemType, "skill" | "tool"> =
-      body.type === "tool" ? "tool" : "skill";
 
     if (url.length > MAX_URL_LENGTH) {
       return NextResponse.json(
@@ -98,15 +89,14 @@ export async function POST(request: Request) {
     }
 
     await ensureDefaultCategories(user.id);
-    const userCategories = await getUserCategoryNames(user.id, type);
+    const userCategories = await getUserCategoryNames(user.id, "tool");
 
-    const result = await createGithubSkillImport({
+    const result = await createWebToolImport({
       url,
-      type,
       categories: userCategories,
     });
 
-    revalidateGithubImportPaths(result.item.id, type);
+    revalidateWebImportPaths(result.item.id);
 
     return NextResponse.json(result, {
       status: 201,

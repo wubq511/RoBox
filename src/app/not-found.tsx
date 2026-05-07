@@ -12,7 +12,7 @@ export default function NotFoundPage() {
           页面不存在
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          这个地址没有对应的 RoBox 页面，返回工作台继续管理 Prompt 与 Skill。
+          这个地址没有对应的 RoBox 页面，返回工作台继续管理 Prompt、Skill 与 Tool。
         </p>
         <Link
           href="/dashboard"

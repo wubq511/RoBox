@@ -10,6 +10,10 @@ import {
   getUserCategories,
 } from "@/server/db/categories";
 
+function getCollectionPath(type: "prompt" | "skill" | "tool") {
+  return type === "prompt" ? "/prompts" : type === "skill" ? "/skills" : "/tools";
+}
+
 export async function GET(request: Request) {
   const origin = request.headers.get("origin");
 
@@ -105,7 +109,7 @@ export async function POST(request: Request) {
     const category = await createUserCategory(user.id, parsedType.data, name);
 
     revalidatePath("/settings");
-    revalidatePath(parsedType.data === "prompt" ? "/prompts" : "/skills");
+    revalidatePath(getCollectionPath(parsedType.data));
 
     return NextResponse.json({ category }, { status: 201 });
   } catch (error: unknown) {
