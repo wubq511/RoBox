@@ -19,7 +19,7 @@ Current MVP behavior:
 
 - `/login` sends Supabase email magic links and enforces `ALLOWED_EMAILS`. GitHub OAuth is the primary login method; Magic Link is the fallback.
 - `/auth/github` initiates GitHub OAuth flow via `supabase.auth.signInWithOAuth({ provider: "github" })`.
-- `/dashboard`、`/prompts`、`/skills`、`/tools`、`/settings` require a valid Supabase session.
+- `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings` require a valid Supabase session.
 - Prompt / Skill / Tool pages run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - Prompt / Skill / Tool detail pages expose manual DeepSeek analyze through `POST /api/items/:id/analyze`; saving raw content still does not call the model.
 - Prompt analyze writes `items` metadata and `prompt_variables`; Skill / Tool analyze updates metadata only.
@@ -163,7 +163,7 @@ Current code placement:
 - UI shell and routes live in Next.js App Router.
 - Shadcn/ui remains the only component primitive layer introduced so far.
 - Supabase is already wired through SSR clients, the `/login` allowlist flow, the `/auth/confirm` callback, and the server-side `src/server/db` repository layer.
-- `/dashboard`、`/prompts`、`/skills`、`/tools`、`/settings` require a valid Supabase session.
+- `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings` require a valid Supabase session.
 - Prompt / Skill / Tool pages run against the real repository layer for create, list, detail, edit, favorite, delete, and raw-copy logging.
 - DeepSeek is wired through a server-only route. Live model calls need a valid `DEEPSEEK_API_KEY`; the model and base URL are read from environment variables (`DEEPSEEK_MODEL`, `DEEPSEEK_API_BASE_URL`).
 - GitHub import is wired through a server-only route for Skill/Tool repository links. Web Tool import is a separate server-only route that fetches only public HTTPS pages with redirect, size, timeout, and content-type limits. `GITHUB_TOKEN` is used only when provided.
@@ -204,6 +204,8 @@ Implemented workspace routes:
 
 - `/dashboard`
   Real dashboard snapshot with counts, recent copies, favorites, pending analyze items, and quick-create links.
+- `/favorites`
+  Unified favorite list for Prompt / Skill / Tool items, with search, type filtering, and updated/used sorting.
 - `/prompts`
   Prompt list with keyword search, category, tag, favorite filter, and updated/used sorting.
 - `/prompts/new`

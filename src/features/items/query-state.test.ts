@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildLibraryHref,
+  parseFavoritesSearchParams,
   parseLibrarySearchParams,
 } from "./query-state";
 
@@ -56,5 +57,21 @@ describe("library query state", () => {
         search: "abc",
       }),
     ).toBe("/prompts?search=abc");
+  });
+
+  it("normalizes favorite list query params", () => {
+    expect(
+      parseFavoritesSearchParams({
+        search: "  cli tool  ",
+        type: "tool",
+        sort: "used",
+      }),
+    ).toEqual({
+      type: "tool",
+      search: "cli tool",
+      isFavorite: true,
+      sort: "used",
+      limit: 100,
+    });
   });
 });

@@ -465,4 +465,27 @@ describe("item repository helpers", () => {
       "pending-4",
     ]);
   });
+
+  it("keeps enough dashboard favorites to fill the expanded card", async () => {
+    const supabase = createSupabaseMock({
+      items: Array.from({ length: 5 }, (_, index) =>
+        createItemRow({
+          id: `favorite-${index + 1}`,
+          is_favorite: true,
+          updated_at: `2026-05-01T0${index}:00:00.000Z`,
+        }),
+      ),
+    });
+    getServerSupabaseClientMock.mockResolvedValue(supabase.client);
+
+    const snapshot = await getDashboardSnapshot();
+
+    expect(snapshot.favorites.map((item) => item.id)).toEqual([
+      "favorite-5",
+      "favorite-4",
+      "favorite-3",
+      "favorite-2",
+      "favorite-1",
+    ]);
+  });
 });

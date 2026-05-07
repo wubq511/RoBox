@@ -166,6 +166,8 @@ export function DashboardView({
             icon={<StarIcon className="size-[18px] text-amber-500" />}
             empty="暂无收藏"
             items={favoriteItems}
+            href="/favorites"
+            ctaLabel="查看全部收藏"
           />
           <MiniListCard
             title="未整理草稿"
@@ -202,6 +204,8 @@ const MiniListCard = memo(function MiniListCard({
   empty,
   items,
   className,
+  href,
+  ctaLabel,
 }: Readonly<{
   title: string;
   icon: React.ReactNode;
@@ -214,20 +218,38 @@ const MiniListCard = memo(function MiniListCard({
     type: string;
   }>;
   className?: string;
+  href?: string;
+  ctaLabel?: string;
 }>) {
-  return (
-    <Card className={cn("rounded-[24px] border-border/60 shadow-sm overflow-hidden flex flex-col", className)}>
-      <CardHeader className="border-b border-border/40 pb-4 px-5">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2.5 text-[16px] font-semibold">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-muted/50">
-              {icon}
-            </div>
-            <span>{title}</span>
-          </CardTitle>
+  const headerContent = (
+    <div className="flex items-center justify-between gap-3">
+      <CardTitle className="flex items-center gap-2.5 text-[16px] font-semibold">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-muted/50">
+          {icon}
         </div>
+        <span>{title}</span>
+      </CardTitle>
+      {href ? (
+        <span className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+          全部
+          <ArrowRightIcon className="size-3.5" />
+        </span>
+      ) : null}
+    </div>
+  );
+
+  return (
+    <Card className={cn("min-h-0 rounded-[24px] border-border/60 shadow-sm overflow-hidden flex flex-col", className)}>
+      <CardHeader className="border-b border-border/40 pb-4 px-5">
+        {href ? (
+          <Link href={href} className="group -m-2 block rounded-xl p-2 transition-colors hover:bg-muted/40">
+            {headerContent}
+          </Link>
+        ) : (
+          headerContent
+        )}
       </CardHeader>
-      <CardContent className="pt-2 px-5 pb-5 bg-muted/10">
+      <CardContent className="flex min-h-0 flex-1 flex-col pt-2 px-5 pb-5 bg-muted/10">
         {items.length === 0 ? (
           <div className="mt-3 flex flex-col items-center justify-center rounded-[16px] border border-dashed border-border/60 bg-background/50 text-center py-8">
             <div className="text-[14px] font-medium text-muted-foreground">{empty}</div>
@@ -250,6 +272,14 @@ const MiniListCard = memo(function MiniListCard({
             ))}
           </div>
         )}
+        {href ? (
+          <Link
+            href={href}
+            className="mt-3 flex min-h-10 flex-1 items-center justify-center rounded-xl border border-dashed border-border/60 bg-background/40 px-3 py-2 text-[13px] font-medium text-muted-foreground transition-colors hover:border-border hover:bg-background hover:text-foreground"
+          >
+            {ctaLabel ?? "查看全部"}
+          </Link>
+        ) : null}
       </CardContent>
     </Card>
   );

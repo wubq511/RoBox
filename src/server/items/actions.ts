@@ -73,6 +73,7 @@ function revalidateItemPaths(type: ItemType, itemId: string) {
   const { collectionPath, detailPath } = getPathsForType(type, itemId);
 
   revalidatePath("/dashboard");
+  revalidatePath("/favorites");
   revalidatePath(collectionPath);
   revalidatePath(detailPath);
 }

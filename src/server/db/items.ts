@@ -214,7 +214,10 @@ async function selectPromptVariables(
   return ((data ?? []) as PromptVariableRow[]).map(mapPromptVariableRow);
 }
 
-export async function listItems(filters: Partial<ListItemsFilters> = {}) {
+export async function listItems(
+  filters: Partial<ListItemsFilters> = {},
+  options: { nextPath?: string } = {},
+) {
   const parsed = sanitizeListItemsInput(filters);
   const nextPath =
     parsed.type === "skill"
@@ -224,7 +227,9 @@ export async function listItems(filters: Partial<ListItemsFilters> = {}) {
         : parsed.type === "prompt"
           ? "/prompts"
           : "/dashboard";
-  const { supabase, userId } = await getDatabaseContext(nextPath);
+  const { supabase, userId } = await getDatabaseContext(
+    options.nextPath ?? nextPath,
+  );
 
   let query = supabase.from("items").select("*").eq("user_id", userId);
 
@@ -501,7 +506,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "skill"),
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "tool"),
       supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_analyzed", false),
-      supabase.from("items").select("*").eq("user_id", userId).eq("is_favorite", true).order("updated_at", { ascending: false }).limit(3),
+      supabase.from("items").select("*").eq("user_id", userId).eq("is_favorite", true).order("updated_at", { ascending: false }).limit(8),
       supabase.from("items").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(20),
     ]);
 

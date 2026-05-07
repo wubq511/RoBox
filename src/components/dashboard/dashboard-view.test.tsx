@@ -54,6 +54,7 @@ describe("DashboardView", () => {
     expect(html).toContain("新建 Prompt");
     expect(html).toContain("新建 Skill");
     expect(html).toContain("新建 Tool");
+    expect(html).toContain('href="/favorites"');
   });
 
   it("renders duplicate empty labels as distinct list entries", () => {

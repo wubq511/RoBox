@@ -251,6 +251,7 @@ describe("item server actions", () => {
 
     expect(toggleFavoriteMock).toHaveBeenCalledWith("prompt-1");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/favorites");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts/prompt-1");
     expect(redirectMock).not.toHaveBeenCalled();
@@ -272,6 +273,7 @@ describe("item server actions", () => {
 
     expect(deleteItemMock).toHaveBeenCalledWith("skill-1");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/favorites");
     expect(revalidatePathMock).toHaveBeenCalledWith("/skills");
     expect(revalidatePathMock).toHaveBeenCalledWith("/skills/skill-1");
     expect(redirectMock).toHaveBeenCalledWith("/skills");

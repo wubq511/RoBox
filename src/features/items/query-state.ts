@@ -1,4 +1,5 @@
 import {
+  itemTypeSchema,
   itemSortSchema,
   type ItemType,
   type ListItemsFilters,
@@ -39,6 +40,13 @@ function normalizeSort(value: string | undefined): ListItemsFilters["sort"] {
   return parsed.success ? parsed.data : undefined;
 }
 
+function normalizeType(value: string | undefined): ListItemsFilters["type"] {
+  const normalized = normalizeString(value);
+  const parsed = itemTypeSchema.safeParse(normalized);
+
+  return parsed.success ? parsed.data : undefined;
+}
+
 function normalizeLimit(value: string | number | undefined) {
   const parsed =
     typeof value === "number" ? value : value ? Number.parseInt(value, 10) : NaN;
@@ -67,6 +75,16 @@ export function parseLibrarySearchParams(
       getSingleParam(searchParams, "favorite") === "1" ? true : undefined,
     sort: normalizeSort(getSingleParam(searchParams, "sort")),
     limit: normalizeLimit(getSingleParam(searchParams, "limit")),
+  });
+}
+
+export function parseFavoritesSearchParams(searchParams: SearchParamsInput) {
+  return sanitizeListItemsInput({
+    type: normalizeType(getSingleParam(searchParams, "type")),
+    search: normalizeString(getSingleParam(searchParams, "search")),
+    isFavorite: true,
+    sort: normalizeSort(getSingleParam(searchParams, "sort")),
+    limit: normalizeLimit(getSingleParam(searchParams, "limit")) ?? 100,
   });
 }
 

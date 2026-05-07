@@ -221,6 +221,9 @@ RoBox
 │   ├── 待整理内容
 │   └── 快速新增
 │
+├── Favorites
+│   └── 全部收藏内容
+│
 ├── Prompts
 │   ├── Prompt 列表
 │   ├── 新建 Prompt
@@ -261,11 +264,15 @@ RoBox
 ```
 全局搜索
 最近复制过的 Prompt / Skill / Tool
-收藏内容
+收藏内容（摘要卡片，点击进入全部收藏页）
 待整理内容
 Prompt / Skill / Tool 数量统计
 快速新增按钮
 ```
+
+## Favorites
+
+独立展示全部收藏的 Prompt / Skill / Tool，支持在收藏范围内继续搜索、按类型筛选和排序。
 
 ---
 

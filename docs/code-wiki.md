@@ -172,6 +172,8 @@ RoBox/
 │   │   │   ├── loading.tsx           # 工作区骨架屏
 │   │   │   ├── dashboard/
 │   │   │   │   └── page.tsx          # 仪表盘页
+│   │   │   ├── favorites/
+│   │   │   │   └── page.tsx          # 全部收藏页
 │   │   │   ├── prompts/              # Prompt 列表/详情/新建/编辑
 │   │   │   │   ├── page.tsx          # Prompt 列表页
 │   │   │   │   ├── [id]/
@@ -231,6 +233,7 @@ RoBox/
 │   │   │   ├── copy-raw-button.tsx          # 复制原文按钮
 │   │   │   ├── github-import-form.tsx       # GitHub 导入表单
 │   │   │   ├── clipboard.ts         # 剪贴板操作封装
+│   │   │   ├── favorites-list.tsx   # 全部收藏列表
 │   │   │   └── login-form.tsx       # Magic Link 登录表单
 │   │   │
 │   │   ├── dashboard/               # 仪表盘组件
@@ -749,7 +752,7 @@ RootLayout (app/layout.tsx)
            ├── requireAppUser() 鉴权守卫
            └── WorkspaceShell (components/layout/workspace-shell.tsx)
                 ├── AppSidebar (左侧导航)
-                │     ├── Logo + 导航链接 (Dashboard/Prompts/Skills/Tools/Settings)
+                │     ├── Logo + 导航链接 (Dashboard/Favorites/Prompts/Skills/Tools/Settings)
                 │     └── 用户邮箱显示
                 ├── Header (顶栏)
                 │     ├── GlobalSearchForm (全局搜索)
@@ -762,6 +765,11 @@ RootLayout (app/layout.tsx)
                       │           ├── MiniListCard (收藏列表)
                       │           ├── MiniListCard (最近使用)
                       │           └── MiniListCard (待整理)
+                      │
+                      ├── FavoritesPage
+                      │     └── FavoritesList
+                      │           ├── FavoriteFilters (搜索/类型/排序)
+                      │           └── FavoriteItemCard × N
                       │
                       ├── PromptsPage / SkillsPage / ToolsPage
                       │     ├── LibraryFilters (搜索 + 分类 + 标签 + 排序)
@@ -812,6 +820,7 @@ RootLayout (app/layout.tsx)
 | [`PromptVariablesEditor`](../src/components/library/prompt-variables-editor.tsx) | Client Component | 变量卡片列表，支持增删改排序 |
 | [`AnalyzeButton`](../src/components/library/analyze-button.tsx) | Client Component | 调用 `/api/items/:id/analyze`，完成后 `router.refresh()` |
 | [`BatchAnalyzeButton`](../src/components/library/batch-analyze-button.tsx) | Client Component | 并发 3 个分析请求，全部完成后续一刷新 |
+| [`FavoritesList`](../src/components/library/favorites-list.tsx) | Server Component | 统一展示全部收藏的 Prompt / Skill / Tool，支持搜索、类型筛选和排序 |
 | [`CategoryManager`](../src/components/settings/category-manager.tsx) | Client Component | 分类增删排管理，调用 Categories API |
 | [`GlobalSearchForm`](../src/components/layout/global-search-form.tsx) | Client Component | 顶部全局搜索，跳转到列表页带 search 参数 |
 

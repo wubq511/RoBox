@@ -2,6 +2,7 @@ import {
   BlocksIcon,
   LayoutDashboardIcon,
   SettingsIcon,
+  StarIcon,
   WrenchIcon,
   WandSparklesIcon,
 } from "lucide-react";
@@ -11,6 +12,11 @@ export const navigationItems = [
     href: "/dashboard",
     label: "总览",
     icon: LayoutDashboardIcon,
+  },
+  {
+    href: "/favorites",
+    label: "收藏",
+    icon: StarIcon,
   },
   {
     href: "/prompts",
