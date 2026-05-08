@@ -10,6 +10,10 @@ vi.mock("./favorite-toggle-button", () => ({
   ),
 }));
 
+vi.mock("./favorite-filters", () => ({
+  FavoriteFilters: () => <div data-testid="favorite-filters" />,
+}));
+
 import { FavoritesList } from "./favorites-list";
 
 function createStoredItem(overrides: Partial<StoredItem>): StoredItem {

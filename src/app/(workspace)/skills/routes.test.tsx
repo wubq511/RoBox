@@ -116,7 +116,11 @@ describe("skill routes", () => {
       { search: "agent", sort: "updated" },
       "skill",
     );
-    expect(mocks.listItems).toHaveBeenCalledWith(filters);
+    expect(mocks.requireAppUser).toHaveBeenCalledTimes(1);
+    expect(mocks.ensureDefaultCategories).not.toHaveBeenCalled();
+    expect(mocks.listItems).toHaveBeenCalledWith(filters, {
+      userId: "user-1",
+    });
     expect(markup).toContain('href="/skills/skill-1"');
     expect(markup).toContain('data-type="skill"');
   });

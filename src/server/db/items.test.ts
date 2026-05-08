@@ -70,7 +70,38 @@ function createSupabaseMock({
     items: [...items],
     containsCalls: [] as Array<{ column: string; value: unknown }>,
     orCalls: [] as string[],
+    rpcCalls: [] as Array<{ fnName: string; args: unknown }>,
   };
+
+  function selectDashboardItems(userId: string) {
+    return [...state.items].filter((item) => item.user_id === userId);
+  }
+
+  function sortRowsByUpdatedAtDesc(rows: MockItemRow[]) {
+    return [...rows].sort((left, right) =>
+      right.updated_at.localeCompare(left.updated_at),
+    );
+  }
+
+  function buildDashboardSnapshot(userId: string) {
+    const userItems = selectDashboardItems(userId);
+    const recentItems = sortRowsByUpdatedAtDesc(userItems).slice(0, 20);
+
+    return {
+      counts: {
+        total: userItems.length,
+        prompts: userItems.filter((item) => item.type === "prompt").length,
+        skills: userItems.filter((item) => item.type === "skill").length,
+        tools: userItems.filter((item) => item.type === "tool").length,
+        pending: userItems.filter((item) => !item.is_analyzed).length,
+      },
+      favorites: sortRowsByUpdatedAtDesc(
+        userItems.filter((item) => item.is_favorite),
+      ).slice(0, 8),
+      pending: recentItems.filter((item) => !item.is_analyzed).slice(0, 4),
+      recent: recentItems.slice(0, 4),
+    };
+  }
 
   function createBuilder(table: "items" | "usage_logs") {
     type QueryRow = MockItemRow;
@@ -244,7 +275,21 @@ function createSupabaseMock({
       from(table: "items" | "usage_logs") {
         return createBuilder(table);
       },
-      rpc(fnName: string) {
+      rpc(fnName: string, args: unknown) {
+        state.rpcCalls.push({ fnName, args });
+
+        if (fnName === "get_dashboard_snapshot") {
+          const userId =
+            typeof args === "object" && args !== null && "p_user_id" in args
+              ? String((args as { p_user_id: unknown }).p_user_id)
+              : "";
+
+          return Promise.resolve({
+            data: buildDashboardSnapshot(userId),
+            error: null,
+          });
+        }
+
         if (fnName === "get_latest_copied_at") {
           return Promise.resolve({ data: [], error: null });
         }
@@ -393,6 +438,43 @@ describe("item repository helpers", () => {
       tags: ["cleanup"],
     });
     expect(supabase.state.items.map((item) => item.id)).toEqual(["item-2"]);
+  });
+
+  it("loads dashboard snapshot through one RPC call", async () => {
+    const favoriteRow = createItemRow({
+      id: "favorite-1",
+      is_favorite: true,
+      updated_at: "2026-05-01T08:00:00.000Z",
+    });
+    const rpc = vi.fn().mockResolvedValue({
+      data: {
+        counts: {
+          total: 1,
+          prompts: 1,
+          skills: 0,
+          tools: 0,
+          pending: 0,
+        },
+        favorites: [favoriteRow],
+        pending: [],
+        recent: [favoriteRow],
+      },
+      error: null,
+    });
+    const from = vi.fn(() => {
+      throw new Error("Dashboard snapshot should use RPC");
+    });
+    getServerSupabaseClientMock.mockResolvedValue({ rpc, from });
+
+    const snapshot = await getDashboardSnapshot();
+
+    expect(rpc).toHaveBeenCalledWith("get_dashboard_snapshot", {
+      p_user_id: "user-1",
+    });
+    expect(from).not.toHaveBeenCalled();
+    expect(snapshot.counts.total).toBe(1);
+    expect(snapshot.favorites.map((item) => item.id)).toEqual(["favorite-1"]);
+    expect(snapshot.recent.map((item) => item.id)).toEqual(["favorite-1"]);
   });
 
   it("builds dashboard snapshot with counts, favorites, pending, and recent", async () => {

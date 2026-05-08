@@ -250,10 +250,10 @@ describe("item server actions", () => {
     await expect(toggleFavoriteAction(formData)).resolves.toBeUndefined();
 
     expect(toggleFavoriteMock).toHaveBeenCalledWith("prompt-1");
-    expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
     expect(revalidatePathMock).toHaveBeenCalledWith("/favorites");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts/prompt-1");
+    expect(revalidatePathMock).not.toHaveBeenCalledWith("/dashboard");
     expect(redirectMock).not.toHaveBeenCalled();
   });
 

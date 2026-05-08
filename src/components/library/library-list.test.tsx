@@ -4,6 +4,22 @@ import { describe, expect, it, vi } from "vitest";
 import type { ListItemsFilters } from "@/lib/schema/items";
 import type { StoredItem } from "@/server/db/types";
 
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    children,
+    className,
+  }: {
+    href: string;
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <a href={href} className={className} data-next-link="true">
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("./batch-analyze-button", () => ({
   BatchAnalyzeButton: () => <div data-testid="batch-analyze" />,
 }));
@@ -103,7 +119,9 @@ describe("LibraryList", () => {
       />,
     );
 
-    expect(html).toContain('href="/prompts/prompt-1"');
+    expect(html).toContain(
+      'href="/prompts/prompt-1" class="block" data-next-link="true"',
+    );
     expect(html).toContain("Prompt title");
     expect(html).toContain("待整理");
     expect(html).toContain("Writing");
