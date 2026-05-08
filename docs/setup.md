@@ -31,7 +31,7 @@ Current MVP behavior:
 - Imported GitHub Skills and linked Tools copy `source_url`; manual Skills and Tools continue to copy raw content.
 - Phase 4 was verified on `2026-05-02` with local Supabase and real DeepSeek `deepseek-v4-flash` analyze.
 - Phase 5 was verified on `2026-05-02` with local `test/typecheck/lint/build`, live README fetch for `https://github.com/tw93/Waza`, and a browser smoke test against local Supabase + DeepSeek: login by magic link, import Waza, view analyzed Skill detail, copy source URL, search it, reject an invalid GitHub URL, then manually save and copy a Skill.
-- Production deployment verified on `2026-05-07`: Supabase cloud project `robox` (`ap-northeast-1`), Vercel production domain `https://robox-beta.vercel.app`, Tools migration applied locally and remotely, latest Favorites deployment `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` on commit `15d7abe1`, 133 tests passing, typecheck/lint/build clean.
+- Production deployment verified on `2026-05-08`: Supabase cloud project `robox` (`ap-northeast-1`), Vercel production domain `https://robox-beta.vercel.app`, Dashboard snapshot RPC migrations applied locally and remotely, latest Git-based deployment `dpl_FxJvd4kSDHyuqnidtCsm9Lkm1w1D` on commit `da6d879`, Vercel Functions running in `hnd1`, 136 tests passing, typecheck/lint/build clean.
 
 Verification commands:
 
@@ -170,7 +170,7 @@ Current code placement:
 
 For architecture and smoke-test details, see `docs/architecture.md` and `docs/integration-guide.md`.
 
-## 8. Vercel deployment
+## 7. Vercel deployment
 
 Production is deployed on Vercel. The project name is `robox`.
 
@@ -192,13 +192,13 @@ Supabase Auth URL Configuration must include the Vercel domain. Configure throug
 - Site URL: `https://robox-beta.vercel.app`
 - Redirect URLs: `https://robox-beta.vercel.app/auth/confirm`
 
-Production deploys are normally triggered by pushing `main` to GitHub. Manual production deploy command:
+Deployment and region conventions:
 
-```bash
-vercel --prod --yes --name robox
-```
+- Production deploys are triggered by merging to `main` and pushing `main` to GitHub; Vercel Git integration performs the production deployment.
+- `vercel.json` sets `"regions": ["hnd1"]` so Node Functions run near the Supabase `ap-northeast-1` project.
+- Do not run manual `vercel --prod` for routine releases unless explicitly requested for emergency work.
 
-## 7. MVP route map
+## 8. MVP route map
 
 Implemented workspace routes:
 

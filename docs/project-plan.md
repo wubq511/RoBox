@@ -229,7 +229,7 @@
 任务清单：
 - 新增 `(workspace)/loading.tsx` 骨架屏，消除 workspace 页面数据加载期间的空白等待。
 - 详情页/编辑页添加 Suspense 边界，页面 shell 立即显示、内容区流式加载。
-- `getDashboardSnapshot()` 从全量加载改为 6 条并行查询 + limit。
+- `getDashboardSnapshot()` 从全量加载改为 6 条并行查询 + limit（2026-05-08 又升级为单次 RPC）。
 - `toggleFavorite` 改为 RPC `toggle_favorite` 原子操作（1 次往返替代 2 次）。
 - `recordCopyAction` 改为 RPC `increment_usage_count` 原子操作（1 次往返替代 3 次）。
 - `selectLatestCopiedAtByItemId` 改为 RPC `get_latest_copied_at` SQL 聚合。
@@ -303,3 +303,30 @@
 - `npm run typecheck`、`npm run lint`、`npm run test`、`npm run build` 全部通过。
 - 生产部署 `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` 对应提交 `15d7abe1`，状态 `READY`。
 - 生产 `/favorites` 返回 HTTP 200，Vercel production error logs 在部署后一小时窗口内无错误。
+
+### Phase 11：工作区加载与跳转提速
+状态：已完成（2026-05-08），已合并并推送到 `main`；本地和远程 Supabase 迁移已应用；Vercel Git 自动部署到 `https://robox-beta.vercel.app`
+
+目标：减少真实热路径上的 Supabase 往返、重复鉴权和整页刷新，让 Dashboard 首屏和列表详情跳转更快。
+
+任务清单：
+- Middleware matcher 收窄到 `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings`，不再拦截 `/api/*`、`/login`、`/auth/*` 和静态资源。
+- `getDashboardSnapshot()` 改为单次 RPC `get_dashboard_snapshot(p_user_id)`，一次返回 counts、favorites、pending、recent。
+- 新增 migration `202605080001_dashboard_snapshot_rpc.sql` 和 `20260508093537_restrict_dashboard_snapshot_rpc_execute.sql`，限制 Dashboard RPC 只授予 `authenticated` 执行。
+- Prompt / Skill / Tool 列表页只调用一次 `requireAppUser()`，再把 `userId` 传给 `listItems(filters, { userId })`，并和分类查询并行。
+- 列表页不再每次渲染 `ensureDefaultCategories()`；默认分类补齐保留在写入、校验、导入和分析入口。
+- `LibraryList` 详情卡片从原生 `<a href>` 改为 Next.js `Link`；收藏筛选和顶部搜索改为客户端 `router.push()`。
+- `toggleFavoriteAction()` 只 revalidate `/favorites`、当前 collection 和 detail，避免高频收藏动作每次刷新 Dashboard。
+- 新增 `vercel.json` 配置 `"regions": ["hnd1"]`，让 Vercel Functions 靠近 Supabase Tokyo。
+
+阶段交付物：
+- Dashboard 数据聚合减少为一次 Supabase RPC。
+- 工作区页面跳转减少整页刷新。
+- 列表页鉴权和分类读取去重。
+- 生产部署由 `main` 推送触发 Vercel Git 自动部署。
+
+验收标准：
+- `npm run test`（136 tests）、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过。
+- 本地和远程 Supabase 都已应用 `202605080001` 与 `20260508093537`。
+- 生产部署 `dpl_FxJvd4kSDHyuqnidtCsm9Lkm1w1D` 对应提交 `da6d879`，状态 `READY`。
+- 生产 `/login` 返回 200，`/api/categories?type=prompt` 未登录返回 401，响应头确认落在 `hnd1`。

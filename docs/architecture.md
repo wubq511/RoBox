@@ -36,7 +36,7 @@ RoBox is a personal Prompt / Skill / Tool manager. The product boundary is inten
 - `src/lib/rate-limit`
   IP-based sliding-window rate limiter used by API Route Handlers.
 - `middleware.ts` (project root)
-  Next.js 16 middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on every matched request. Runs in Edge Runtime; does not use `node:fs` or `env.ts`.
+  Next.js 16 middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on matched workspace page requests. The matcher is intentionally limited to `/dashboard`, `/favorites`, `/prompts`, `/skills`, `/tools`, and `/settings`; `/api/*`, `/login`, `/auth/*`, and static assets do not run middleware. Runs in Edge Runtime; does not use `node:fs` or `env.ts`.
 
 ## Data Model
 
@@ -55,8 +55,9 @@ Supabase Row Level Security keeps each user scoped to their own rows. Server cod
 
 ### Database RPC Functions
 
-Three PostgreSQL functions optimize hot-path operations by reducing database round trips:
+Four PostgreSQL functions optimize hot-path operations by reducing database round trips:
 
+- `get_dashboard_snapshot(p_user_id)` — Returns Dashboard counts, favorites, pending analysis rows, and recent rows as one JSON payload.
 - `toggle_favorite(p_item_id, p_user_id)` — Atomic `NOT is_favorite` toggle in a single call.
 - `increment_usage_count(p_item_id, p_user_id, p_action)` — Atomic `usage_count + 1` with `usage_logs` insertion in a single call.
 - `get_latest_copied_at(p_item_ids)` — SQL `MAX(created_at) GROUP BY item_id` aggregation, replacing JS-side reduce.
@@ -139,8 +140,9 @@ Copy logging is implemented through Server Actions. There is no `POST /api/items
 1. The page parses URL search params with `parseFavoritesSearchParams()`.
 2. The query forces `isFavorite=true`, accepts optional `type`, `search`, `sort`, and caps `limit` at 100.
 3. `listItems(filters, { nextPath: "/favorites" })` fetches the current user's rows through the shared repository layer.
-4. `FavoritesList` renders mixed item types, maps each item back to its own detail route, and keeps `FavoriteToggleButton` available on each card.
-5. `toggleFavoriteAction()` revalidates `/dashboard`, `/favorites`, the type list route, and the item detail route so removing a favorite updates both the summary card and the full list.
+4. `FavoriteFilters` uses client-side `router.push()` navigation for search, type filtering, and sorting.
+5. `FavoritesList` renders mixed item types, maps each item back to its own detail route, and keeps `FavoriteToggleButton` available on each card.
+6. `toggleFavoriteAction()` revalidates `/favorites`, the type list route, and the item detail route. It no longer revalidates `/dashboard` on every favorite toggle, so Dashboard summary counts can lag until the next Dashboard render while the current collection/detail/favorites surfaces stay fresh.
 
 ## Verification Baseline
 
@@ -187,9 +189,20 @@ Favorites deployment verified on `2026-05-07` with:
 - Vercel production deployment `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` on commit `15d7abe1` completed successfully for `https://robox-beta.vercel.app`.
 - Production smoke confirmed `https://robox-beta.vercel.app/favorites` returns HTTP 200 and Vercel production error logs showed no errors in the previous hour.
 
+Workspace speed deployment verified on `2026-05-08` with:
+
+- Middleware matcher narrowed to workspace pages only; API Route Handlers keep their own explicit authentication.
+- `getDashboardSnapshot()` now calls `get_dashboard_snapshot(p_user_id)` once instead of issuing multiple Supabase queries from the Node function.
+- Prompt / Skill / Tool list pages read the current user once and pass `userId` into `listItems()`, avoiding duplicated `requireAppUser()` calls; routine list rendering no longer calls `ensureDefaultCategories()`.
+- Library item cards use Next.js `Link` for detail navigation; favorites filters and the top search form use client-side router navigation.
+- Local and remote Supabase migrations `202605080001_dashboard_snapshot_rpc.sql` and `20260508093537_restrict_dashboard_snapshot_rpc_execute.sql` applied.
+- `vercel.json` pins Vercel Functions to `hnd1`, close to the Supabase `ap-northeast-1` project.
+- `npm run test` (136 tests), `npm run typecheck`, `npm run lint`, and `npm run build` all passed locally before deployment.
+- Vercel Git deployment `dpl_FxJvd4kSDHyuqnidtCsm9Lkm1w1D` on commit `da6d879` completed successfully for `https://robox-beta.vercel.app`; unauthenticated smoke confirmed `/login` 200, `/api/categories?type=prompt` 401, and response headers from `hnd1`.
+
 ## Performance
 
-Performance optimization was completed on `2026-05-05`.
+Performance optimization was completed on `2026-05-05` and extended on `2026-05-08`.
 
 ### Perceived Speed
 
@@ -198,7 +211,9 @@ Performance optimization was completed on `2026-05-05`.
 
 ### Server-Side Efficiency
 
-- `getDashboardSnapshot()` uses 6 parallel queries with `limit` instead of loading all items into Node memory; Dashboard favorites currently fetch up to 8 rows for the adaptive summary card.
+- `getDashboardSnapshot()` uses the PostgreSQL RPC `get_dashboard_snapshot(p_user_id)` to fetch counts, favorites, pending analysis rows, and recent rows in one Supabase round trip.
+- Prompt / Skill / Tool list pages call `requireAppUser()` once, then pass `userId` into `listItems(filters, { userId })` and fetch custom categories in parallel.
+- Default category seeding is not performed during normal list-page rendering; it remains on write/validation/import/analyze entry points where categories are required.
 - `toggleFavorite` and `recordCopyAction` use PostgreSQL RPC functions for single-trip atomic operations instead of read-then-write patterns.
 - `selectLatestCopiedAtByItemId` uses SQL aggregation via RPC instead of fetching all `usage_logs` rows and reducing in JS.
 
@@ -207,7 +222,13 @@ Performance optimization was completed on `2026-05-05`.
 - `ItemCard`, `VariableCard`, `MetricCard`, and `MiniListCard` are wrapped with `React.memo` to prevent unnecessary re-renders after actions like favoriting.
 - `formatDate` is extracted to `src/lib/format.ts` as a shared utility.
 - `BatchAnalyzeButton` runs 3 concurrent requests and calls `router.refresh()` once after all complete, instead of refreshing after each success.
-- `LibraryFilters` uses `useRouter` + `useSearchParams` for client-side navigation instead of full-page form submission.
+- `LibraryFilters`, `FavoriteFilters`, and `GlobalSearchForm` use `useRouter` + URL search params for client-side navigation instead of full-page form submission.
+- `LibraryList` item cards use Next.js `Link` for detail navigation instead of raw `<a href>` reloads.
+
+### Deployment Region
+
+- `vercel.json` sets `"regions": ["hnd1"]` so Vercel Functions run in Tokyo near the Supabase `ap-northeast-1` project.
+- Normal production deployment is a `main` branch push through Vercel Git integration; manual `vercel --prod` should be reserved for explicit emergency work.
 
 ### Caching
 

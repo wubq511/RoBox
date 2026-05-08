@@ -58,7 +58,7 @@ src/
 关键设计原则：
 
 - 用户原始内容保存在 `items.content`，AI 整理结果只写入元数据，不覆盖原文
-- 数据库层通过 RPC 原子操作减少往返（`toggle_favorite`、`increment_usage_count`、`get_latest_copied_at`）
+- 数据库层通过 RPC 减少热路径往返（`get_dashboard_snapshot`、`toggle_favorite`、`increment_usage_count`、`get_latest_copied_at`）
 - 服务端环境变量优先从 `.env.local` 读取，避免系统环境变量静默覆盖项目配置
 
 ## 快速开始
@@ -171,7 +171,9 @@ npm run build       # 构建
 
 ## 生产部署
 
-生产环境部署在 Vercel，使用 Supabase 云项目（`ap-northeast-1`）。
+生产环境部署在 Vercel，使用 Supabase 云项目（`ap-northeast-1`）。`vercel.json` 将函数区域固定到 Tokyo `hnd1`，降低 Vercel Function 到 Supabase Tokyo 的往返延迟。
+
+生产发布默认流程：合并到 `main` 并推送到 GitHub，由 Vercel Git 集成自动部署；不要在常规发布中直接运行手动生产部署命令。
 
 **必需环境变量**
 

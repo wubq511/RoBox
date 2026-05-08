@@ -100,7 +100,7 @@ RoBox 是一个面向个人的 Prompt / Skill / Tool 管理工具。产品边界
 │                                                             │
 │  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐   │
 │  │ Route       │  │ Server       │  │ Middleware        │   │
-│  │ Handlers    │  │ Actions      │  │ (Session Refresh) │   │
+│  │ Handlers    │  │ Actions      │  │ (Workspace Pages) │   │
 │  │ /api/*      │  │ (formData)   │  │                  │   │
 │  └──────┬──────┘  └──────┬───────┘  └────────┬─────────┘   │
 │         │                │                    │              │
@@ -434,6 +434,7 @@ RoBox/
 
 | 函数名 | 参数 | 返回值 | 用途 |
 |--------|------|--------|------|
+| `get_dashboard_snapshot(p_user_id)` | uuid | jsonb | 单次返回 Dashboard counts/favorites/pending/recent |
 | `toggle_favorite(p_item_id, p_user_id)` | uuid, uuid | items row | 原子切换收藏状态 |
 | `increment_usage_count(p_item_id, p_user_id, p_action)` | uuid, uuid, text | items row | 原子递增使用计数 + 插入日志 |
 | `get_latest_copied_at(p_item_ids[])` | uuid[] | {item_id, latest_copied_at} | 批量获取最近复制时间 |
@@ -502,7 +503,7 @@ signOutWorkspaceSession(): Promise<void>
 
 **中间件链路** ([middleware.ts](../middleware.ts))：
 
-每个请求经过 `updateSession()` → 调用 `supabase.auth.getClaims()` → 刷新 Cookie 中的 session → 保证后续 `getServerSupabaseClient()` 能读到有效 session。
+只有匹配 `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings` 的工作区页面请求经过 `updateSession()` → 调用 `supabase.auth.getClaims()` → 刷新 Cookie 中的 session → 保证后续 `getServerSupabaseClient()` 能读到有效 session。`/api/*` 由 Route Handler 自身鉴权，不再经过 middleware。
 
 ---
 
@@ -521,7 +522,7 @@ signOutWorkspaceSession(): Promise<void>
 
 | 函数签名 | 说明 |
 |---------|------|
-| `listItems(filters?)` | 条目列表查询（支持 type/category/tag/favorite/search/sort/limit） |
+| `listItems(filters?, options?)` | 条目列表查询（支持 type/category/tag/favorite/search/sort/limit）；传入 `options.userId` 时跳过内部 `requireAppUser()` |
 | `getItemById(id)` | 按 ID 获取单个条目（含 user_id 校验） |
 | `getItemDetail(id)` | 获取条目详情（含关联的 prompt_variables） |
 | `createItem(input)` | 创建条目 |
@@ -530,7 +531,7 @@ signOutWorkspaceSession(): Promise<void>
 | `replacePromptVariables(id, variables)` | 替换条目的变量定义（先删后插） |
 | `toggleFavorite(id)` | RPC 原子切换收藏 |
 | `recordCopyAction(id, action)` | RPC 原子记录复制 + 计数递增 |
-| `getDashboardSnapshot()` | Dashboard 数据（6 条并行查询 + limit；收藏摘要最多 8 条） |
+| `getDashboardSnapshot()` | Dashboard 数据，内部调用 `get_dashboard_snapshot(p_user_id)` 单次 RPC；收藏摘要最多 8 条 |
 | `buildItemInsert(userId, input)` | 构建插入 payload（含 schema 校验） |
 | `buildItemUpdate(input)` | 构建更新 payload（只含非 undefined 字段） |
 | `sanitizeListItemsInput(input)` | 清洗列表查询参数 |
@@ -538,7 +539,7 @@ signOutWorkspaceSession(): Promise<void>
 
 **搜索实现**：使用 PostgreSQL ILIKE 对 `title`/`summary`/`content` 三字段模糊匹配，特殊字符 `%` `_` 已转义防止注入。
 
-**`getDatabaseContext()`** 内部辅助函数：并行获取 `supabase` 客户端和 `userId`，所有 DAO 函数共用。
+**`getDatabaseContext()`** 内部辅助函数：获取 `supabase` 客户端和 `userId`，所有 DAO 函数共用；传入 `userId` 时不再重复调用 `requireAppUser()`。
 
 #### `categories.ts` — 分类 DAO
 
@@ -822,8 +823,9 @@ RootLayout (app/layout.tsx)
 | [`AnalyzeButton`](../src/components/library/analyze-button.tsx) | Client Component | 调用 `/api/items/:id/analyze`，完成后 `router.refresh()` |
 | [`BatchAnalyzeButton`](../src/components/library/batch-analyze-button.tsx) | Client Component | 并发 3 个分析请求，全部完成后续一刷新 |
 | [`FavoritesList`](../src/components/library/favorites-list.tsx) | Server Component | 统一展示全部收藏的 Prompt / Skill / Tool，支持搜索、类型筛选和排序 |
+| [`FavoriteFilters`](../src/components/library/favorite-filters.tsx) | Client Component | 收藏页搜索、类型筛选和排序，使用 `router.push()` 更新 URL |
 | [`CategoryManager`](../src/components/settings/category-manager.tsx) | Client Component | 分类增删排管理，调用 Categories API |
-| [`GlobalSearchForm`](../src/components/layout/global-search-form.tsx) | Client Component | 顶部全局搜索，跳转到列表页带 search 参数 |
+| [`GlobalSearchForm`](../src/components/layout/global-search-form.tsx) | Client Component | 顶部全局搜索，使用 `router.push()` 跳转到列表页并带上 search 参数 |
 
 ### 性能优化要点
 
@@ -831,7 +833,8 @@ RootLayout (app/layout.tsx)
 - **Skeleton 加载**: `(workspace)/loading.tsx` 提供骨架屏
 - **Suspense 边界**: 详情页/编辑页流式加载
 - **批量分析并发**: 3 个并行请求 + 单次 `router.refresh()`
-- **客户端导航**: `LibraryFilters` 使用 `useRouter` 替代 `<form action>` 全页面刷新
+- **客户端导航**: `LibraryFilters`、`FavoriteFilters`、`GlobalSearchForm` 使用 `useRouter` 替代 `<form action>` 全页面刷新；`LibraryList` 卡片使用 Next.js `Link` 跳详情
+- **Dashboard RPC**: `getDashboardSnapshot()` 通过 `get_dashboard_snapshot(p_user_id)` 一次返回聚合数据
 
 ---
 
@@ -940,7 +943,7 @@ clearRateLimitStore()
 |------|------|------|
 | [`server-client.ts`](../src/lib/supabase/server-client.ts) | 创建服务端 Supabase 客户端（Cookie-based auth） | Server Components / Route Handlers / Server Actions |
 | [`browser-client.ts`](../src/lib/supabase/browser-client.ts) | 创建浏览器端客户端（localStorage-based auth） | 客户端组件（如有订阅需求） |
-| [`proxy.ts`](../src/lib/supabase/proxy.ts) | Middleware 中刷新 session cookie | 每个 HTTP 请求自动执行 |
+| [`proxy.ts`](../src/lib/supabase/proxy.ts) | Middleware 中刷新 session cookie | 仅工作区页面 matcher 自动执行 |
 
 ---
 
@@ -1031,7 +1034,7 @@ clearRateLimitStore()
 
 ```
 1. 浏览器 GET /prompts/{id}
-2. Next.js Middleware (middleware.ts)
+2. Next.js Middleware (middleware.ts，仅工作区页面 matcher)
    └─ updateSession(request) → 刷新 Supabase session cookie
 3. (workspace)/layout.tsx
    └─ requireAppUser("/dashboard") → 读取 session → 获取 AppUser
@@ -1070,23 +1073,24 @@ clearRateLimitStore()
 
 ```
 1. 用户粘贴 URL → 点击导入
-2. github-import-form.tsx → fetch POST /api/import/github { url }
+2. github-import-form.tsx → fetch POST /api/import/github { url, type? }
 3. Route Handler:
    a. CORS + Auth + RateLimit (10/h)
    b. readRequestBody → 校验长度 ≤ 2048
    c. ensureDefaultCategories(user.id)
-   d. getUserCategoryNames(user.id, "skill")
-   e. createGithubSkillImport({ url, categories })
+   d. type = body.type === "tool" ? "tool" : "skill"
+   e. getUserCategoryNames(user.id, type)
+   f. createGithubSkillImport({ url, type, categories })
       ├─ resolveGithubSkillUrl(url) → 解析仓库信息
       ├─ fetchGithubReadme(target) → 抓取 README
-      ├─ createItem({ type:"skill", content:url, ... }) → 先建条目
+      ├─ createItem({ type, content:url, ... }) → 先建条目
       ├─ requestDeepSeekAnalysis(readme_content) → AI 分析
       │   ├─ 成功 → updateItem(analysis result)
       │   └─ 失败 → return warning (保留原始条目)
       └─ return { item, readmeUrl, warning? }
-   f. revalidatePath(/dashboard, /skills, /skills/{id})
-   g. Return 201 { item, readmeUrl }
-4. 前端 → router.push(`/skills/${itemId}`) → 跳转详情
+   g. revalidatePath(/dashboard, /skills 或 /tools, /skills/{id} 或 /tools/{id})
+   h. Return 201 { item, readmeUrl }
+4. 前端 → router.push(`/skills/${itemId}` 或 `/tools/${itemId}`) → 跳转详情
 ```
 
 ---
@@ -1154,7 +1158,8 @@ npm run build       # 构建验证
 - **平台**：Vercel
 - **数据库**：Supabase Cloud（`ap-northeast-1`）
 - **域名**：`https://robox-beta.vercel.app`
-- **CI/CD**：推送至 Git 后 Vercel 自动部署
+- **函数区域**：`vercel.json` 固定到 Tokyo `hnd1`
+- **CI/CD**：推送 `main` 至 GitHub 后 Vercel 自动部署
 
 生产环境**必需**的环境变量：`NEXT_PUBLIC_APP_ORIGIN`（缺失会抛异常）。
 
@@ -1168,3 +1173,5 @@ npm run build       # 构建验证
 | 2026-05-05 | `202605050001_performance_rpc_indexes.sql` | pg_trgm 扩展、复合索引、3 个 RPC 函数（toggle_favorite/increment_usage_count/get_latest_copied_at） |
 | 2026-05-06 | `202605060001_custom_categories.sql` | user_categories 表、移除 items.category CHECK 约束、已有数据 seed 默认分类 |
 | 2026-05-07 | `202605070001_add_tools_item_type.sql` | 扩展 items/user_categories 类型约束到 `prompt`、`skill`、`tool`，并 seed Tool 默认分类 |
+| 2026-05-08 | `202605080001_dashboard_snapshot_rpc.sql` | 新增 `get_dashboard_snapshot(p_user_id)`，一次返回 Dashboard counts/favorites/pending/recent |
+| 2026-05-08 | `20260508093537_restrict_dashboard_snapshot_rpc_execute.sql` | 撤销 `public`/`anon` 对 Dashboard RPC 的执行权限，仅授予 `authenticated` |

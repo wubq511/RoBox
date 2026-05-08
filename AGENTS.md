@@ -103,6 +103,18 @@ RoBox 追求的不是功能多，而是个人常用 Prompt / Skill / Tool 的使
 
 ## 9. 近期重要变更（供 Agent 快速同步）
 
+### 2026-05-08 工作区加载与跳转提速
+
+- **Middleware 收窄**：`middleware.ts` 只匹配 `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings`；不再拦截 `/api/*`、`/login`、`/auth/*` 或静态资源。API Route Handler 继续用自身显式鉴权。
+- **Dashboard RPC**：`getDashboardSnapshot()` 改为调用 `get_dashboard_snapshot(p_user_id)` 单次 RPC，返回 counts、favorites、pending、recent；迁移文件为 `supabase/migrations/202605080001_dashboard_snapshot_rpc.sql`。
+- **RPC 权限修正**：`supabase/migrations/20260508093537_restrict_dashboard_snapshot_rpc_execute.sql` 撤销 `public`/`anon` 对 Dashboard RPC 的执行权限，仅授予 `authenticated`。
+- **列表页查询去重**：Prompt / Skill / Tool 列表页先调用一次 `requireAppUser()`，再把 `userId` 传给 `listItems(filters, { userId })`，并和分类查询并行；正常列表渲染不再每次 `ensureDefaultCategories()`。
+- **跳转优化**：`LibraryList` 卡片详情入口从原生 `<a href>` 改为 Next.js `Link`；收藏页筛选和顶部全局搜索改为客户端 `router.push()`。
+- **缓存刷新收窄**：`toggleFavoriteAction()` 只 revalidate `/favorites`、当前 collection 和 detail，不再每次收藏都刷新 `/dashboard`；Dashboard 收藏/计数可到下一次 Dashboard 渲染时更新。
+- **Vercel 区域**：新增 `vercel.json`，设置 `"regions": ["hnd1"]`，让 Vercel Functions 靠近 Supabase `ap-northeast-1`。
+- **发布方式**：生产部署以合并并推送 `main` 为准，由 Vercel Git 集成自动部署；不要把手动 `vercel --prod` 当作常规发布路径。
+- **验证与发布**：本地 `npm run test`（136 tests）、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过；本地与远程 Supabase 均已应用 `202605080001` 和 `20260508093537`；`main` 已推送并触发 Vercel 生产部署 `dpl_FxJvd4kSDHyuqnidtCsm9Lkm1w1D`，对应提交 `da6d879`；生产 `/login` 返回 200，`/api/categories?type=prompt` 未登录返回 401，响应头确认落在 `hnd1`。
+
 ### 2026-05-07 Favorites 页面与 Dashboard 收藏卡片优化
 
 - **Dashboard 收藏卡片**：`getDashboardSnapshot()` 收藏查询从 3 条提升到 8 条，解决右侧收藏卡片自适应变高后只显示少量收藏、底部大面积留白的问题。
@@ -168,7 +180,7 @@ RoBox 追求的不是功能多，而是个人常用 Prompt / Skill / Tool 的使
 
 - **感知速度**：新增 `(workspace)/loading.tsx` 骨架屏，消除 workspace 页面数据加载期间的空白等待；详情页/编辑页添加 Suspense 边界，页面 shell 立即显示、内容区流式加载。
 - **数据库原子操作**：`toggleFavorite` 从先读后写（2 次往返）改为 RPC `toggle_favorite`（1 次原子 NOT）；`recordCopyAction` 从 3 次往返改为 RPC `increment_usage_count`（1 次原子 +1 含 usage_logs 插入）；`selectLatestCopiedAtByItemId` 从 JS 层 reduce 改为 RPC `get_latest_copied_at`（SQL 聚合）。
-- **Dashboard 查询优化**：`getDashboardSnapshot()` 从全量加载改为 6 条并行查询 + limit，只取需要的数据。
+- **Dashboard 查询优化**：`getDashboardSnapshot()` 从全量加载改为 6 条并行查询 + limit，只取需要的数据（2026-05-08 已进一步升级为单次 `get_dashboard_snapshot` RPC）。
 - **数据库索引**：新增 `(user_id, is_favorite, updated_at DESC)` 复合索引和 `title` 列 `pg_trgm` GIN 索引。
 - **React.memo**：`ItemCard`、`VariableCard`、`MetricCard`、`MiniListCard` 均用 `React.memo` 包裹，减少操作后的不必要重渲染。
 - **共享工具**：`formatDate` 从 `library-list.tsx` 和 `item-detail-view.tsx` 中提取到 `src/lib/format.ts`。
