@@ -22,6 +22,7 @@ function revalidateItemPaths(type: "prompt" | "skill" | "tool", itemId: string) 
     type === "prompt" ? "/prompts" : type === "skill" ? "/skills" : "/tools";
 
   revalidatePath("/dashboard");
+  revalidatePath("/favorites");
   revalidatePath(collectionPath);
   revalidatePath(`${collectionPath}/${itemId}`);
 }

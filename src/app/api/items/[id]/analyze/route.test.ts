@@ -74,7 +74,7 @@ describe("POST /api/items/:id/analyze", () => {
     expect(analyzeStoredItemMock).not.toHaveBeenCalled();
   });
 
-  it("analyzes an item and revalidates the dashboard, collection, and detail pages", async () => {
+  it("analyzes an item and revalidates dashboard, favorites, collection, and detail pages", async () => {
     analyzeStoredItemMock.mockResolvedValue({
       id: "prompt-1",
       type: "prompt",
@@ -97,6 +97,7 @@ describe("POST /api/items/:id/analyze", () => {
     expect(response.status).toBe(200);
     expect(analyzeStoredItemMock).toHaveBeenCalledWith("prompt-1");
     expect(revalidatePathMock).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/favorites");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts");
     expect(revalidatePathMock).toHaveBeenCalledWith("/prompts/prompt-1");
   });

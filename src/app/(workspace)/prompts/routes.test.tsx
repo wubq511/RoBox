@@ -116,6 +116,8 @@ describe("prompt routes", () => {
       { search: "draft", sort: "updated" },
       "prompt",
     );
+    expect(mocks.requireAppUser).toHaveBeenCalledTimes(1);
+    expect(mocks.ensureDefaultCategories).toHaveBeenCalledWith("user-1");
     expect(mocks.listItems).toHaveBeenCalledWith(filters);
     expect(markup).toContain('href="/prompts/prompt-1"');
     expect(markup).toContain('data-type="prompt"');

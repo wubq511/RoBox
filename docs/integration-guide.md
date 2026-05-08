@@ -290,5 +290,7 @@ Request body:
 10. Confirm imported GitHub Skill copy uses the source URL, while manually pasted Skills still copy their raw content.
 11. Open `/tools/new`, import a GitHub repository with `type: "tool"`, and confirm the saved Tool detail page opens.
 12. Import a public HTTPS website as a Tool, then confirm the saved Tool keeps the submitted/final URL and does not render fetched page text as saved content.
-13. Open Settings and confirm Prompt / Skill / Tool category tabs are present and isolated.
+13. Favorite at least one Prompt, Skill, or Tool; open `/dashboard` and confirm the favorites card links to `/favorites`.
+14. Open `/favorites` and confirm all favorited Prompt / Skill / Tool items are listed, type filtering works, and each card opens its original detail route.
+15. Open Settings and confirm Prompt / Skill / Tool category tabs are present and isolated.
 

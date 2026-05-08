@@ -130,6 +130,7 @@
   - 当前复制日志通过 Server Actions 写入；`POST /api/items/:id/copy` 仅作为后续外部 API 需求的预留名称
 - 前端页面
 - Dashboard
+- Favorites：全部收藏列表
 - Prompts：列表 / 新建 / 详情 / 编辑
 - Skills：列表 / 新建 / 详情 / 编辑 / GitHub 导入
 - Tools：列表 / 新建 / 详情 / 编辑 / GitHub 导入 / 网站导入
@@ -279,3 +280,26 @@
 - 本地和远程 Supabase 都已应用 `202605070001_add_tools_item_type.sql`。
 - 生产部署 `dpl_DYZAvL7FR32FdpBPpBofc9kix5cD` 对应提交 `75f040f`，状态 `READY`。
 - 未登录访问 Tools 页面和 API 不出现全局错误页，API 返回预期 `401`。
+
+### Phase 10：收藏页与 Dashboard 收藏卡片优化
+状态：已完成（2026-05-07），已合并并推送到 `main`；生产已部署到 `https://robox-beta.vercel.app`
+
+目标：解决 Dashboard 收藏卡片自适应变高后只展示 3 条导致大面积留白的问题，并提供完整收藏列表入口。
+
+任务清单：
+- `getDashboardSnapshot()` 收藏查询从 3 条提升到 8 条，让 Dashboard 摘要卡片能填充更多可用空间。
+- Dashboard 收藏卡片标题区和底部 CTA 跳转到 `/favorites`。
+- 新增 `/favorites` 工作区页面，统一展示全部收藏的 Prompt / Skill / Tool。
+- 新增 `FavoritesList`，支持收藏范围内搜索、类型筛选和最近更新/最近使用排序。
+- 左侧导航和移动导航通过 `navigationItems` 新增“收藏”入口。
+- `toggleFavoriteAction()` 和 Analyze route 增加 `revalidatePath("/favorites")`，避免收藏页在收藏切换或智能整理后缓存滞后。
+- 同步 README、setup、architecture、integration-guide、product-spec、code-wiki 与 AGENTS 近期变更。
+
+阶段交付物：
+- Dashboard 收藏摘要卡片不再因为固定 3 条数据而显著留白。
+- 用户可以从 Dashboard 或导航进入 `/favorites` 查看全部收藏。
+
+验收标准：
+- `npm run typecheck`、`npm run lint`、`npm run test`、`npm run build` 全部通过。
+- 生产部署 `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` 对应提交 `15d7abe1`，状态 `READY`。
+- 生产 `/favorites` 返回 HTTP 200，Vercel production error logs 在部署后一小时窗口内无错误。

@@ -103,6 +103,14 @@ RoBox 追求的不是功能多，而是个人常用 Prompt / Skill / Tool 的使
 
 ## 9. 近期重要变更（供 Agent 快速同步）
 
+### 2026-05-07 Favorites 页面与 Dashboard 收藏卡片优化
+
+- **Dashboard 收藏卡片**：`getDashboardSnapshot()` 收藏查询从 3 条提升到 8 条，解决右侧收藏卡片自适应变高后只显示少量收藏、底部大面积留白的问题。
+- **新增 Favorites 页面**：新增 `/favorites`，统一展示全部收藏的 Prompt / Skill / Tool，支持搜索、类型筛选和最近更新/最近使用排序；每张收藏卡片跳回对应详情页。
+- **导航入口**：`navigationItems` 新增“收藏”，左侧导航和移动导航自动出现；Dashboard 收藏卡片标题区和底部 CTA 均跳转 `/favorites`。
+- **缓存刷新**：`toggleFavoriteAction()` 和 Analyze route 现在都会额外 `revalidatePath("/favorites")`，避免收藏页在取消/新增收藏或智能整理后滞后。
+- **验证与发布**：本地 `npm run typecheck`、`npm run lint`、`npm run test`（133 tests）、`npm run build` 全部通过；`main` 已推送并部署到 Vercel 生产，生产部署 `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` 对应提交 `15d7abe1`，生产 `/favorites` 返回 HTTP 200，部署后一小时 Vercel production error logs 无错误。
+
 ### 2026-05-07 Tools 栏目、迁移与生产部署
 
 - **产品边界扩展**：RoBox 当前只做 `prompt` / `skill` / `tool` 三类内容，仍只围绕保存、整理、搜索、复制使用，不扩展为通用知识库、爬虫平台、Agent 平台或万能收藏箱。

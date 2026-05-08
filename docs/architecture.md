@@ -16,7 +16,7 @@ RoBox is a personal Prompt / Skill / Tool manager. The product boundary is inten
 - `src/app`
   Next.js App Router pages, route layouts, and API Route Handlers.
 - `src/components`
-  Dashboard, library, settings, and shared UI components.
+  Dashboard, favorites, library, settings, and shared UI components.
 - `src/hooks`
   Shared client-side hooks, including the toast notification system (`useToast`).
 - `src/features/items`
@@ -79,7 +79,8 @@ Beyond the base migration indexes (`user_id + updated_at`, `user_id + type`, `us
 5. `src/server/analyze/parser.ts` strips markdown fences, repairs common JSON issues, and validates the structured response. The `category` field is validated as a free-text string; `validateAnalysisCategory` checks it against the user's custom categories and falls back to the first category if the model returns an invalid value.
 6. `src/server/analyze/service.ts` updates `items` metadata and sets `is_analyzed=true`.
 7. Prompt analysis replaces that prompt's `prompt_variables`; Skill and Tool analysis ignore variable output.
-8. On model or parse failure, the route returns a recoverable error and the original item content stays unchanged.
+8. On success, the route revalidates `/dashboard`, `/favorites`, the type list route, and the item detail route so analyzed metadata is visible wherever the item is surfaced.
+9. On model or parse failure, the route returns a recoverable error and the original item content stays unchanged.
 
 Required server-only environment variables:
 
@@ -131,6 +132,16 @@ Optional server-only environment variable:
 
 Copy logging is implemented through Server Actions. There is no `POST /api/items/:id/copy` Route Handler yet; that route name is reserved only if an external API surface is needed later.
 
+## Favorites Flow
+
+`/favorites` is a workspace page that lists all favorited Prompt / Skill / Tool items in one place.
+
+1. The page parses URL search params with `parseFavoritesSearchParams()`.
+2. The query forces `isFavorite=true`, accepts optional `type`, `search`, `sort`, and caps `limit` at 100.
+3. `listItems(filters, { nextPath: "/favorites" })` fetches the current user's rows through the shared repository layer.
+4. `FavoritesList` renders mixed item types, maps each item back to its own detail route, and keeps `FavoriteToggleButton` available on each card.
+5. `toggleFavoriteAction()` revalidates `/dashboard`, `/favorites`, the type list route, and the item detail route so removing a favorite updates both the summary card and the full list.
+
 ## Verification Baseline
 
 Phase 4 was verified on `2026-05-02` with:
@@ -167,6 +178,15 @@ Tools deployment verified on `2026-05-07` with:
 - Vercel production deployment `dpl_DYZAvL7FR32FdpBPpBofc9kix5cD` on commit `75f040f` completed successfully for `https://robox-beta.vercel.app`.
 - Production smoke confirmed `/tools`, `/tools/new`, `/dashboard`, `/api/import/web`, `/api/import/github`, `/api/categories?type=tool`, and `/auth/github?next=/tools` return the expected unauthenticated or redirect behavior without rendering the global error page.
 
+Favorites deployment verified on `2026-05-07` with:
+
+- Dashboard favorites query increased from 3 to 8 rows so the adaptive summary card can fill available vertical space.
+- New `/favorites` workspace page lists all favorited Prompt / Skill / Tool items with search, type filtering, and updated/used sorting.
+- `toggleFavoriteAction()` now revalidates `/favorites` alongside dashboard, list, and detail paths.
+- `npm run typecheck`, `npm run lint`, `npm run test` (133 tests), and `npm run build` all passed locally before deployment.
+- Vercel production deployment `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` on commit `15d7abe1` completed successfully for `https://robox-beta.vercel.app`.
+- Production smoke confirmed `https://robox-beta.vercel.app/favorites` returns HTTP 200 and Vercel production error logs showed no errors in the previous hour.
+
 ## Performance
 
 Performance optimization was completed on `2026-05-05`.
@@ -178,7 +198,7 @@ Performance optimization was completed on `2026-05-05`.
 
 ### Server-Side Efficiency
 
-- `getDashboardSnapshot()` uses 6 parallel queries with `limit` instead of loading all items into Node memory.
+- `getDashboardSnapshot()` uses 6 parallel queries with `limit` instead of loading all items into Node memory; Dashboard favorites currently fetch up to 8 rows for the adaptive summary card.
 - `toggleFavorite` and `recordCopyAction` use PostgreSQL RPC functions for single-trip atomic operations instead of read-then-write patterns.
 - `selectLatestCopiedAtByItemId` uses SQL aggregation via RPC instead of fetching all `usage_logs` rows and reducing in JS.
 

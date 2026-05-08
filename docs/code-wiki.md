@@ -1,6 +1,6 @@
 # RoBox Code Wiki
 
-> **生成日期**：2026-05-07
+> **生成日期**：2026-05-08
 > **项目版本**：0.1.0  
 > **框架**：Next.js 16 (App Router) + React 19 + TypeScript  
 > **定位**：个人 Prompt / Skill / Tool 管理工具（保存 → 整理 → 搜索 → 复制使用）
@@ -296,7 +296,8 @@ RoBox/
 │   ├── migrations/                   # 数据库迁移脚本
 │   │   ├── 202605010001_phase2_foundation.sql    # 基础表结构 + RLS
 │   │   ├── 202605050001_performance_rpc_indexes.sql  # 性能索引 + RPC 函数
-│   │   └── 202605060001_custom_categories.sql       # 自定义分类表
+│   │   ├── 202605060001_custom_categories.sql       # 自定义分类表
+│   │   └── 202605070001_add_tools_item_type.sql     # Tool 类型扩展
 │   ├── seed.sql                      # 种子数据
 │   └── templates/
 │       └── magic_link.html           # Magic Link 邮件模板
@@ -529,7 +530,7 @@ signOutWorkspaceSession(): Promise<void>
 | `replacePromptVariables(id, variables)` | 替换条目的变量定义（先删后插） |
 | `toggleFavorite(id)` | RPC 原子切换收藏 |
 | `recordCopyAction(id, action)` | RPC 原子记录复制 + 计数递增 |
-| `getDashboardSnapshot()` | Dashboard 数据（6 条并行查询 + limit） |
+| `getDashboardSnapshot()` | Dashboard 数据（6 条并行查询 + limit；收藏摘要最多 8 条） |
 | `buildItemInsert(userId, input)` | 构建插入 payload（含 schema 校验） |
 | `buildItemUpdate(input)` | 构建更新 payload（只含非 undefined 字段） |
 | `sanitizeListItemsInput(input)` | 清洗列表查询参数 |
@@ -801,7 +802,7 @@ RootLayout (app/layout.tsx)
                       │
                       └── SettingsPage
                             └── SettingsView
-                                  └── CategoryManager (Tab: Prompts / Skills)
+                                  └── CategoryManager (Tab: Prompts / Skills / Tools)
                                         ├── 分类列表 (拖拽排序)
                                         ├── 新建分类输入框
                                         └── 删除按钮 (带使用量提示)
@@ -1060,7 +1061,7 @@ clearRateLimitStore()
       ├─ validateAnalysisCategory(category, allowed)
       ├─ updateItem(id, {title, summary, category, tags, isAnalyzed:true})
       └─ replacePromptVariables(id, variables) [if prompt]
-   e. revalidatePath(/dashboard, /prompts, /prompts/{id})
+   e. revalidatePath(/dashboard, /favorites, /prompts, /prompts/{id})
    f. Return { item }
 4. analyze-button.tsx → router.refresh() → 页面刷新
 ```
@@ -1166,3 +1167,4 @@ npm run build       # 构建验证
 | 2026-05-01 | `202605010001_phase2_foundation.sql` | 基础表结构（items/prompt_variables/usage_logs）、RLS 策略、索引、trigger |
 | 2026-05-05 | `202605050001_performance_rpc_indexes.sql` | pg_trgm 扩展、复合索引、3 个 RPC 函数（toggle_favorite/increment_usage_count/get_latest_copied_at） |
 | 2026-05-06 | `202605060001_custom_categories.sql` | user_categories 表、移除 items.category CHECK 约束、已有数据 seed 默认分类 |
+| 2026-05-07 | `202605070001_add_tools_item_type.sql` | 扩展 items/user_categories 类型约束到 `prompt`、`skill`、`tool`，并 seed Tool 默认分类 |

@@ -8,7 +8,8 @@ RoBox 是一个个人 Prompt / Skill / Tool 管理工具，用来保存、整理
 
 | 功能 | 说明 |
 |------|------|
-| **工作台** | Dashboard 聚合展示最近使用、收藏、待整理的内容 |
+| **工作台** | Dashboard 聚合展示最近使用、收藏摘要、待整理的内容 |
+| **收藏页** | 统一查看所有已收藏的 Prompt / Skill / Tool，支持搜索、类型筛选和排序 |
 | **Prompt 管理** | 创建、编辑、删除、收藏、搜索、分类、标签过滤 |
 | **Skill 管理** | 同上，额外支持从 GitHub 仓库导入 Skill |
 | **Tool 管理** | 保存工具 GitHub 仓库、官网与说明，支持 GitHub/网页导入 |
@@ -122,7 +123,7 @@ npm run dev
 
 打开 http://localhost:3000/login
 
-根路由 `/` 会自动跳转到 `/dashboard`；未登录时工作台路由会再跳转到 `/login`。
+根路由 `/` 会自动跳转到 `/dashboard`；未登录时工作区路由会再跳转到 `/login`。
 
 ### 4. 本地 Supabase（可选）
 

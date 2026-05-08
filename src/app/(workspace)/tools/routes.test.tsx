@@ -116,6 +116,8 @@ describe("tool routes", () => {
       { search: "launcher", sort: "updated" },
       "tool",
     );
+    expect(mocks.requireAppUser).toHaveBeenCalledTimes(1);
+    expect(mocks.ensureDefaultCategories).toHaveBeenCalledWith("user-1");
     expect(mocks.listItems).toHaveBeenCalledWith(filters);
     expect(markup).toContain('href="/tools/tool-1"');
     expect(markup).toContain('data-type="tool"');
