@@ -15,6 +15,14 @@ export function GitHubImportForm({
   const [url, setUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
+  const guidance =
+    type === "tool"
+      ? "粘贴 GitHub 仓库或 README 链接，自动导入内容"
+      : "粘贴 GitHub 仓库、README 或 SKILL.md 链接，自动导入内容";
+  const placeholder =
+    type === "tool"
+      ? "https://github.com/用户名/仓库"
+      : "https://github.com/用户名/仓库/blob/分支/文件路径";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -65,7 +73,7 @@ export function GitHubImportForm({
             从 GitHub 导入
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            粘贴 GitHub 仓库或 README 链接，自动导入内容
+            {guidance}
           </p>
         </div>
       </div>
@@ -74,7 +82,7 @@ export function GitHubImportForm({
         <Input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://github.com/用户名/仓库/blob/分支/文件路径"
+          placeholder={placeholder}
           className="h-11 flex-1"
           disabled={isImporting}
         />

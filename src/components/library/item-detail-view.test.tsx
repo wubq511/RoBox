@@ -114,6 +114,43 @@ describe("ItemDetailView", () => {
     expect(html).toContain('href="/skills/skill-1/edit"');
   });
 
+  it("uses the SKILL.md directory source URL for imported skill install prompts", () => {
+    const item: ItemDetail = {
+      id: "skill-1",
+      userId: "user-1",
+      type: "skill",
+      title: "frontend-design",
+      summary: "Skill summary",
+      content:
+        "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+      category: "Design",
+      tags: ["frontend"],
+      sourceUrl:
+        "https://github.com/anthropics/skills/blob/main/skills/frontend-design",
+      isFavorite: false,
+      isAnalyzed: true,
+      usageCount: 3,
+      createdAt: "2026-05-01T12:00:00.000Z",
+      updatedAt: "2026-05-01 20:00",
+      variables: [],
+    };
+
+    const html = renderToStaticMarkup(
+      <ItemDetailView item={item} returnPath="/skills" />,
+    );
+
+    expect(html).toContain("安装/加载提示词");
+    expect(html).toContain(
+      "https://github.com/anthropics/skills/blob/main/skills/frontend-design",
+    );
+    expect(html).toContain(
+      'data-content="https://github.com/anthropics/skills/blob/main/skills/frontend-design"',
+    );
+    expect(html).not.toContain(
+      "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+    );
+  });
+
   it("keeps manual skills bound to raw content for copy", () => {
     const item: ItemDetail = {
       id: "skill-1",

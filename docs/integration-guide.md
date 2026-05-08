@@ -148,8 +148,9 @@ Supported URL forms:
 
 - `https://github.com/<owner>/<repo>`
 - `https://github.com/<owner>/<repo>/blob/<branch>/README.md`
+- `https://github.com/<owner>/<repo>/blob/<branch>/<path>/SKILL.md` (Skill imports only)
 - `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/README.md`
-- `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/SKILL.md`
+- `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>/SKILL.md` (Skill imports only)
 
 Successful response shape:
 
@@ -161,7 +162,7 @@ Successful response shape:
 }
 ```
 
-Import stores the submitted link in `items.content`, stores the canonical repository link in `items.source_url`, and uses fetched README/SKILL.md content only as DeepSeek analysis context.
+Import stores the submitted link in `items.content` and uses fetched GitHub content only as DeepSeek analysis context. Repository and README imports store the canonical repository link in `items.source_url`; Skill `SKILL.md` imports store the GitHub blob path with the trailing `/SKILL.md` removed and analyze only the frontmatter plus text before the first `##` heading. Tool imports reject `SKILL.md` links.
 
 ### Import Web Tool
 

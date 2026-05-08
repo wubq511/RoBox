@@ -137,7 +137,7 @@ Next.js
 | 模型 | DeepSeek |
 | 部署 | Vercel Hobby |
 | 搜索 | 第一版关键词搜索 + 分类 / 标签筛选 |
-| GitHub 导入 | 服务端读取 GitHub README/SKILL.md 内容 |
+| GitHub 导入 | 服务端读取 GitHub README，或读取 SKILL.md 开头段 |
 | 网站导入 | 服务端读取公共 HTTPS 页面文本，限 Tool 使用 |
 
 ---
@@ -448,7 +448,7 @@ is_analyzed
 
 第一版支持 GitHub Skill 和 Tool 链接导入。
 
-对于以链接形式导入的 Skill / Tool，不保存 README 原文，只显示仓库链接和根据 README 文件总结的使用场景与摘要。
+对于以链接形式导入的 Skill / Tool，不保存 README 或 SKILL.md 原文，只显示来源链接和根据 GitHub 文档总结的使用场景与摘要。Skill 的 `SKILL.md` 链接只读取 frontmatter 和第一个二级标题前的正文，详情页安装链接会去掉最后的 `/SKILL.md`。
 
 网站导入只支持 Tool。系统抓取公共 HTTPS 页面文本并交给 DeepSeek 分析；数据库只保存用户提交链接和最终来源链接，不保存网页正文。
 
@@ -648,7 +648,7 @@ POST /api/import/github
 ↓
 转换 raw URL
 ↓
-抓取README
+抓取 README，或为 Skill 的 SKILL.md 链接抓取开头段
 ↓
 保存为 Skill 或 Tool
 ↓

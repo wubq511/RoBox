@@ -54,8 +54,28 @@ describe("GitHub skill import helpers", () => {
     ).toMatchObject({
       originalUrl: "https://github.com/tw93/Waza/blob/main/README.md",
       repositoryUrl: "https://github.com/tw93/Waza",
+      displaySourceUrl: "https://github.com/tw93/Waza",
+      sourceKind: "readme-file",
       readmeCandidates: [
         "https://raw.githubusercontent.com/tw93/Waza/main/README.md",
+      ],
+    });
+  });
+
+  it("converts a GitHub SKILL.md blob URL to raw content and a directory source URL", () => {
+    expect(
+      resolveGithubSkillUrl(
+        "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+      ),
+    ).toMatchObject({
+      originalUrl:
+        "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+      repositoryUrl: "https://github.com/anthropics/skills",
+      displaySourceUrl:
+        "https://github.com/anthropics/skills/blob/main/skills/frontend-design",
+      sourceKind: "skill-file",
+      readmeCandidates: [
+        "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
       ],
     });
   });
@@ -68,8 +88,28 @@ describe("GitHub skill import helpers", () => {
     ).toMatchObject({
       originalUrl: "https://raw.githubusercontent.com/tw93/Waza/main/README.md",
       repositoryUrl: "https://github.com/tw93/Waza",
+      displaySourceUrl: "https://github.com/tw93/Waza",
+      sourceKind: "readme-file",
       readmeCandidates: [
         "https://raw.githubusercontent.com/tw93/Waza/main/README.md",
+      ],
+    });
+  });
+
+  it("converts a raw GitHub SKILL.md URL to a directory source URL", () => {
+    expect(
+      resolveGithubSkillUrl(
+        "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
+      ),
+    ).toMatchObject({
+      originalUrl:
+        "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
+      repositoryUrl: "https://github.com/anthropics/skills",
+      displaySourceUrl:
+        "https://github.com/anthropics/skills/blob/main/skills/frontend-design",
+      sourceKind: "skill-file",
+      readmeCandidates: [
+        "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
       ],
     });
   });
@@ -92,12 +132,14 @@ describe("GitHub skill import helpers", () => {
           originalUrl: "https://github.com/tw93/Waza",
           repositoryName: "tw93/Waza",
           repositoryUrl: "https://github.com/tw93/Waza",
+          displaySourceUrl: "https://github.com/tw93/Waza",
+          sourceKind: "repository-readme",
           readmeCandidates: [
             "https://raw.githubusercontent.com/tw93/Waza/HEAD/README.md",
             "https://raw.githubusercontent.com/tw93/Waza/HEAD/README.mdx",
           ],
         },
-        { fetcher },
+        { fetcher, githubToken: "" },
       ),
     ).resolves.toEqual({
       content: "# Waza\n\nA useful skill.",
@@ -157,7 +199,7 @@ describe("GitHub skill import helpers", () => {
     await expect(
       createGithubSkillImport(
         { url: "https://github.com/tw93/Waza", categories: userCategories },
-        { fetcher },
+        { fetcher, githubToken: "" },
       ),
     ).resolves.toMatchObject({
       item: analyzedItem,
@@ -192,6 +234,112 @@ describe("GitHub skill import helpers", () => {
       tags: ["AI", "Skill"],
       isAnalyzed: true,
     });
+  });
+
+  it("imports a SKILL.md link as a skill using only the frontmatter and intro", async () => {
+    const userCategories = ["Design", "Agent", "Other"];
+    const sourceUrl =
+      "https://github.com/anthropics/skills/blob/main/skills/frontend-design";
+    const submittedUrl = `${sourceUrl}/SKILL.md`;
+    const createdItem = {
+      id: "skill-frontend-design",
+      type: "skill",
+      title: "anthropics/skills",
+      summary: "",
+      content: submittedUrl,
+      category: "Design",
+      tags: ["GitHub"],
+      sourceUrl,
+      isAnalyzed: false,
+    };
+    const analyzedItem = {
+      ...createdItem,
+      title: "frontend-design",
+      summary: "用于创建高质量前端界面的 Skill。",
+      category: "Design",
+      tags: ["前端设计", "UI"],
+      isAnalyzed: true,
+    };
+    const skillBody = [
+      "---",
+      "name: frontend-design",
+      "description: Create distinctive interfaces.",
+      "license: Complete terms in LICENSE.txt",
+      "---",
+      "This skill guides creation of production-grade frontend interfaces.",
+      "",
+      "## Design Thinking",
+      "This later section should not be used for analysis.",
+    ].join("\n");
+
+    createItemMock.mockResolvedValue(createdItem);
+    requestDeepSeekAnalysisMock.mockResolvedValue({
+      title: "frontend-design",
+      summary: "用于创建高质量前端界面的 Skill。",
+      category: "Design",
+      tags: ["前端设计", "UI"],
+      variables: [],
+    });
+    updateItemMock.mockResolvedValue(analyzedItem);
+
+    const fetcher = vi.fn().mockResolvedValue(
+      new Response(skillBody, {
+        status: 200,
+      }),
+    );
+
+    await expect(
+      createGithubSkillImport(
+        { url: submittedUrl, categories: userCategories },
+        { fetcher, githubToken: "" },
+      ),
+    ).resolves.toMatchObject({
+      item: analyzedItem,
+      readmeUrl:
+        "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Range: expect.stringMatching(/^bytes=0-\d+$/),
+        }),
+      }),
+    );
+    expect(createItemMock).toHaveBeenCalledWith({
+      type: "skill",
+      title: "anthropics/skills",
+      summary: "",
+      content: submittedUrl,
+      category: "Design",
+      tags: ["GitHub"],
+      sourceUrl,
+    });
+    expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "skill",
+        categories: userCategories,
+        content: expect.stringContaining("description: Create distinctive interfaces."),
+      }),
+    );
+    expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining(
+          "This skill guides creation of production-grade frontend interfaces.",
+        ),
+      }),
+    );
+    expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.not.stringContaining("This later section should not be used"),
+      }),
+    );
+    expect(requestDeepSeekAnalysisMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: expect.stringContaining(`GitHub source: ${sourceUrl}`),
+      }),
+    );
   });
 
   it("imports a GitHub repository as a tool when requested", async () => {
@@ -238,7 +386,7 @@ describe("GitHub skill import helpers", () => {
           type: "tool",
           categories: userCategories,
         },
-        { fetcher },
+        { fetcher, githubToken: "" },
       ),
     ).resolves.toMatchObject({
       item: analyzedItem,
@@ -261,6 +409,25 @@ describe("GitHub skill import helpers", () => {
         content: expect.stringContaining("# Next.js"),
       }),
     );
+  });
+
+  it("rejects SKILL.md links for tool imports", async () => {
+    await expect(
+      createGithubSkillImport(
+        {
+          url: "https://github.com/anthropics/skills/blob/main/skills/frontend-design/SKILL.md",
+          type: "tool",
+          categories: ["Coding", "Other"],
+        },
+        { fetcher: vi.fn(), githubToken: "" },
+      ),
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      message: "Tool GitHub import requires a repository or README link.",
+    });
+
+    expect(createItemMock).not.toHaveBeenCalled();
+    expect(requestDeepSeekAnalysisMock).not.toHaveBeenCalled();
   });
 
   it("keeps the imported skill when README analysis fails", async () => {
@@ -288,7 +455,7 @@ describe("GitHub skill import helpers", () => {
     await expect(
       createGithubSkillImport(
         { url: "https://github.com/tw93/Waza", categories: ["Writing", "Coding", "Other"] },
-        { fetcher },
+        { fetcher, githubToken: "" },
       ),
     ).resolves.toEqual({
       item: createdItem,

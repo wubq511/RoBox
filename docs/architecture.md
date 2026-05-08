@@ -8,7 +8,7 @@ RoBox is a personal Prompt / Skill / Tool manager. The product boundary is inten
 - The original user input is stored in `items.content` and must not be overwritten by model output.
 - AI analysis enriches metadata and variables; it does not replace the source text.
 - Copy behavior is split between raw copy and final prompt copy so usage logs stay explicit.
-- GitHub-imported Skills store the submitted link in `items.content` and the canonical repository link in `items.source_url`; fetched README content is analysis context, not the saved original.
+- GitHub-imported Skills store the submitted link in `items.content` and the display source link in `items.source_url`; fetched README or `SKILL.md` intro content is analysis context, not the saved original. For `SKILL.md` links, `items.source_url` removes the trailing `/SKILL.md`.
 - Imported Tools follow the same preservation rule: the submitted URL stays in `items.content`, the canonical source URL stays in `items.source_url`, and fetched README or web page text is used only as analysis context.
 
 ## Runtime Layers
@@ -100,11 +100,12 @@ All server-side environment variables are read through `getServerEnv()` (defined
 
 1. The route accepts a JSON body with `url`.
 2. `src/server/import/github.ts` only allows `github.com` and `raw.githubusercontent.com`.
-3. Repository URLs are converted into raw README candidates. GitHub blob/raw README or `SKILL.md` links are converted or used directly.
-4. The fetched README/SKILL.md body is used only as analysis context. README content exceeding 100KB is rejected.
-5. The stored item uses `items.content = submitted URL` and `items.source_url = canonical repository URL`.
-6. The import creates the Skill or Tool first, then requests DeepSeek analysis using the README context.
-7. If analysis fails after a successful README fetch, the imported item remains saved with `is_analyzed=false` and the API returns a warning.
+3. Repository URLs are converted into raw README candidates. GitHub blob/raw README links are converted or used directly.
+4. Skill `SKILL.md` blob/raw links are converted to raw content for fetching, but only the YAML frontmatter plus text before the first `##` heading is used as analysis context.
+5. Tool imports reject `SKILL.md` links; Tools continue to use repository or README links only.
+6. The stored item uses `items.content = submitted URL`; README/repository imports store the canonical repository URL in `items.source_url`, while `SKILL.md` imports store the GitHub blob path with the trailing `/SKILL.md` removed.
+7. The import creates the Skill or Tool first, then requests DeepSeek analysis using the fetched context.
+8. If analysis fails after a successful fetch, the imported item remains saved with `is_analyzed=false` and the API returns a warning.
 
 ## Web Tool Import Flow
 
@@ -274,7 +275,7 @@ Exceeding the limit returns `429 Too Many Requests`.
 - Search queries: `sanitizeSearchValue` escapes PostgreSQL ILIKE wildcards (`%`, `_`).
 - GitHub import: URL length capped at 2048 characters; request body capped at 4KB.
 - Web import: URL length capped at 2048 characters; request body capped at 4KB; only public HTTPS pages are fetched, with redirect, size, timeout, and content-type limits.
-- README fetch: content exceeding 100KB is rejected.
+- README fetch: content exceeding 100KB is rejected. Skill `SKILL.md` fetch uses a limited range request and only analyzes frontmatter plus the intro before the first `##` heading.
 - DeepSeek prompt: user content is wrapped in boundary markers with an instruction to ignore injection attempts.
 
 ### CORS

@@ -288,7 +288,7 @@ RoBox/
 │       │   └── service.ts            # 分析编排（读取条目 → 调 AI → 持久化结果）
 │       │
 │       └── import/
-│           ├── github.ts             # GitHub 导入全流程（URL 解析 → README 抓取 → 创建 + AI 分析）
+│           ├── github.ts             # GitHub 导入全流程（URL 解析 → README/SKILL.md 开头段抓取 → 创建 + AI 分析）
 │           └── web.ts                # 公共 HTTPS 网页导入 Tool（URL 校验 → 文本抓取 → 创建 + AI 分析）
 │
 ├── supabase/                         # Supabase 本地配置
@@ -645,18 +645,22 @@ service.ts: analyzeStoredItem(itemId)
 resolveGithubSkillUrl(url)              // URL 解析与规范化
   ├─ github.com/owner/repo              → 尝试 HEAD/main/master 的 README
   ├─ github.com/owner/repo/blob/ref/README.md  → 指定文件
+  ├─ github.com/owner/repo/blob/ref/path/SKILL.md → Skill 专用，转 raw 后只读开头段
   └─ raw.githubusercontent.com/owner/repo/ref/README.md  → 直接读取
   ↓
-fetchGithubReadme(target)               // 按候选列表依次抓取
+fetchGithubReadme(target) / fetchGithubSkillExcerpt(target)
+  // README 按候选列表依次抓取；SKILL.md 只读取 frontmatter + 首个 H2 前正文
   → 返回 { content, readmeUrl }
   ↓
 createGithubSkillImport({ url, categories })
-  ├─ createItem({ type:"skill", content: originalUrl, ... })  // 先创建条目
-  ├─ requestDeepSeekAnalysis({ type:"skill", content: readme+meta })
+  ├─ createItem({ type, content: originalUrl, sourceUrl, ... })  // 先创建条目
+  ├─ requestDeepSeekAnalysis({ type, content: fetchedContext+meta })
   │   → 成功: updateItem(title, summary, category, tags, isAnalyzed:true)
   │   → 失败: 返回 warning，保留原始条目
   └─ return { item, readmeUrl, warning? }
 ```
+
+`SKILL.md` 链接导入为 Skill 时，`items.source_url` 使用去掉最后 `/SKILL.md` 的 GitHub blob 路径；导入为 Tool 时直接拒绝，Tool 只接受仓库或 README 链接。
 
 **安全限制**：
 
@@ -667,6 +671,7 @@ createGithubSkillImport({ url, categories })
 | Request Body 最大 | 4KB | 防止大 body |
 | README 最大抓取 | 100KB (100,000 字符) | 防止过大文件 |
 | AI 分析截断 | 24,000 字符 | 超长 README 截断分析 |
+| SKILL.md 分析范围 | frontmatter + 首个 `##` 前正文 | 避免读取和分析整份长 Skill |
 | 允许的文件 | `README*`, `SKILL.md` | 只读文档文件 |
 | 速率限制 | 10 次/小时/IP | 防滥用 |
 
