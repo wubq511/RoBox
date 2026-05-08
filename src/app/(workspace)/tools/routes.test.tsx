@@ -117,8 +117,10 @@ describe("tool routes", () => {
       "tool",
     );
     expect(mocks.requireAppUser).toHaveBeenCalledTimes(1);
-    expect(mocks.ensureDefaultCategories).toHaveBeenCalledWith("user-1");
-    expect(mocks.listItems).toHaveBeenCalledWith(filters);
+    expect(mocks.ensureDefaultCategories).not.toHaveBeenCalled();
+    expect(mocks.listItems).toHaveBeenCalledWith(filters, {
+      userId: "user-1",
+    });
     expect(markup).toContain('href="/tools/tool-1"');
     expect(markup).toContain('data-type="tool"');
   });

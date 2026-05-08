@@ -71,7 +71,7 @@ const ItemCard = memo(function ItemCard({
   type: ItemType;
 }>) {
   return (
-    <a href={getDetailHref(type, item.id)} className="block">
+    <Link href={getDetailHref(type, item.id)} className="block">
       <article className="rounded-[24px] border border-border/70 bg-background/90 p-5 shadow-[0_10px_24px_-22px_rgba(17,17,17,0.35)] h-full flex flex-col">
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -115,7 +115,7 @@ const ItemCard = memo(function ItemCard({
           ))}
         </div>
       </article>
-    </a>
+    </Link>
   );
 });
 

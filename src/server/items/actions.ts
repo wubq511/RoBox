@@ -78,6 +78,14 @@ function revalidateItemPaths(type: ItemType, itemId: string) {
   revalidatePath(detailPath);
 }
 
+function revalidateFavoriteTogglePaths(type: ItemType, itemId: string) {
+  const { collectionPath, detailPath } = getPathsForType(type, itemId);
+
+  revalidatePath("/favorites");
+  revalidatePath(collectionPath);
+  revalidatePath(detailPath);
+}
+
 function toErrorState(error: unknown): ItemFormState {
   if (error instanceof Error) {
     return {
@@ -246,7 +254,7 @@ export async function toggleFavoriteAction(formData: FormData) {
     return toErrorState(error);
   }
 
-  revalidateItemPaths(type, itemId);
+  revalidateFavoriteTogglePaths(type, itemId);
 }
 
 export async function deleteItemAction(

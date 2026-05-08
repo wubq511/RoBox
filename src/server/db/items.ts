@@ -22,6 +22,7 @@ import {
 
 import { mapItemRow, mapPromptVariableRow } from "./mappers";
 import type {
+  DashboardCounts,
   DashboardSnapshot,
   ItemDetail,
   ItemRow,
@@ -52,6 +53,13 @@ type ItemUpdatePayload = Partial<{
   is_analyzed: boolean;
 }>;
 
+type DashboardSnapshotRpcPayload = {
+  counts?: Partial<DashboardCounts>;
+  favorites?: ItemRow[];
+  pending?: ItemRow[];
+  recent?: ItemRow[];
+};
+
 function sanitizeSearchValue(value: string) {
   return value
     .replaceAll(",", " ")
@@ -66,11 +74,50 @@ function compareIsoDatesDesc(left: string, right: string) {
   return right.localeCompare(left);
 }
 
-async function getDatabaseContext(nextPath = "/dashboard") {
-  const [supabase, user] = await Promise.all([
-    getServerSupabaseClient(),
-    requireAppUser(nextPath),
-  ]);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function toDashboardSnapshot(payload: unknown): DashboardSnapshot {
+  if (!isRecord(payload)) {
+    throw new Error("Invalid dashboard snapshot payload.");
+  }
+
+  const data = payload as DashboardSnapshotRpcPayload;
+  const counts = data.counts ?? {};
+  const mapRows = (rows: ItemRow[] | undefined) =>
+    (Array.isArray(rows) ? rows : []).map((row) => mapItemRow(row));
+
+  return {
+    counts: {
+      total: counts.total ?? 0,
+      prompts: counts.prompts ?? 0,
+      skills: counts.skills ?? 0,
+      tools: counts.tools ?? 0,
+      pending: counts.pending ?? 0,
+    },
+    favorites: mapRows(data.favorites),
+    pending: mapRows(data.pending),
+    recent: mapRows(data.recent),
+  };
+}
+
+type DatabaseContextOptions = {
+  nextPath?: string;
+  userId?: string;
+};
+
+async function getDatabaseContext(options: DatabaseContextOptions = {}) {
+  const supabase = await getServerSupabaseClient();
+
+  if (options.userId) {
+    return {
+      supabase,
+      userId: options.userId,
+    };
+  }
+
+  const user = await requireAppUser(options.nextPath ?? "/dashboard");
 
   return {
     supabase,
@@ -216,7 +263,7 @@ async function selectPromptVariables(
 
 export async function listItems(
   filters: Partial<ListItemsFilters> = {},
-  options: { nextPath?: string } = {},
+  options: { nextPath?: string; userId?: string } = {},
 ) {
   const parsed = sanitizeListItemsInput(filters);
   const nextPath =
@@ -227,9 +274,10 @@ export async function listItems(
         : parsed.type === "prompt"
           ? "/prompts"
           : "/dashboard";
-  const { supabase, userId } = await getDatabaseContext(
-    options.nextPath ?? nextPath,
-  );
+  const { supabase, userId } = await getDatabaseContext({
+    nextPath: options.nextPath ?? nextPath,
+    userId: options.userId,
+  });
 
   let query = supabase.from("items").select("*").eq("user_id", userId);
 
@@ -304,13 +352,23 @@ export async function getItemById(itemId: string): Promise<StoredItem | null> {
 }
 
 export async function getItemDetail(itemId: string): Promise<ItemDetail | null> {
-  const { supabase } = await getDatabaseContext();
-  const item = await getItemById(itemId);
+  const { supabase, userId } = await getDatabaseContext();
+  const { data, error } = await supabase
+    .from("items")
+    .select("*")
+    .eq("id", itemId)
+    .eq("user_id", userId)
+    .maybeSingle();
 
-  if (!item) {
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
     return null;
   }
 
+  const item = mapItemRow(data as ItemRow);
   const variables =
     item.type === "prompt" ? await selectPromptVariables(supabase, item.id) : [];
 
@@ -454,8 +512,7 @@ export async function replacePromptVariables(
 }
 
 export async function toggleFavorite(itemId: string) {
-  const { userId } = await getDatabaseContext();
-  const { supabase } = await getDatabaseContext();
+  const { supabase, userId } = await getDatabaseContext();
 
   const { data, error } = await supabase.rpc("toggle_favorite", {
     p_item_id: itemId,
@@ -499,43 +556,13 @@ export async function recordCopyAction(itemId: string, action: CopyAction) {
 export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   const { supabase, userId } = await getDatabaseContext();
 
-  const [totalResult, promptsResult, skillsResult, toolsResult, pendingResult, favoritesResult, recentResult] =
-    await Promise.all([
-      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId),
-      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "prompt"),
-      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "skill"),
-      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("type", "tool"),
-      supabase.from("items").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_analyzed", false),
-      supabase.from("items").select("*").eq("user_id", userId).eq("is_favorite", true).order("updated_at", { ascending: false }).limit(8),
-      supabase.from("items").select("*").eq("user_id", userId).order("updated_at", { ascending: false }).limit(20),
-    ]);
+  const { data, error } = await supabase.rpc("get_dashboard_snapshot", {
+    p_user_id: userId,
+  });
 
-  if (totalResult.error) throw totalResult.error;
-  if (promptsResult.error) throw promptsResult.error;
-  if (skillsResult.error) throw skillsResult.error;
-  if (toolsResult.error) throw toolsResult.error;
-  if (pendingResult.error) throw pendingResult.error;
-  if (favoritesResult.error) throw favoritesResult.error;
-  if (recentResult.error) throw recentResult.error;
+  if (error) {
+    throw error;
+  }
 
-  const favorites = ((favoritesResult.data ?? []) as ItemRow[]).map(mapItemRow);
-  const recentItems = ((recentResult.data ?? []) as ItemRow[]).map(mapItemRow);
-
-  const copiedAtByItemId = await selectLatestCopiedAtByItemId(
-    supabase,
-    recentItems.map((item) => item.id),
-  );
-
-  return {
-    counts: {
-      total: totalResult.count ?? 0,
-      prompts: promptsResult.count ?? 0,
-      skills: skillsResult.count ?? 0,
-      tools: toolsResult.count ?? 0,
-      pending: pendingResult.count ?? 0,
-    },
-    favorites,
-    pending: recentItems.filter((item) => !item.isAnalyzed).slice(0, 4),
-    recent: sortItemsByRecentUsage(recentItems, copiedAtByItemId).slice(0, 4),
-  };
+  return toDashboardSnapshot(data);
 }

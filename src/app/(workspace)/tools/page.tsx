@@ -1,6 +1,6 @@
 import { LibraryList } from "@/components/library/library-list";
 import { parseLibrarySearchParams } from "@/features/items/query-state";
-import { getUserCategoryNames, ensureDefaultCategories } from "@/server/db/categories";
+import { getUserCategoryNames } from "@/server/db/categories";
 import { listItems } from "@/server/db/items";
 import { requireAppUser } from "@/server/auth/session";
 
@@ -13,13 +13,11 @@ export default async function ToolsPage({
 }>) {
   const params = await searchParams;
   const filters = parseLibrarySearchParams(params, "tool");
-  const [items, user] = await Promise.all([
-    listItems(filters),
-    requireAppUser(),
+  const user = await requireAppUser();
+  const [items, categories] = await Promise.all([
+    listItems(filters, { userId: user.id }),
+    getUserCategoryNames(user.id, "tool"),
   ]);
-
-  await ensureDefaultCategories(user.id);
-  const categories = await getUserCategoryNames(user.id, "tool");
 
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-6 lg:px-8 lg:py-8">

@@ -21,9 +21,14 @@ describe("middleware", () => {
     expect(mocks.updateSession).toHaveBeenCalledWith(request);
   });
 
-  it("excludes static assets from the middleware matcher", () => {
+  it("only refreshes sessions on protected workspace pages", () => {
     expect(config.matcher).toEqual([
-      "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+      "/dashboard/:path*",
+      "/prompts/:path*",
+      "/skills/:path*",
+      "/tools/:path*",
+      "/favorites/:path*",
+      "/settings/:path*",
     ]);
   });
 });
