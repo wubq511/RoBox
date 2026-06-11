@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   copyActionSchema,
   createItemInputSchema,
+  itemTypes,
   listItemsFiltersSchema,
   promptVariableSchema,
   updateItemInputSchema,
@@ -13,6 +14,7 @@ import {
   type PromptVariableInput,
   type UpdateItemInput,
 } from "@/lib/schema/items";
+import type { AiSearchSelectedType } from "@/lib/schema/ai-search";
 import { getServerSupabaseClient } from "@/lib/supabase/server-client";
 import { requireAppUser } from "@/server/auth/session";
 import {
@@ -59,6 +61,9 @@ type DashboardSnapshotRpcPayload = {
   pending?: ItemRow[];
   recent?: ItemRow[];
 };
+
+const AI_SEARCH_AUTO_LIMIT_PER_TYPE = 60;
+const AI_SEARCH_SINGLE_TYPE_LIMIT = 160;
 
 function sanitizeSearchValue(value: string) {
   return value
@@ -329,6 +334,53 @@ export async function listItems(
   );
 
   return sortItemsByRecentUsage(items, copiedAtByItemId).slice(0, parsed.limit);
+}
+
+export async function listAiSearchCandidates(
+  input: { selectedType: AiSearchSelectedType },
+  options: { nextPath?: string; userId?: string } = {},
+) {
+  const selectedType = input.selectedType;
+  const targetTypes = selectedType === "auto" ? itemTypes : [selectedType];
+  const perTypeLimit =
+    selectedType === "auto"
+      ? AI_SEARCH_AUTO_LIMIT_PER_TYPE
+      : AI_SEARCH_SINGLE_TYPE_LIMIT;
+  const { supabase, userId } = await getDatabaseContext({
+    nextPath: options.nextPath ?? "/ai-search",
+    userId: options.userId,
+  });
+  const results = await Promise.all(
+    targetTypes.map(async (type) => {
+      const { data, error } = await supabase
+        .from("items")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("type", type)
+        .order("updated_at", { ascending: false })
+        .limit(perTypeLimit + 1);
+
+      if (error) {
+        throw error;
+      }
+
+      const rows = (data ?? []) as ItemRow[];
+
+      return {
+        items: rows.slice(0, perTypeLimit).map(mapItemRow),
+        candidateLimitReached: rows.length > perTypeLimit,
+      };
+    }),
+  );
+  const items = results.flatMap((result) => result.items);
+
+  return {
+    items,
+    scannedCount: items.length,
+    candidateLimitReached: results.some(
+      (result) => result.candidateLimitReached,
+    ),
+  };
 }
 
 export async function getItemById(itemId: string): Promise<StoredItem | null> {

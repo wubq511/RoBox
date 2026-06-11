@@ -24,6 +24,7 @@ describe("middleware", () => {
   it("only refreshes sessions on protected workspace pages", () => {
     expect(config.matcher).toEqual([
       "/dashboard/:path*",
+      "/ai-search/:path*",
       "/prompts/:path*",
       "/skills/:path*",
       "/tools/:path*",

@@ -5,6 +5,7 @@ import {
   buildItemUpdate,
   deleteItem,
   getDashboardSnapshot,
+  listAiSearchCandidates,
   listItems,
   sanitizeListItemsInput,
   sortItemsByRecentUsage,
@@ -569,5 +570,67 @@ describe("item repository helpers", () => {
       "favorite-2",
       "favorite-1",
     ]);
+  });
+
+  it("loads AI search candidates by type without crossing user boundaries", async () => {
+    const supabase = createSupabaseMock({
+      items: [
+        createItemRow({
+          id: "tool-1",
+          type: "tool",
+          user_id: "user-1",
+          updated_at: "2026-05-01T10:00:00.000Z",
+        }),
+        createItemRow({
+          id: "tool-2",
+          type: "tool",
+          user_id: "user-2",
+          updated_at: "2026-05-01T11:00:00.000Z",
+        }),
+        createItemRow({
+          id: "prompt-1",
+          type: "prompt",
+          user_id: "user-1",
+          updated_at: "2026-05-01T12:00:00.000Z",
+        }),
+      ],
+    });
+    getServerSupabaseClientMock.mockResolvedValue(supabase.client);
+
+    const result = await listAiSearchCandidates({
+      selectedType: "tool",
+    });
+
+    expect(result.items.map((item) => item.id)).toEqual(["tool-1"]);
+    expect(result.scannedCount).toBe(1);
+    expect(result.candidateLimitReached).toBe(false);
+  });
+
+  it("loads at most sixty AI search candidates per type in auto mode", async () => {
+    const supabase = createSupabaseMock({
+      items: [
+        ...Array.from({ length: 62 }, (_, index) =>
+          createItemRow({
+            id: `prompt-${index + 1}`,
+            type: "prompt",
+            updated_at: `2026-05-01T00:${String(index).padStart(2, "0")}:00.000Z`,
+          }),
+        ),
+        createItemRow({
+          id: "skill-1",
+          type: "skill",
+          updated_at: "2026-05-02T00:00:00.000Z",
+        }),
+      ],
+    });
+    getServerSupabaseClientMock.mockResolvedValue(supabase.client);
+
+    const result = await listAiSearchCandidates({
+      selectedType: "auto",
+    });
+
+    expect(result.items.filter((item) => item.type === "prompt")).toHaveLength(60);
+    expect(result.items.filter((item) => item.type === "skill")).toHaveLength(1);
+    expect(result.candidateLimitReached).toBe(true);
   });
 });

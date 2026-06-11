@@ -31,12 +31,14 @@ RoBox is a personal Prompt / Skill / Tool manager. The product boundary is inten
   Form parsing and Server Actions for create, update, delete, favorite, and copy logging.
 - `src/server/analyze`
   DeepSeek prompt construction, model call, JSON repair/parsing, and persistence orchestration.
+- `src/server/search`
+  One-shot AI search orchestration, DeepSeek ranking, JSON parsing, and result normalization. Search results are not persisted.
 - `src/server/import`
   GitHub URL validation, raw README/SKILL.md fetch, public HTTPS web page text fetch, import creation, and analysis orchestration.
 - `src/lib/rate-limit`
   IP-based sliding-window rate limiter used by API Route Handlers.
 - `middleware.ts` (project root)
-  Next.js 16 middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on matched workspace page requests. The matcher is intentionally limited to `/dashboard`, `/favorites`, `/prompts`, `/skills`, `/tools`, and `/settings`; `/api/*`, `/login`, `/auth/*`, and static assets do not run middleware. Runs in Edge Runtime; does not use `node:fs` or `env.ts`.
+  Next.js 16 middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on matched workspace page requests. The matcher is intentionally limited to `/dashboard`, `/ai-search`, `/favorites`, `/prompts`, `/skills`, `/tools`, and `/settings`; `/api/*`, `/login`, `/auth/*`, and static assets do not run middleware. Runs in Edge Runtime; does not use `node:fs` or `env.ts`.
 
 ## Data Model
 
@@ -93,6 +95,18 @@ Optional environment variables:
 - `DEEPSEEK_API_BASE_URL`, default `https://api.deepseek.com`
 
 All server-side environment variables are read through `getServerEnv()` (defined in `src/lib/env.ts`), which prioritizes `.env.local` file values over system `process.env`. This prevents system-level environment variables from silently overriding project-local configuration.
+
+## AI Search Flow
+
+`POST /api/search/ai` handles one-shot natural-language retrieval across the user's saved Prompt / Skill / Tool items.
+
+1. `/ai-search` submits `{ query, type }`, where `type` is `auto`, `prompt`, `skill`, or `tool`.
+2. The route enforces same-origin requests, authenticated user access, and a 30 requests/hour IP rate limit.
+3. `listAiSearchCandidates()` reads recent candidate rows for the current user only. Auto mode reads at most 60 rows per type; a specified type reads at most 160 rows. It performs no writes.
+4. `src/server/search/service.ts` sends only metadata plus a short `items.content` preview to DeepSeek: title, summary, category, tags, source URL, favorite/analyzed state, usage count, updated time, and a 360-character content preview.
+5. `src/server/search/deepseek.ts` asks DeepSeek for matching candidate ids, scores, reasons, and use cases. Candidate content is wrapped in boundary markers and treated as untrusted text.
+6. The service validates every returned id/type against the original candidate set, drops unknown or duplicate matches, clamps scores to 0-100, and limits each type group to 6 results.
+7. The response is returned with `Cache-Control: no-store`. Search history, rankings, and query logs are not stored, and no `revalidatePath()` call is made.
 
 ## GitHub Import Flow
 
@@ -300,4 +314,3 @@ Categories are no longer a fixed enum. Each user manages their own Prompt, Skill
 - The last category in a type cannot be deleted.
 - `items.category` stores free-text values. Application-layer validation (via `validateCategoryBelongsToUser`) ensures the value exists in the user's `user_categories` for the corresponding type.
 - DeepSeek analysis dynamically injects the user's category list into the prompt and validates the returned category against it, falling back to the first category if invalid.
-

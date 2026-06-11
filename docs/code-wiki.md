@@ -172,6 +172,8 @@ RoBox/
 │   │   │   ├── loading.tsx           # 工作区骨架屏
 │   │   │   ├── dashboard/
 │   │   │   │   └── page.tsx          # 仪表盘页
+│   │   │   ├── ai-search/
+│   │   │   │   └── page.tsx          # 一次性 AI 检索页
 │   │   │   ├── favorites/
 │   │   │   │   └── page.tsx          # 全部收藏页
 │   │   │   ├── prompts/              # Prompt 列表/详情/新建/编辑
@@ -190,6 +192,9 @@ RoBox/
 │   │       ├── items/[id]/
 │   │       │   └── analyze/
 │   │       │       └── route.ts      # POST AI 分析条目
+│   │       ├── search/
+│   │       │   └── ai/
+│   │       │       └── route.ts      # POST 一次性 AI 检索
 │   │       ├── import/
 │   │       │   ├── github/
 │   │       │   │   └── route.ts      # POST GitHub 导入 Skill/Tool
@@ -228,6 +233,8 @@ RoBox/
 │   │   │   ├── prompt-final-panel.tsx       # 变量填充 + 最终文本预览
 │   │   │   ├── analyze-button.tsx    # 单个条目 AI 分析按钮
 │   │   │   ├── batch-analyze-button.tsx     # 批量分析按钮
+│   │   ├── search/                   # AI 检索界面
+│   │   │   └── ai-search-view.tsx    # 自然语言输入、类型选择、分组结果
 │   │   │   ├── favorite-toggle-button.tsx   # 收藏切换
 │   │   │   ├── delete-item-button.tsx       # 删除按钮
 │   │   │   ├── copy-raw-button.tsx          # 复制原文按钮
@@ -503,7 +510,7 @@ signOutWorkspaceSession(): Promise<void>
 
 **中间件链路** ([middleware.ts](../middleware.ts))：
 
-只有匹配 `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings` 的工作区页面请求经过 `updateSession()` → 调用 `supabase.auth.getClaims()` → 刷新 Cookie 中的 session → 保证后续 `getServerSupabaseClient()` 能读到有效 session。`/api/*` 由 Route Handler 自身鉴权，不再经过 middleware。
+只有匹配 `/dashboard`、`/ai-search`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings` 的工作区页面请求经过 `updateSession()` → 调用 `supabase.auth.getClaims()` → 刷新 Cookie 中的 session → 保证后续 `getServerSupabaseClient()` 能读到有效 session。`/api/*` 由 Route Handler 自身鉴权，不再经过 middleware。
 
 ---
 
@@ -515,7 +522,7 @@ signOutWorkspaceSession(): Promise<void>
 |------|------|
 | [types.ts](../src/server/db/types.ts) | 数据库 Row 接口 + Stored Entity 接口 + Dashboard 类型 |
 | [mappers.ts](../src/server/db/mappers.ts) | snake_case Row → camelCase Entity 映射 |
-| [items.ts](../src/server/db/items.ts) | items 表完整 CRUD + Dashboard 快照 + 收藏/复制记录 |
+| [items.ts](../src/server/db/items.ts) | items 表完整 CRUD + Dashboard 快照 + 收藏/复制记录 + AI 检索候选读取 |
 | [categories.ts](../src/server/db/categories.ts) | user_categories 表 CRUD + 默认分类 seed + 归属校验 |
 
 #### `items.ts` — 核心 DAO
@@ -532,6 +539,7 @@ signOutWorkspaceSession(): Promise<void>
 | `toggleFavorite(id)` | RPC 原子切换收藏 |
 | `recordCopyAction(id, action)` | RPC 原子记录复制 + 计数递增 |
 | `getDashboardSnapshot()` | Dashboard 数据，内部调用 `get_dashboard_snapshot(p_user_id)` 单次 RPC；收藏摘要最多 8 条 |
+| `listAiSearchCandidates({selectedType})` | 一次性 AI 检索候选读取；auto 每类最多 60 条，指定类型最多 160 条，只读不写 |
 | `buildItemInsert(userId, input)` | 构建插入 payload（含 schema 校验） |
 | `buildItemUpdate(input)` | 构建更新 payload（只含非 undefined 字段） |
 | `sanitizeListItemsInput(input)` | 清洗列表查询参数 |
@@ -635,6 +643,40 @@ service.ts: analyzeStoredItem(itemId)
 
 ---
 
+### 6.4.1 AI 检索 (`src/server/search/`)
+
+AI 检索是一次性自然语言重排，不保存搜索历史、不新增数据库表、不写检索结果。
+
+```
+POST /api/search/ai
+  ↓
+aiSearchRequestSchema.parse({ query, type })
+  ↓
+listAiSearchCandidates({ selectedType })
+  ├─ auto: prompt/skill/tool 每类最多 60 条
+  └─ 指定类型: 最多 160 条
+  ↓
+buildAiSearchCandidates(items)
+  └─ 仅发送标题、摘要、分类、标签、来源、状态、使用次数、更新时间、360 字原文片段
+  ↓
+requestAiSearchRanking(...)
+  └─ DeepSeek 返回 id/type/score/reason/use_case
+  ↓
+normalizeAiSearchRanking(...)
+  ├─ 丢弃未知 id/type
+  ├─ 丢弃重复结果
+  ├─ score 限制在 0-100
+  └─ 每个类型最多 6 条
+```
+
+| 文件 | 职责 |
+|------|------|
+| [service.ts](../src/server/search/service.ts) | 候选构建、结果校验、分组、每组上限 |
+| [deepseek.ts](../src/server/search/deepseek.ts) | 构建检索 prompt、调用 DeepSeek、解析 JSON |
+| [errors.ts](../src/server/search/errors.ts) | AI 检索错误码、安全错误信息和日志字段 |
+
+---
+
 ### 6.5 GitHub 导入 (`src/server/import/github.ts`)
 
 **完整流程**：
@@ -694,6 +736,7 @@ createGithubSkillImport({ url, categories })
 | 方法 | 路径 | 功能 | 限流 | 鉴权 |
 |------|------|------|------|------|
 | `POST` | `/api/items/:id/analyze` | AI 分析条目 | 30次/h | 必须 |
+| `POST` | `/api/search/ai` | 一次性 AI 检索 | 30次/h | 必须 |
 | `POST` | `/api/import/github` | GitHub 导入 Skill | 10次/h | 必须 |
 | `GET` | `/api/categories?type=prompt\|skill` | 获取分类列表 | 无 | 必须 |
 | `POST` | `/api/categories` | 创建分类 | 无 | 必须 |
@@ -829,6 +872,7 @@ RootLayout (app/layout.tsx)
 | [`BatchAnalyzeButton`](../src/components/library/batch-analyze-button.tsx) | Client Component | 并发 3 个分析请求，全部完成后续一刷新 |
 | [`FavoritesList`](../src/components/library/favorites-list.tsx) | Server Component | 统一展示全部收藏的 Prompt / Skill / Tool，支持搜索、类型筛选和排序 |
 | [`FavoriteFilters`](../src/components/library/favorite-filters.tsx) | Client Component | 收藏页搜索、类型筛选和排序，使用 `router.push()` 更新 URL |
+| [`AiSearchView`](../src/components/search/ai-search-view.tsx) | Client Component | `/ai-search` 自然语言检索、类型选择、加载/错误/空态和分组结果 |
 | [`CategoryManager`](../src/components/settings/category-manager.tsx) | Client Component | 分类增删排管理，调用 Categories API |
 | [`GlobalSearchForm`](../src/components/layout/global-search-form.tsx) | Client Component | 顶部全局搜索，使用 `router.push()` 跳转到列表页并带上 search 参数 |
 

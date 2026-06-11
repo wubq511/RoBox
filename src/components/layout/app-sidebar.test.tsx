@@ -19,6 +19,8 @@ describe("AppSidebar", () => {
     expect(html).not.toContain("Phase 2");
     expect(html).toContain("当前账号");
     expect(html).toContain("robert@example.com");
+    expect(html).toContain('href="/ai-search"');
+    expect(html).toContain("AI检索");
     expect(html).toContain('href="/favorites"');
     expect(html).toContain("收藏");
   });

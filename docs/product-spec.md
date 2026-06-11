@@ -136,7 +136,7 @@ Next.js
 | 登录 | Supabase Auth，限制单用户 |
 | 模型 | DeepSeek |
 | 部署 | Vercel Hobby |
-| 搜索 | 第一版关键词搜索 + 分类 / 标签筛选 |
+| 搜索 | 关键词搜索 + 分类 / 标签筛选 + 一次性 AI 检索 |
 | GitHub 导入 | 服务端读取 GitHub README，或读取 SKILL.md 开头段 |
 | 网站导入 | 服务端读取公共 HTTPS 页面文本，限 Tool 使用 |
 
@@ -220,6 +220,9 @@ RoBox
 │   ├── 收藏内容
 │   ├── 待整理内容
 │   └── 快速新增
+│
+├── AI Search
+│   └── 自然语言检索 Prompt / Skill / Tool
 │
 ├── Favorites
 │   └── 全部收藏内容
@@ -469,9 +472,9 @@ raw.githubusercontent.com
 
 # 12. 搜索方案
 
-第一版不做向量搜索。
+当前不做向量搜索，不保存搜索历史。
 
-## 第一版搜索
+## 关键词搜索
 
 ```
 标题搜索
@@ -483,7 +486,20 @@ raw.githubusercontent.com
 类型筛选：Prompt / Skill / Tool
 ```
 
-## 第二版再做
+## AI 检索
+
+```
+自然语言描述需求、目标工具或使用场景
+可指定类型：Prompt / Skill / Tool
+不指定类型时按 Prompt / Skill / Tool 分组呈现
+读取当前用户候选条目的标题、摘要、分类、标签、来源和短原文片段
+DeepSeek 只做一次性排序和匹配说明
+不写搜索历史、不新增数据库表、不保存检索结果
+```
+
+AI 检索用于缩短“想做什么 → 找到可复制资源”的路径，不扩展为通用知识库、Agent 平台或推荐系统。
+
+## 后续再评估
 
 ```
 Embedding
@@ -491,7 +507,7 @@ Embedding
 相似 Prompt / Skill / Tool 推荐
 ```
 
-原因：个人使用初期，关键词 + 标签已经够用。
+只有当个人库规模明显变大、一次性候选重排不够稳定时，再评估向量索引。
 
 ---
 

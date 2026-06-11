@@ -1,6 +1,7 @@
 import {
   BlocksIcon,
   LayoutDashboardIcon,
+  SearchIcon,
   SettingsIcon,
   StarIcon,
   WrenchIcon,
@@ -12,6 +13,11 @@ export const navigationItems = [
     href: "/dashboard",
     label: "总览",
     icon: LayoutDashboardIcon,
+  },
+  {
+    href: "/ai-search",
+    label: "AI检索",
+    icon: SearchIcon,
   },
   {
     href: "/favorites",
