@@ -8,6 +8,7 @@ import {
   AiSearchErrorMessage,
   AiSearchLoadingState,
   AiSearchResults,
+  AiSearchStartState,
   AiSearchView,
 } from "./ai-search-view";
 
@@ -63,16 +64,21 @@ describe("AiSearchView", () => {
     expect(html).toContain("Prompt");
     expect(html).toContain("Skill");
     expect(html).toContain("Tool");
+    expect(html).toContain("等待检索");
+    expect(html).toContain("不保存历史");
   });
 
   it("renders grouped results with match metadata and detail links", () => {
     const html = renderToStaticMarkup(<AiSearchResults response={response} />);
 
+    expect(html).toContain("1 个结果");
     expect(html).toContain("已扫描 3 个");
     expect(html).toContain("范围已截断");
     expect(html).toContain("Prompt");
     expect(html).toContain("论文阅读 Prompt");
-    expect(html).toContain("匹配度 96");
+    expect(html).toContain("匹配度");
+    expect(html).toContain("96");
+    expect(html).toContain("原文片段");
     expect(html).toContain("能把论文拆成结构化步骤。");
     expect(html).toContain("阅读 PDF 并输出学习笔记。");
     expect(html).toContain('href="/prompts/prompt-1"');
@@ -83,5 +89,6 @@ describe("AiSearchView", () => {
     expect(renderToStaticMarkup(<AiSearchLoadingState />)).toContain("正在检索");
     expect(renderToStaticMarkup(<AiSearchErrorMessage message="DeepSeek 请求超时" />)).toContain("DeepSeek 请求超时");
     expect(renderToStaticMarkup(<AiSearchEmptyState />)).toContain("没有匹配结果");
+    expect(renderToStaticMarkup(<AiSearchStartState />)).toContain("等待检索");
   });
 });
