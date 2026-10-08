@@ -1,90 +1,59 @@
 # AGENTS.md
 
-## 1. 目的
+RoBox 是个人 Prompt / Skill / Tool 管理器：只存 `prompt`、`skill`、`tool` 三类内容，只跑「保存 → 整理 → 搜索 → 复制使用」一条闭环。取舍准绳是使用路径短、查找快、复制顺。
 
-本文件只定义 `RoBox` 的基础工作规则，不重复承载完整产品方案。
+本文件是工作规则（怎么做）；`docs/` 是需求与设计（做什么）。
 
-- `AGENTS.md` 负责“怎么做”
-- 项目文档负责“做什么”
+## 开工顺序
 
-开始任何实现前，先读项目文档，再动手。
+1. **查方案**：动手前读 `docs/product-spec.md`，再看 `docs/project-plan.md` 里相关的 Phase。
+   完成判据：能说清这次改动落在哪条产品边界内、受哪些既有约定约束；不靠猜。
+2. **先改文档，再改代码**：长期规则、目录约定、数据库结构要变，先改 `docs/` 再落实现。
+   完成判据：文档与代码在同一批改动里一起提交。
+3. **实现**：遵守下面的产品边界、结构与命名、工程纪律。
+   完成判据：没有为跑通而注释报错、跳过校验或绕过类型；`items.content` 里的用户原文没被覆盖。
+4. **验证**：跑 `npm run test`、`npm run typecheck`、`npm run lint`、`npm run build`，基线见 `docs/architecture.md` 的 Verification Baseline。
+   完成判据：四条全绿；跑不动的要说明原因。
+5. **发布**：生产发布 = 推 `main`，由 Vercel Git 集成自动部署，不手动跑 `vercel --prod`。
+   完成判据：推之前已按「红线操作」拿到明确同意。
 
----
+## 文档地图
 
-## 2. 参考文档/文档索引
+- 产品边界、数据模型、后续 API → `docs/product-spec.md`
+- 分阶段计划与已完成阶段的变更记录 → `docs/project-plan.md`
+- 本地启动、环境变量、Supabase 开发约定 → `docs/setup.md`
+- 系统边界、链路、安全层、性能、部署区域 → `docs/architecture.md`
+- Route Handler 用法与冒烟清单 → `docs/integration-guide.md`
+- 代码结构与模块索引 → `docs/code-wiki.md`
+- 面向使用者的仓库说明与部署步骤 → `README.md`
+- 线上 504 / Supabase 免费项目被暂停 → `README.md` 的生产部署章节、`docs/architecture.md` 的 Deployment Region 一节
+- 开发期计划与清单（不进版本控制） → `docs/dev/`
 
-### 长期文档（版本控制）
-- 仓库说明 D:\RoBox\README.md
-- 本文件 `AGENTS.md`
-- 启动文档 D:\RoBox\docs\setup.md
-- 架构文档 D:\RoBox\docs\architecture.md
-- 接入文档 D:\RoBox\docs\integration-guide.md
-- 项目方案 D:\RoBox\docs\product-spec.md
-- 分阶段计划 D:\RoBox\docs\project-plan.md
-- 代码索引 D:\RoBox\docs\code-wiki.md
+实现与文档冲突时以文档为准；文档之间冲突时先指出冲突，再继续。AGENTS.md 只放规则：数据库字段、页面清单、API 细节写在 `docs/` 里。
 
-### 开发期文档（不进入版本控制）
-- 开发计划/清单 D:\RoBox\docs\dev\
+## 产品边界
 
-如果实现与项目文档冲突，以项目文档为准；如果项目文档本身不一致，先指出冲突，再继续。
+只做 `prompt` / `skill` / `tool` 三类内容，和「保存 → 整理 → 搜索 → 复制使用」一条闭环。
 
----
+通用知识库、爬虫平台、Agent 平台、万能收藏箱都在边界外；要扩边界先回 `docs/product-spec.md` 改方案，再动手。
 
-## 3. Agent 开工规则
+## 结构与命名
 
-- 正式开发前，先查项目方案，不靠猜
-- 不在 `AGENTS.md` 里重复抄数据库字段、页面清单、API 细节
-- 如果要调整长期规则，先改文档，再改代码
+- 目录按业务边界拆分；文件名、目录名、变量名、数据库字段名统一英文。
+- 命名直接说明内容，不用 `misc`、`temp`、`backup`、`utils2` 这类含糊名。
+- 新增长期目录约定：先写文档，再落代码。
+- 第三方 CLI：二进制放 `vendor_imports/tools/<tool>/<version>/`，稳定入口放 `scripts/<tool>.ps1` 或 `scripts/<tool>.cmd`；代码和文档只引用稳定入口。
+- `docs/` 放面向接手者的启动、接入、运维文档；`.worktrees/` 只用于隔离开发，不作为交付目录或文档来源。
 
----
+## 工程纪律
 
-## 4. 产品硬边界
+- 用户原文保存在 `items.content`；AI 整理结果只写元数据，不覆盖原文。
+- 优先做 MVP；同一结构重复出现第二次再抽象。
+- 密钥只放 `.env.local` 和部署平台的环境变量，不进代码、commit、日志。
 
-`RoBox` 只做三类内容：
+## 红线操作
 
-- `prompt`
-- `skill`
-- `tool`
-
-核心流程只围绕：
-
-- 保存
-- 整理
-- 搜索
-- 复制使用
-
-不要把项目做成通用知识库、爬虫平台、Agent 平台或万能收藏箱。
-任何超出边界的需求，先回到项目方案核对，再决定是否扩展。
-
----
-
-## 5. 结构与命名
-
-- 目录结构必须清晰，按业务边界拆分
-- 文件名、目录名、变量名、数据库字段名统一用英文
-- 不创建含义模糊的目录或文件，例如 `misc`、`temp`、`backup`、`utils2`
-- 新增长期目录约定时，先写文档，再落代码
-- 第三方 CLI 二进制统一放在 `vendor_imports/tools/<tool>/<version>/`
-- 第三方 CLI 的稳定入口统一放在 `scripts/<tool>.ps1` 或 `scripts/<tool>.cmd`，代码和文档都不要直接依赖版本化二进制路径
-- `docs/` 负责面向接手者的启动、接入、运维文档
-- `.worktrees/` 只用于隔离开发，不作为主交付目录或主文档来源
-
----
-
-## 6. 工程纪律
-
-- 优先做 MVP，不做超前设计
-- 保留原始内容，不要让 AI 整理结果覆盖用户原文
-- 不要为了跑通而注释报错、跳过校验或绕过类型问题
-- 发现可复用的重复结构时再抽象，不为“看起来高级”而抽象
-- 改完主动验证；如果仓库当前没有可运行验证手段，要明确说明
-- 密钥、token、密码不进代码、不进 commit、不进日志
-
----
-
-## 7. 红线操作
-
-以下操作必须先说明原因和风险，再获得用户明确同意：
+先说明原因和风险，拿到明确同意再执行：
 
 - 删除文件、目录或 git 历史
 - 修改 `.env`、密钥、token、CI/CD 配置
@@ -92,128 +61,3 @@
 - `git push`、`git rebase`、`git reset --hard`、强制推送
 - 安装新的全局依赖或修改系统配置
 - 公开发布或生产部署
-
----
-
-## 8. 一句话原则
-
-RoBox 追求的不是功能多，而是个人常用 Prompt / Skill / Tool 的使用路径短、查找快、复制顺。
-
----
-
-## 9. 近期重要变更（供 Agent 快速同步）
-
-### 2026-10-08 Supabase 保活与暂停恢复
-
-- **故障现象**：生产站点带登录会话访问 `/dashboard` 等受保护路由返回 504 `MIDDLEWARE_INVOCATION_TIMEOUT`。
-- **根因**：Supabase 免费项目 `robox` 因一周无数据库活动被自动暂停，middleware 的 `supabase.auth.getClaims()` 会话校验一直等待，拖到 Vercel middleware 超时。2026-08-01 与 2026-10-08 两次故障均为同一根因，均已从 Supabase Dashboard 手动 Resume。
-- **保活修复**：新增 `GET /api/keepalive`（`src/app/api/keepalive/route.ts`），用 anon key 对 `items`、`user_categories`、`prompt_variables` 各执行一次 `select=id&limit=1` 只读请求；`vercel.json` 增加两条 Vercel Cron（UTC 01:00 / 13:00）每天触发两次，让免费项目持续产生数据库活动，不再因低活动被暂停。该路由无鉴权、只读、失败时返回 503。
-- **备选方案**：升级 Supabase Pro 可彻底取消自动暂停；不升级时保活 Cron 是免费且够用的方案。
-
-### 2026-05-08 工作区加载与跳转提速
-
-- **Middleware 收窄**：`middleware.ts` 只匹配 `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings`；不再拦截 `/api/*`、`/login`、`/auth/*` 或静态资源。API Route Handler 继续用自身显式鉴权。
-- **Dashboard RPC**：`getDashboardSnapshot()` 改为调用 `get_dashboard_snapshot(p_user_id)` 单次 RPC，返回 counts、favorites、pending、recent；迁移文件为 `supabase/migrations/202605080001_dashboard_snapshot_rpc.sql`。
-- **RPC 权限修正**：`supabase/migrations/20260508093537_restrict_dashboard_snapshot_rpc_execute.sql` 撤销 `public`/`anon` 对 Dashboard RPC 的执行权限，仅授予 `authenticated`。
-- **列表页查询去重**：Prompt / Skill / Tool 列表页先调用一次 `requireAppUser()`，再把 `userId` 传给 `listItems(filters, { userId })`，并和分类查询并行；正常列表渲染不再每次 `ensureDefaultCategories()`。
-- **跳转优化**：`LibraryList` 卡片详情入口从原生 `<a href>` 改为 Next.js `Link`；收藏页筛选和顶部全局搜索改为客户端 `router.push()`。
-- **缓存刷新收窄**：`toggleFavoriteAction()` 只 revalidate `/favorites`、当前 collection 和 detail，不再每次收藏都刷新 `/dashboard`；Dashboard 收藏/计数可到下一次 Dashboard 渲染时更新。
-- **Vercel 区域**：新增 `vercel.json`，设置 `"regions": ["hnd1"]`，让 Vercel Functions 靠近 Supabase `ap-northeast-1`。
-- **发布方式**：生产部署以合并并推送 `main` 为准，由 Vercel Git 集成自动部署；不要把手动 `vercel --prod` 当作常规发布路径。
-- **验证与发布**：本地 `npm run test`（136 tests）、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过；本地与远程 Supabase 均已应用 `202605080001` 和 `20260508093537`；`main` 已推送并触发 Vercel 生产部署 `dpl_FxJvd4kSDHyuqnidtCsm9Lkm1w1D`，对应提交 `da6d879`；生产 `/login` 返回 200，`/api/categories?type=prompt` 未登录返回 401，响应头确认落在 `hnd1`。
-
-### 2026-05-07 Favorites 页面与 Dashboard 收藏卡片优化
-
-- **Dashboard 收藏卡片**：`getDashboardSnapshot()` 收藏查询从 3 条提升到 8 条，解决右侧收藏卡片自适应变高后只显示少量收藏、底部大面积留白的问题。
-- **新增 Favorites 页面**：新增 `/favorites`，统一展示全部收藏的 Prompt / Skill / Tool，支持搜索、类型筛选和最近更新/最近使用排序；每张收藏卡片跳回对应详情页。
-- **导航入口**：`navigationItems` 新增“收藏”，左侧导航和移动导航自动出现；Dashboard 收藏卡片标题区和底部 CTA 均跳转 `/favorites`。
-- **缓存刷新**：`toggleFavoriteAction()` 和 Analyze route 现在都会额外 `revalidatePath("/favorites")`，避免收藏页在取消/新增收藏或智能整理后滞后。
-- **验证与发布**：本地 `npm run typecheck`、`npm run lint`、`npm run test`（133 tests）、`npm run build` 全部通过；`main` 已推送并部署到 Vercel 生产，生产部署 `dpl_CFstKgSi6RgjrTFiv4otz69XBfJ9` 对应提交 `15d7abe1`，生产 `/favorites` 返回 HTTP 200，部署后一小时 Vercel production error logs 无错误。
-
-### 2026-05-07 Tools 栏目、迁移与生产部署
-
-- **产品边界扩展**：RoBox 当前只做 `prompt` / `skill` / `tool` 三类内容，仍只围绕保存、整理、搜索、复制使用，不扩展为通用知识库、爬虫平台、Agent 平台或万能收藏箱。
-- **新增 Tools 页面**：新增 `/tools`、`/tools/new`、`/tools/[id]`、`/tools/[id]/edit`，与 Prompts/Skills 共享列表、详情、新建、编辑、分类、搜索、收藏、复制链路。
-- **Schema 与数据库**：`itemTypeSchema` 接受 `tool`；`items.type` 与 `user_categories.type` CHECK 约束均包含 `tool`；迁移文件为 `supabase/migrations/202605070001_add_tools_item_type.sql`。
-- **Tool 分类**：`user_categories` 按 `user_id + type` 隔离，Prompt、Skill、Tool 三套分类独立管理；现有用户已 seed Tool 默认分类。
-- **GitHub 导入泛化**：`POST /api/import/github` body 支持 `type?: "skill" | "tool"`，不传仍按 Skill 导入以兼容旧调用；Tool 导入使用 README/SKILL.md 作为分析上下文。
-- **网站导入**：新增 `POST /api/import/web`，只允许公共 HTTPS 页面，拒绝 localhost、内网、IP 字面量、非 HTTPS 和重定向到受限目标；抓取文本只用于 DeepSeek 分析，不保存网页正文。
-- **AI 分析与复制语义**：DeepSeek 支持 `tool`，Skill/Tool 都不生成 Prompt 变量；链接型 Tool 详情页以 `source_url` 作为主要打开/复制对象。
-- **验证与发布**：本地 `npm run test`、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过；本地与远程 Supabase 均已应用 `202605070001`；`main` 已推送并部署到 Vercel 生产，生产部署 `dpl_DYZAvL7FR32FdpBPpBofc9kix5cD` 对应提交 `75f040f`。
-
-### 2026-05-06 自定义分类功能
-
-- **新增 `user_categories` 表**：按 `user_id` + `type`（prompt/skill/tool）隔离，支持用户对 Prompt、Skill、Tool 分类分别自定义增删。`UNIQUE(user_id, type, name)` 防止重复，RLS 限制用户只能操作自己的分类。
-- **移除 `items.category` CHECK 约束**：category 从固定 8 值枚举变为自由文本，应用层通过 `validateCategoryBelongsToUser` 校验。
-- **Schema 变更**：`itemCategorySchema` 从 `z.enum([...])` 改为 `z.string().trim().min(1).max(32)`；`itemCategories` 常量改为 `DEFAULT_CATEGORIES`（仅用于 seed）。
-- **新增数据访问层**：`src/server/db/categories.ts`，包含 `getUserCategories`、`getUserCategoryNames`、`ensureDefaultCategories`、`createUserCategory`、`deleteUserCategory`、`forceDeleteUserCategory`、`getCategoryUsageCount`、`reorderUserCategories`、`validateCategoryBelongsToUser`。
-- **新增 API 路由**：`GET/POST /api/categories`、`DELETE /api/categories/[name]`、`PATCH /api/categories/reorder`。
-- **设置页 UI 重构**：`settings-view.tsx` 从"固定分类"只读卡片改为"自定义分类"交互式管理区，含 Prompt/Skill/Tool Tab 切换；新增 `category-manager.tsx` 客户端组件。
-- **表单与筛选更新**：`ItemForm` 和 `LibraryFilters` 的分类下拉框从 `itemCategories` 常量改为 `categories` prop，由页面路由组件查询用户分类后传入。
-- **DeepSeek 分析适配**：`buildAnalyzePrompt` 接收动态 `categories` 参数；`parser.ts` 新增 `validateAnalysisCategory` 函数，校验返回的分类是否在用户自定义列表中，不合法则 fallback 为第一个分类。
-- **GitHub 导入适配**：`createGithubSkillImport` 接收 `categories` 参数，默认分类取用户自定义列表的第一个而非硬编码 `"Agent"`。
-- **Migration**：`supabase/migrations/202605060001_custom_categories.sql`，已推送到远程和本地 Supabase。
-
-### 2026-05-04 智能分析 Bug 修复与环境变量优先级重构
-
-- **AnalyzeButton 响应格式修复**：`analyze-button.tsx` 中 `data.ok` → `data.item`，匹配后端实际返回的 `{ item }` 格式；新增 `router.refresh()` 使分析完成后页面立即刷新。
-- **CORS 403 修复**：`.env.local` 中 `NEXT_PUBLIC_APP_ORIGIN` 端口从 3004 修正为 3000，匹配实际 dev server 端口。
-- **DEEPSEEK_MODEL 补全**：`.env.local` 缺少 `DEEPSEEK_MODEL` 行，导致 `readDeepSeekModel()` 抛异常；已补加 `DEEPSEEK_MODEL=deepseek-v4-flash`。
-- **环境变量优先级重构**：新增 `src/lib/env.ts` 中的 `getServerEnv()` 函数，优先从 `.env.local` 文件读取配置，`process.env`（系统环境变量）作为 fallback。解决系统环境变量静默覆盖 `.env.local` 的问题。`deepseek.ts`、`github.ts`、`auth/service.ts` 中的直接 `process.env` 读取已全部改为 `getServerEnv()`。
-- **env.test.ts 适配**：mock `node:fs` 避免测试读真实 `.env.local`，新增 `resetLocalEnvCache()` 清缓存。
-
-### 2026-05-04 安全审计与加固
-
-- **middleware.ts 位置与 Edge Runtime 适配**：Next.js 16 要求 middleware 文件在项目根目录且导出 `middleware` 函数。原 `proxy.ts` 已重命名为 `middleware.ts`，同时将 `src/lib/supabase/proxy.ts` 的环境变量读取从 `env.ts`（依赖 `node:fs`，无法在 Edge Runtime 运行）改为直接读取 `process.env`，解决了 Edge Runtime 兼容性问题。
-- **API 路由鉴权**：`/api/items/[id]/analyze` 和 `/api/import/github` 已添加 `getOptionalAppUser` 显式鉴权，未登录返回 401。
-- **安全响应头**：`next.config.ts` 已配置 X-Frame-Options、X-Content-Type-Options、Referrer-Policy、HSTS、CSP、Permissions-Policy。
-- **ILIKE 注入修复**：`sanitizeSearchValue` 已转义 PostgreSQL ILIKE 特殊字符 `%` 和 `_`。
-- **速率限制**：新增 `src/lib/rate-limit.ts`，GitHub import 10次/小时，Analyze 30次/小时。
-- **请求体大小限制**：GitHub import URL 长度限制 2048 字符，请求体限制 4KB。
-- **DeepSeek prompt 防注入**：添加内容边界标记和忽略指令注入的规则。
-- **replacePromptVariables 归属校验**：删除变量前先通过 `getItemById` 确认 item 存在且属于当前用户。
-- **错误信息脱敏**：生产环境 API 返回通用错误信息，不再泄露内部细节。
-- **README 大小限制**：GitHub 导入 README 内容上限 100KB。
-- **CORS 检查**：API 路由添加同源限制，拒绝跨域请求。
-- **`.env.example` 清理**：移除未使用的 `SUPABASE_SERVICE_ROLE_KEY`。
-
-### 2026-05-05 GitHub 导入 Skill 详情页展示优化
-
-- **标题文案**：GitHub 导入的 Skill 详情页内容区标题从"内容"改为"安装/加载提示词"。
-- **内容展示**：`<pre>` 块不再直接显示 `item.content`（原始 URL 文本），改为显示"请你安装/加载这个skill："加可点击的 `sourceUrl` 链接。
-- **测试更新**：`item-detail-view.test.tsx` 断言已同步更新。
-
-### 2026-05-05 全面性能优化
-
-- **感知速度**：新增 `(workspace)/loading.tsx` 骨架屏，消除 workspace 页面数据加载期间的空白等待；详情页/编辑页添加 Suspense 边界，页面 shell 立即显示、内容区流式加载。
-- **数据库原子操作**：`toggleFavorite` 从先读后写（2 次往返）改为 RPC `toggle_favorite`（1 次原子 NOT）；`recordCopyAction` 从 3 次往返改为 RPC `increment_usage_count`（1 次原子 +1 含 usage_logs 插入）；`selectLatestCopiedAtByItemId` 从 JS 层 reduce 改为 RPC `get_latest_copied_at`（SQL 聚合）。
-- **Dashboard 查询优化**：`getDashboardSnapshot()` 从全量加载改为 6 条并行查询 + limit，只取需要的数据（2026-05-08 已进一步升级为单次 `get_dashboard_snapshot` RPC）。
-- **数据库索引**：新增 `(user_id, is_favorite, updated_at DESC)` 复合索引和 `title` 列 `pg_trgm` GIN 索引。
-- **React.memo**：`ItemCard`、`VariableCard`、`MetricCard`、`MiniListCard` 均用 `React.memo` 包裹，减少操作后的不必要重渲染。
-- **共享工具**：`formatDate` 从 `library-list.tsx` 和 `item-detail-view.tsx` 中提取到 `src/lib/format.ts`。
-- **BatchAnalyzeButton 并发**：从串行改为并发 3 请求，只在全部完成后 `router.refresh()` 一次。
-- **DeleteItemButton 修复**：从不存在的 `DELETE /api/items/${id}` 改为 `deleteItemAction` Server Action。
-- **LibraryFilters 客户端导航**：从 `<form action>` 全页面导航改为 `useRouter` + `useSearchParams` 客户端导航。
-- **缓存头**：`/_next/static/` 添加 `Cache-Control: immutable`；API 路由添加 `Cache-Control: no-store`。
-- **Migration**：`supabase/migrations/202605050001_performance_rpc_indexes.sql`，已推送到远程和本地 Supabase。
-
-### 2026-05-05 GitHub OAuth 登录与云部署
-
-- **GitHub OAuth 登录**：新增 GitHub OAuth 作为主要登录方式，Magic Link 保留为备选。登录页显示「GitHub 登录」按钮 + "或" 分隔线 + 邮箱 Magic Link 表单。
-- **Route Handler**：`/auth/github` 使用 `supabase.auth.signInWithOAuth({ provider: "github" })` 发起 PKCE 流程，通过 `NextResponse.redirect()` 跳转 GitHub（Server Action `redirect()` 在 Next.js 16 有外部 URL bug，已弃用）。
-- **本地 Supabase 配置**：`config.toml` 启用 `[auth.external.github]`，`client_id`/`secret`/`redirect_uri` 均通过 `env(...)` 从 `.env.local` 读取。GoTrue v2.189.0 要求显式设置 `redirect_uri`，否则报 "missing redirect URI"。
-- **云 Supabase 配置**：通过 Management API 或 Dashboard 设置 `site_url` = `https://robox-beta.vercel.app`，`uri_allow_list` 包含 `https://robox-beta.vercel.app/auth/confirm`。GitHub Provider 的 Client ID/Secret 在 Dashboard → Authentication → Providers 中配置。**禁止 `supabase config push`**，全量推送会覆盖云项目配置。
-- **GitHub OAuth App**：已创建，Client ID/Secret 存于 `.env.local`。Authorization callback URL 设为 `https://pgzupvktbwelsoigtnea.supabase.co/auth/v1/callback`。
-- **Vercel 环境变量**：`NEXT_PUBLIC_APP_ORIGIN` = `https://robox-beta.vercel.app`（生产环境必须，`getAppOrigin()` 无值会抛异常）；`ALLOWED_EMAILS` = `tsts19891213@126.com`。
-- **Supabase CLI**：安装到 `vendor_imports/tools/supabase/latest/`，稳定入口 `scripts/supabase.cmd`。
-- **顺带修复**：`github.ts` 中 `requestDeepSeekAnalysis` 缺失 `categories` 参数，补上 `[...DEFAULT_CATEGORIES]`。
-
-### 2026-05-04 UI 打磨与模型固定
-
-- **UI 全面优化**：登录页、Dashboard、Prompts/Skills 列表页、详情页、新建/编辑页均已完成视觉与交互优化。核心原则：去除开发阶段注释与小字说明，保持简洁专业；统一间距、字体层级、圆角与阴影体系。
-- **Button 组件修复**：`src/components/ui/button.tsx` 已显式处理 `asChild` 属性，解决 React "does not recognize the `asChild` prop on a DOM element" 报错。
-- **模型与 Base URL 环境变量化**：`src/server/analyze/deepseek.ts` 中模型和 Base URL 均从环境变量读取（`DEEPSEEK_MODEL`、`DEEPSEEK_API_BASE_URL`），支持通过 `.env.local` 配置，不再硬编码。
-- **新增/重构的组件**：
-  - `item-form.tsx`：新增 FormSection/FormDivider/RequiredLabel/OptionalLabel/FieldDescription 等辅助组件，分区展示表单。
-  - `prompt-variables-editor.tsx`：重构为 VariableCard 子组件，优化空状态和变量卡片视觉。
-  - `github-import-form.tsx`：添加标题区、统一输入框高度、使用内联 SVG 替代不存在的 GithubIcon。

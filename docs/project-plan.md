@@ -330,3 +330,43 @@
 - 本地和远程 Supabase 都已应用 `202605080001` 与 `20260508093537`。
 - 生产部署 `dpl_FxJvd4kSDHyuqnidtCsm9Lkm1w1D` 对应提交 `da6d879`，状态 `READY`。
 - 生产 `/login` 返回 200，`/api/categories?type=prompt` 未登录返回 401，响应头确认落在 `hnd1`。
+
+### Phase 12：Supabase 保活与暂停恢复
+状态：已完成（2026-10-08），已推送 `main`（`6ba6451`）并由 Vercel Git 集成自动部署到生产
+
+目标：切断「Supabase 免费项目因约一周无数据库活动被自动暂停 → 带会话访问受保护路由 504」这条已出现两次的故障链，并留下可复盘的记录。
+
+任务清单：
+- 新增 `src/app/api/keepalive/route.ts`：用 anon key 对 `items`、`user_categories`、`prompt_variables` 各发一次 `select=id&limit=1` 只读 PostgREST 请求；无鉴权、`force-dynamic`、`no-store`，任一表非 200 时整体返回 503，并在 body 里带回每张表的状态码。
+- `vercel.json` 增加两条 Vercel Cron（UTC 01:00 / 13:00）调用该路由。Hobby 计划每个表达式每天触发一次，实际时间在 1 小时弹性窗口内漂移；一条生效就足以避开「一周无活动」判定。
+- 同步 `README.md`、`docs/architecture.md`、`docs/integration-guide.md`、`docs/code-wiki.md`；在 Vercel 控制台确认两条 Cron 均已登记。
+
+阶段交付物：
+- 保活路由与 Cron 随 `main` 部署到生产，Supabase 项目持续产生数据库活动。
+
+验收标准：
+- `npm run test`（158 tests）、`npm run typecheck`、`npm run lint`、`npm run build` 全部通过。
+- 生产 `GET https://robox-beta.vercel.app/api/keepalive` 返回 200，body 为 `{"ok":true,"checks":{"items":200,"user_categories":200,"prompt_variables":200},"durationMs":867}`。
+- 生产 `/`、`/login`、`/dashboard`、`/favorites` 返回 200，响应头落在 `hnd1`；Vercel 上 `6ba6451` 的部署状态为 `Ready`。
+- 长期观察项：接下来一周 Supabase 项目不被自动暂停。
+
+### 补记：未单独列为阶段的早期改动（2026-05-04 ~ 2026-05-06）
+
+这些改动原先只记在 `AGENTS.md` 的「近期重要变更」里，2026-10-08 整理文档时并入本文件；实现细节见对应提交与 `docs/architecture.md`、`docs/code-wiki.md`。
+
+#### 2026-05-06 自定义分类
+- 新增 `user_categories` 表：按 `user_id + type` 隔离，`UNIQUE(user_id, type, name)`，RLS 限制用户只能操作自己的分类；migration `202605060001_custom_categories.sql`。
+- `items.category` 从固定枚举改为自由文本，由应用层 `validateCategoryBelongsToUser` 校验；新增 `src/server/db/categories.ts`、`GET/POST /api/categories`、`DELETE /api/categories/[name]`、`PATCH /api/categories/reorder`、设置页 `category-manager.tsx`。
+- 表单、筛选、DeepSeek 分析与 GitHub 导入改为读取用户自定义分类；`DEFAULT_CATEGORIES` 只用于 seed。
+
+#### 2026-05-05 GitHub OAuth 登录与云部署
+- 新增 GitHub OAuth 登录（`/auth/github` 发起 PKCE，`/auth/confirm` 接收会话），Magic Link 保留为备选。
+- 云 Supabase 的 `site_url`、`uri_allow_list`、GitHub Provider 通过 Dashboard / Management API 配置，**禁止 `supabase config push`**（会全量覆盖云配置）；生产环境在 Vercel 配置 `NEXT_PUBLIC_APP_ORIGIN` 与 `ALLOWED_EMAILS`。
+- Supabase CLI 固定到仓库内 `vendor_imports/tools/supabase/<version>/`，稳定入口 `scripts/supabase.cmd`。
+
+#### 2026-05-05 GitHub 导入 Skill 详情页展示
+- 详情页内容区标题改为「安装/加载提示词」；`<pre>` 块显示「请你安装/加载这个skill：」加可点击的 `source_url`，不再直接展示原始 URL 文本。
+
+#### 2026-05-04 智能分析修复与环境变量优先级
+- `AnalyzeButton` 按后端实际的 `{ item }` 结构解析响应，并在分析完成后 `router.refresh()`。
+- 新增 `getServerEnv()`（`src/lib/env.ts`）：优先读 `.env.local`，系统环境变量只作 fallback，避免系统变量静默覆盖项目配置；`deepseek.ts`、`github.ts`、`auth/service.ts` 全部改用它。
