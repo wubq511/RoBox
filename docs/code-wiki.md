@@ -742,6 +742,7 @@ createGithubSkillImport({ url, categories })
 | `POST` | `/api/categories` | 创建分类 | 无 | 必须 |
 | `DELETE` | `/api/categories/:name` | 删除分类 | 无 | 必须 |
 | `PATCH` | `/api/categories/reorder` | 分类排序 | 无 | 必须 |
+| `GET` | `/api/keepalive` | Supabase 保活探测（Vercel Cron 调用） | 无 | 无 |
 
 ### 统一处理模式
 

@@ -37,6 +37,8 @@ RoBox is a personal Prompt / Skill / Tool manager. The product boundary is inten
   GitHub URL validation, raw README/SKILL.md fetch, public HTTPS web page text fetch, import creation, and analysis orchestration.
 - `src/lib/rate-limit`
   IP-based sliding-window rate limiter used by API Route Handlers.
+- `src/app/api/keepalive`
+  Cron-invoked route that runs one tiny PostgREST read per table so the Supabase free-plan project keeps registering database activity and is not auto-paused.
 - `middleware.ts` (project root)
   Next.js 16 middleware entry point using `src/lib/supabase/proxy.ts` for Supabase session refresh on matched workspace page requests. The matcher is intentionally limited to `/dashboard`, `/ai-search`, `/favorites`, `/prompts`, `/skills`, `/tools`, and `/settings`; `/api/*`, `/login`, `/auth/*`, and static assets do not run middleware. Runs in Edge Runtime; does not use `node:fs` or `env.ts`.
 
@@ -244,11 +246,12 @@ Performance optimization was completed on `2026-05-05` and extended on `2026-05-
 
 - `vercel.json` sets `"regions": ["hnd1"]` so Vercel Functions run in Tokyo near the Supabase `ap-northeast-1` project.
 - Normal production deployment is a `main` branch push through Vercel Git integration; manual `vercel --prod` should be reserved for explicit emergency work.
+- Two daily Vercel Cron entries (UTC 01:00 and 13:00) call `/api/keepalive` to keep the Supabase free-plan project active. Without database activity the project is paused after about a week, and every authenticated workspace request then hangs in middleware until Vercel returns `MIDDLEWARE_INVOCATION_TIMEOUT` (504).
 
 ### Caching
 
 - `/_next/static/` responses include `Cache-Control: public, max-age=31536000, immutable`.
-- API route responses (`/api/items/:id/analyze`, `/api/import/github`, `/api/import/web`, and category routes) include `Cache-Control: no-store`.
+- API route responses (`/api/items/:id/analyze`, `/api/import/github`, `/api/import/web`, category routes, and `/api/keepalive`) include `Cache-Control: no-store`.
 
 ## Security Layer
 

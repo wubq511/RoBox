@@ -277,6 +277,29 @@ Request body:
 }
 ```
 
+### Keepalive (Vercel Cron)
+
+```text
+GET /api/keepalive
+```
+
+Requirements:
+
+- No session. Called by the Vercel Cron entries in `vercel.json`; safe to call manually.
+- Runs one lightweight PostgREST read (`select=id&limit=1`) against `items`, `user_categories`, and `prompt_variables` with the public anon key so the Supabase free-plan project keeps registering database activity and is not auto-paused.
+
+Successful response shape:
+
+```ts
+{
+  ok: true;
+  checks: { items: 200; user_categories: 200; prompt_variables: 200 };
+  durationMs: number;
+}
+```
+
+Returns `503` with the per-table check result when any read fails, for example while the project is paused or unreachable.
+
 ## Manual Smoke Test
 
 1. Start Supabase and the Next.js dev server.
@@ -294,4 +317,3 @@ Request body:
 13. Favorite at least one Prompt, Skill, or Tool; open `/dashboard` and confirm the favorites card links to `/favorites`.
 14. Open `/favorites` and confirm all favorited Prompt / Skill / Tool items are listed, type filtering works, and each card opens its original detail route.
 15. Open Settings and confirm Prompt / Skill / Tool category tabs are present and isolated.
-

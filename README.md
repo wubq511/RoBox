@@ -175,6 +175,8 @@ npm run build       # 构建
 
 生产发布默认流程：合并到 `main` 并推送到 GitHub，由 Vercel Git 集成自动部署；不要在常规发布中直接运行手动生产部署命令。
 
+`vercel.json` 同时配置了每天两次的 Vercel Cron（UTC 01:00 / 13:00）调用 `GET /api/keepalive`，对 Supabase 执行几次极小的只读 PostgREST 请求，避免免费项目因一周无数据库活动被自动暂停；项目一旦被暂停，带会话的页面请求会因 middleware 等待 Auth 响应而超时（504 MIDDLEWARE_INVOCATION_TIMEOUT）。
+
 **必需环境变量**
 
 | 变量 | 说明 |

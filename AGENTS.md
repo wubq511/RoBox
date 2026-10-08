@@ -103,6 +103,13 @@ RoBox 追求的不是功能多，而是个人常用 Prompt / Skill / Tool 的使
 
 ## 9. 近期重要变更（供 Agent 快速同步）
 
+### 2026-10-08 Supabase 保活与暂停恢复
+
+- **故障现象**：生产站点带登录会话访问 `/dashboard` 等受保护路由返回 504 `MIDDLEWARE_INVOCATION_TIMEOUT`。
+- **根因**：Supabase 免费项目 `robox` 因一周无数据库活动被自动暂停，middleware 的 `supabase.auth.getClaims()` 会话校验一直等待，拖到 Vercel middleware 超时。2026-08-01 与 2026-10-08 两次故障均为同一根因，均已从 Supabase Dashboard 手动 Resume。
+- **保活修复**：新增 `GET /api/keepalive`（`src/app/api/keepalive/route.ts`），用 anon key 对 `items`、`user_categories`、`prompt_variables` 各执行一次 `select=id&limit=1` 只读请求；`vercel.json` 增加两条 Vercel Cron（UTC 01:00 / 13:00）每天触发两次，让免费项目持续产生数据库活动，不再因低活动被暂停。该路由无鉴权、只读、失败时返回 503。
+- **备选方案**：升级 Supabase Pro 可彻底取消自动暂停；不升级时保活 Cron 是免费且够用的方案。
+
 ### 2026-05-08 工作区加载与跳转提速
 
 - **Middleware 收窄**：`middleware.ts` 只匹配 `/dashboard`、`/favorites`、`/prompts`、`/skills`、`/tools`、`/settings`；不再拦截 `/api/*`、`/login`、`/auth/*` 或静态资源。API Route Handler 继续用自身显式鉴权。
